@@ -1,31 +1,38 @@
 declare var $: any;
 
-module Browser {
-    export class Schema {
-        load(schema: any, browser: Browser) {
-            if(!schema) {
-				return Promise.reject("schema cannot be null or undefined");
+module BrowserModule {
+    export class ConfigLoader {
+        load(config: any, browser: Browser) {
+			var resources = config.resources;
+			var styles = config.styles;
+			var schema = config.schema;
+			
+			if(!schema) {
+				throw "schema cannot be null or undefined";
 			}
 	
 			if(!schema.body) {
-				return Promise.reject("schema body missing");
-            }
+				throw "schema body missing";
+			}
+
+			this.processResources(resources, browser);
+			
+			browser.styles = styles;
     
-            var _instances: any[] = [];
 			var body = schema.body;
 
 			if(body.view) {
 				browser.pages.__body.htmlElement = null;
 				browser.pages.__body.view = body.view;
 
-				_instances.push(body.view);
+				browser.instances.push(body.view);
 			}
 
 			if(body.controllers && Array.isArray(body.controllers)) {
 				browser.pages.__body.controllers = body.controllers;
 				
 				for(var i=0; i<body.controllers.length; i++) {
-					_instances.push(body.controllers[i]);
+					browser.instances.push(body.controllers[i]);
 				}
 			}
 
@@ -33,7 +40,7 @@ module Browser {
 				browser.pages.__body.models = body.models;
 
 				for (var modelKey in body.models) {
-					_instances.push(body.models[modelKey]);
+					browser.instances.push(body.models[modelKey]);
 				}
 			}
 
@@ -44,9 +51,15 @@ module Browser {
 			this.processSchema("append", browser.body, body.append, browser);
 			this.processSchema("replace", browser.body, body.replace, browser);
 			this.processSchema("unwind", browser.body, body.unwind, browser);
+		}
 
-			return browser._private.loadInstances();
-        }
+		processResources(resources: any, browser: Browser) {
+			browser.resources = resources;
+			
+			for (var key in resources) {
+				browser.instances.push(resources[key]);
+			}
+		}
 
         addHandlers(pagePath: string, browser: Browser) {
 			var _page: any = browser.pages[pagePath];
