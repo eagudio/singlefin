@@ -59,7 +59,7 @@ var BrowserModule;
                 });
             }
             catch (ex) {
-                console.error("an error occurred during init browser");
+                console.error("an error occurred during init browser: " + ex);
             }
         }
         open(pageName, parameters) {
@@ -174,14 +174,15 @@ var BrowserModule;
             return this._handlers;
         }
         addPage(action, pageName, pagePath, container, view, htmlview, controllers, models, replace, append, unwind, key, events, parameters) {
-            if (typeof view != "string") {
+            /*if(typeof view != "string") {
                 throw "view must be a string";
-            }
+            }*/
             if (htmlview) {
-                //TODO: vedi https://github.com/requirejs/text per il plugin text...
                 this._instances.push("text!" + htmlview);
             }
-            this._instances.push(view);
+            if (view) {
+                this._instances.push(view);
+            }
             if (controllers) {
                 for (var i = 0; i < controllers.length; i++) {
                     this._instances.push(controllers[i]);
@@ -305,11 +306,7 @@ var BrowserModule;
                     }
                     this.drawContainer(page, page.container, parameters).then((htmlContainerElement) => {
                         this.loadController(page, parameters).then((viewParameters) => {
-                            if (!page.view.render) {
-                                console.error("an error occurred during render view: page method render missing");
-                                return reject("an error occurred during render view: page method render missing");
-                            }
-                            page.htmlElement = page.view.render(viewParameters, this._browser.defaultResources);
+                            page.htmlElement = this.renderView(page, viewParameters);
                             this.addEventsHandlers(page, page.htmlElement, viewParameters);
                             this.drawItems(page, viewParameters).then(() => {
                                 this.addHtmlElement(htmlContainerElement, page);
@@ -364,12 +361,8 @@ var BrowserModule;
                 }
                 this.drawContainer(page, page.container, parameters).then((htmlContainerElement) => {
                     this.reloadController(page, parameters).then((viewParameters) => {
-                        if (!page.view.render) {
-                            console.error("an error occurred during render view: page method render missing");
-                            return reject("an error occurred during render view: page method render missing");
-                        }
                         var previousPageHtmlElement = page.htmlElement;
-                        page.htmlElement = page.view.render(viewParameters, this._browser.defaultResources);
+                        page.htmlElement = this.renderView(page, viewParameters);
                         this.addEventsHandlers(page, page.htmlElement, viewParameters);
                         this.drawItems(page, viewParameters).then(() => {
                             previousPageHtmlElement.replaceWith(page.htmlElement);
@@ -410,11 +403,7 @@ var BrowserModule;
             }
             return new Promise((resolve, reject) => {
                 this.loadController(body, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                    if (!body.view.render) {
-                        console.error("an error occurred during render view: page method render missing");
-                        return reject("an error occurred during render view: page method render missing");
-                    }
-                    body.htmlElement = body.view.render(viewParameters, this._browser.defaultResources);
+                    body.htmlElement = this.renderView(body, viewParameters);
                     resolve(body.htmlElement);
                 }), (ex) => {
                     if (ex) {
@@ -488,11 +477,7 @@ var BrowserModule;
                         page.models = parentPage.models;
                     }
                     this.loadController(parentPage, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                        if (!parentPage.view.render) {
-                            console.error("an error occurred during render view: page method render missing");
-                            return reject("an error occurred during render view: page method render missing");
-                        }
-                        parentPage.htmlElement = parentPage.view.render(viewParameters, this._browser.defaultResources);
+                        parentPage.htmlElement = this.renderView(parentPage, viewParameters);
                         this.addEventsHandlers(parentPage, htmlContainerElement, viewParameters);
                         this.addHtmlElement(htmlContainerElement, parentPage);
                         resolve(parentPage.htmlElement);
@@ -520,10 +505,6 @@ var BrowserModule;
                         childPage.models = parent.models;
                     }
                     yield this.loadController(childPage, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                        if (!childPage.view.render) {
-                            console.error("draw children error: page method render missing");
-                            return reject("draw children error: page method render missing");
-                        }
                         if (childPage.action == "unwind") {
                             yield this.unwind(parent, childPageName, childPage, viewParameters).then(() => __awaiter(this, void 0, void 0, function* () {
                             }), (ex) => {
@@ -534,7 +515,7 @@ var BrowserModule;
                             });
                         }
                         else {
-                            childPage.htmlElement = childPage.view.render(viewParameters, this._browser.defaultResources);
+                            childPage.htmlElement = this.renderView(childPage, viewParameters);
                             this.addEventsHandlers(childPage, childPage.htmlElement, viewParameters);
                             this.addHtmlElement(parent.htmlElement, childPage);
                             yield this.drawItems(childPage, viewParameters).then(() => __awaiter(this, void 0, void 0, function* () {
@@ -564,10 +545,10 @@ var BrowserModule;
                 //TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
                 for (var i = 0; i < parameters.length; i++) {
                     var surrogate = this.addSurrogate(pageName + "/" + page.name + "#" + i, page.name + "#" + i, page);
-                    yield this.resolveUnwindItem(surrogate, parameters[i]).then((viewParameter) => __awaiter(this, void 0, void 0, function* () {
-                        surrogate.htmlElement = page.view.render(viewParameter, this._browser.defaultResources);
-                        this.addEventsHandlers(surrogate, surrogate.htmlElement, viewParameter);
-                        yield this.drawItems(surrogate, viewParameter).then(() => __awaiter(this, void 0, void 0, function* () {
+                    yield this.resolveUnwindItem(surrogate, parameters[i]).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
+                        surrogate.htmlElement = this.renderView(page, viewParameters);
+                        this.addEventsHandlers(surrogate, surrogate.htmlElement, viewParameters);
+                        yield this.drawItems(surrogate, viewParameters).then(() => __awaiter(this, void 0, void 0, function* () {
                             this.addHtmlElement(parent.htmlElement, surrogate);
                         }), (ex) => {
                             if (ex) {
@@ -591,6 +572,7 @@ var BrowserModule;
                 action: page.action,
                 container: page.container,
                 view: page.view,
+                htmlview: page.htmlview,
                 controllers: page.controllers,
                 models: page.models,
                 parameters: page.parameters,
@@ -658,6 +640,42 @@ var BrowserModule;
                 resolve(result);
             }));
         }
+        renderView(page, viewParameters) {
+            /*if(!page.view.render) {
+                throw "an error occurred during render view: page method render missing";
+            }*/
+            if (page.htmlview) {
+                var html = this.resolveMarkup(page.htmlview, {
+                    data: viewParameters,
+                    parameters: page.parameters,
+                    resources: this._browser.defaultResources
+                });
+                return $(html);
+            }
+            return page.view.render(viewParameters, this._browser.defaultResources);
+        }
+        resolveMarkup(markup, context) {
+            try {
+                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/gm;
+                var match = markupRegex.exec(markup);
+                if (!match) {
+                    return markup;
+                }
+                var result = null;
+                var code = "(() => {" +
+                    "result = " + match[1] + ";" +
+                    "})()";
+                eval(code);
+                //var context = vm.createContext(sandbox);
+                //var script = new vm.Script(code);
+                //script.runInContext(context, {displayErrors: false});
+                return markup.replace(match[0], result);
+            }
+            catch (ex) {
+                console.error("resolve markup error: " + ex);
+                return markup;
+            }
+        }
         resolveUnwindItem(page, parameters) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 if (!page.controllers) {
@@ -716,9 +734,9 @@ var BrowserModule;
                                 }
                                 for (var p = 0; p < paths.length; p++) {
                                     var handlerPage = this._browser.pages[paths[p]];
-                                    if (handlerPage.view[handler]) {
+                                    /*if(handlerPage.view[handler]) {
                                         this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.view[handler], parameters);
-                                    }
+                                    }*/
                                     for (var c = 0; c < handlerPage.controllers.length; c++) {
                                         if (handlerPage.controllers[c][handler]) {
                                             this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);

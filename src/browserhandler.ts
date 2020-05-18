@@ -24,13 +24,7 @@ module BrowserModule {
 	
 					this.drawContainer(page, page.container, parameters).then((htmlContainerElement: any) => {
 						this.loadController(page, parameters).then((viewParameters: any) => {
-							if(!page.view.render) {
-                                console.error("an error occurred during render view: page method render missing");
-
-								return reject("an error occurred during render view: page method render missing");
-							}
-	
-							page.htmlElement = page.view.render(viewParameters, this._browser.defaultResources);
+							page.htmlElement = this.renderView(page, viewParameters);
 	
 							this.addEventsHandlers(page, page.htmlElement, viewParameters);
 							
@@ -97,15 +91,9 @@ module BrowserModule {
 
 				this.drawContainer(page, page.container, parameters).then((htmlContainerElement: any) => {
 					this.reloadController(page, parameters).then((viewParameters: any) => {
-						if(!page.view.render) {
-                            console.error("an error occurred during render view: page method render missing");
-                    
-                            return reject("an error occurred during render view: page method render missing");
-						}
-
 						var previousPageHtmlElement = page.htmlElement;
 
-						page.htmlElement = page.view.render(viewParameters, this._browser.defaultResources);
+						page.htmlElement = this.renderView(page, viewParameters);
 
 						this.addEventsHandlers(page, page.htmlElement, viewParameters);
 						
@@ -155,13 +143,7 @@ module BrowserModule {
 
 			return new Promise((resolve, reject) => {
 				this.loadController(body, parameters).then(async (viewParameters: any) => {
-					if(!body.view.render) {
-                        console.error("an error occurred during render view: page method render missing");
-
-                        return reject("an error occurred during render view: page method render missing");
-					}
-	
-					body.htmlElement = body.view.render(viewParameters, this._browser.defaultResources);
+					body.htmlElement = this.renderView(body, viewParameters);
 	
 					resolve(body.htmlElement);
 				}, (ex: any) => {
@@ -252,13 +234,7 @@ module BrowserModule {
 					}
 
 					this.loadController(parentPage, parameters).then(async (viewParameters: any) => {
-						if(!parentPage.view.render) {
-                            console.error("an error occurred during render view: page method render missing");
-
-					        return reject("an error occurred during render view: page method render missing");
-						}
-
-						parentPage.htmlElement = parentPage.view.render(viewParameters, this._browser.defaultResources);
+						parentPage.htmlElement = this.renderView(parentPage, viewParameters);
 
 						this.addEventsHandlers(parentPage, htmlContainerElement, viewParameters);
 						
@@ -293,13 +269,7 @@ module BrowserModule {
 						childPage.models = parent.models;
 					}
 
-					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {
-						if(!childPage.view.render) {
-                            console.error("draw children error: page method render missing");
-
-							return reject("draw children error: page method render missing");
-						}
-						
+					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {						
 						if(childPage.action == "unwind") {
 							await this.unwind(parent, childPageName, childPage, viewParameters).then(async () => {
 								
@@ -312,7 +282,7 @@ module BrowserModule {
 							});
 						}
 						else {
-							childPage.htmlElement = childPage.view.render(viewParameters, this._browser.defaultResources);
+							childPage.htmlElement = this.renderView(childPage, viewParameters);
 
 							this.addEventsHandlers(childPage, childPage.htmlElement, viewParameters);
 
@@ -354,12 +324,12 @@ module BrowserModule {
 				for(var i=0; i<parameters.length; i++) {
 					var surrogate = this.addSurrogate(pageName + "/" + page.name + "#" + i, page.name + "#" + i, page);
 
-					await this.resolveUnwindItem(surrogate, parameters[i]).then(async (viewParameter: any) => {
-						surrogate.htmlElement = page.view.render(viewParameter, this._browser.defaultResources);
+					await this.resolveUnwindItem(surrogate, parameters[i]).then(async (viewParameters: any) => {
+						surrogate.htmlElement = this.renderView(page, viewParameters);
 
-						this.addEventsHandlers(surrogate, surrogate.htmlElement, viewParameter);
+						this.addEventsHandlers(surrogate, surrogate.htmlElement, viewParameters);
 
-						await this.drawItems(surrogate, viewParameter).then(async () => {
+						await this.drawItems(surrogate, viewParameters).then(async () => {
 							this.addHtmlElement(parent.htmlElement, surrogate);
 						}, (ex) => {
 							if(ex) {
@@ -387,6 +357,7 @@ module BrowserModule {
 				action: page.action,
 				container: page.container,
 				view: page.view,
+				htmlview: page.htmlview,
 				controllers: page.controllers,
 				models: page.models,
 				parameters: page.parameters,
@@ -472,6 +443,56 @@ module BrowserModule {
 
 				resolve(result);
 			});
+		}
+		
+		renderView(page: any, viewParameters: any) {
+			/*if(!page.view.render) {
+				throw "an error occurred during render view: page method render missing";
+			}*/
+
+			if(page.htmlview) {
+				var html = this.resolveMarkup(page.htmlview, {
+					data: viewParameters,
+					parameters: page.parameters,
+					resources: this._browser.defaultResources
+				});
+
+				return $(html);
+			}
+
+			return page.view.render(viewParameters, this._browser.defaultResources);
+		}
+
+		resolveMarkup(markup: string, context: any) {
+            try {
+                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/gm;
+                    
+                var match = markupRegex.exec(markup);
+    
+                if(!match) {
+                    return markup;
+                }
+    
+                var result: any = null;
+                
+                var code = "(() => {" +
+                    "result = " + match[1] + ";" +
+				"})()";
+				
+				eval(code);
+                
+                //var context = vm.createContext(sandbox);
+                //var script = new vm.Script(code);
+            
+                //script.runInContext(context, {displayErrors: false});
+    
+                return markup.replace(match[0], result);
+            }
+            catch(ex) {
+                console.error("resolve markup error: " + ex);
+                
+                return markup;
+            }
         }
         
 		resolveUnwindItem(page: any, parameters: any) {
@@ -549,9 +570,9 @@ module BrowserModule {
 								for(var p=0; p<paths.length; p++) {
 									var handlerPage = this._browser.pages[paths[p]];
 									
-									if(handlerPage.view[handler]) {
+									/*if(handlerPage.view[handler]) {
 										this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.view[handler], parameters);
-									}
+									}*/
 
 									for(var c=0; c<handlerPage.controllers.length; c++) {
 										if(handlerPage.controllers[c][handler]) {

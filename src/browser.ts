@@ -55,7 +55,7 @@ module BrowserModule {
                 });
             }
             catch(ex) {
-                console.error("an error occurred during init browser");
+                console.error("an error occurred during init browser: " + ex);
             }
         }
 
@@ -209,16 +209,17 @@ module BrowserModule {
         }
 
         addPage(action: string, pageName: string, pagePath: string, container: string, view: string, htmlview: string, controllers: any[], models: any, replace: any[], append: any[], unwind: any[], key: string, events: string[], parameters: any) {
-			if(typeof view != "string") {
+			/*if(typeof view != "string") {
 				throw "view must be a string";
-			}
+			}*/
 
 			if(htmlview) {
-				//TODO: vedi https://github.com/requirejs/text per il plugin text...
 				this._instances.push("text!" + htmlview);
 			}
 
-			this._instances.push(view);
+            if(view) {
+                this._instances.push(view);
+            }
 
 			if(controllers) {
 				for(var i=0; i<controllers.length; i++) {
