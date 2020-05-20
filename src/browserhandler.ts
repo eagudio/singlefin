@@ -460,33 +460,36 @@ module BrowserModule {
 				return $(html);
 			}
 
+			if(!page.view) {
+				return "";
+			}
+
 			return page.view.render(viewParameters, this._browser.defaultResources);
 		}
 
 		resolveMarkup(markup: string, context: any) {
             try {
-                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/gm;
-                    
-                var match = markupRegex.exec(markup);
-    
-                if(!match) {
-                    return markup;
-                }
-    
-                var result: any = null;
-                
-                var code = "(() => {" +
-                    "result = " + match[1] + ";" +
-				"})()";
+                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/m;
 				
-				eval(code);
+				var str = markup;
+
+				var match = markupRegex.exec(str);
+				
+				while(match) {
+					var result: any = null;
                 
-                //var context = vm.createContext(sandbox);
-                //var script = new vm.Script(code);
-            
-                //script.runInContext(context, {displayErrors: false});
-    
-                return markup.replace(match[0], result);
+					var code = "(() => {" +
+						"result = " + match[1] + ";" +
+					"})()";
+					
+					eval(code);
+
+					str = str.replace(match[0], result);
+
+					match = markupRegex.exec(str);
+				}
+
+				return str;
             }
             catch(ex) {
                 console.error("resolve markup error: " + ex);
@@ -639,8 +642,6 @@ module BrowserModule {
 			return new Promise((resolve, reject) => {
 				this.closeItems(page).then(() => {
 					this.closeController(page).then(() => {
-						this.closeView(page);
-
 						resolve();
 					}, (ex: any) => {
                         console.error("close error");
@@ -653,12 +654,6 @@ module BrowserModule {
 					reject("close error");
 				});
 			});
-        }
-        
-		closeView(page: any) {
-			if(page.view.close) {
-				page.view.close(page.htmlElement);
-			}
         }
         
 		closeController(page: any) {
@@ -745,7 +740,6 @@ module BrowserModule {
 
 					await this.closeItems(page).then(async () => {
 						this.closeController(page).then(() => {
-							this.closeView(page);
 						}, (ex) => {
 							console.error("close children error");
 						});

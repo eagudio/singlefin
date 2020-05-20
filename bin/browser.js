@@ -652,24 +652,26 @@ var BrowserModule;
                 });
                 return $(html);
             }
+            if (!page.view) {
+                return "";
+            }
             return page.view.render(viewParameters, this._browser.defaultResources);
         }
         resolveMarkup(markup, context) {
             try {
-                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/gm;
-                var match = markupRegex.exec(markup);
-                if (!match) {
-                    return markup;
+                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/m;
+                var str = markup;
+                var match = markupRegex.exec(str);
+                while (match) {
+                    var result = null;
+                    var code = "(() => {" +
+                        "result = " + match[1] + ";" +
+                        "})()";
+                    eval(code);
+                    str = str.replace(match[0], result);
+                    match = markupRegex.exec(str);
                 }
-                var result = null;
-                var code = "(() => {" +
-                    "result = " + match[1] + ";" +
-                    "})()";
-                eval(code);
-                //var context = vm.createContext(sandbox);
-                //var script = new vm.Script(code);
-                //script.runInContext(context, {displayErrors: false});
-                return markup.replace(match[0], result);
+                return str;
             }
             catch (ex) {
                 console.error("resolve markup error: " + ex);
@@ -789,7 +791,6 @@ var BrowserModule;
             return new Promise((resolve, reject) => {
                 this.closeItems(page).then(() => {
                     this.closeController(page).then(() => {
-                        this.closeView(page);
                         resolve();
                     }, (ex) => {
                         console.error("close error");
@@ -800,11 +801,6 @@ var BrowserModule;
                     reject("close error");
                 });
             });
-        }
-        closeView(page) {
-            if (page.view.close) {
-                page.view.close(page.htmlElement);
-            }
         }
         closeController(page) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -875,7 +871,6 @@ var BrowserModule;
                     }
                     yield this.closeItems(page).then(() => __awaiter(this, void 0, void 0, function* () {
                         this.closeController(page).then(() => {
-                            this.closeView(page);
                         }, (ex) => {
                             console.error("close children error");
                         });
