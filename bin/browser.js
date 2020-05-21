@@ -19,13 +19,7 @@ var BrowserModule;
             this._pages = {
                 __body: {
                     container: "__body",
-                    view: {
-                        render: (parameters) => {
-                            return new Promise((resolve, reject) => {
-                                resolve($("body"));
-                            });
-                        }
-                    },
+                    view: null,
                     controllers: [],
                     models: {},
                     events: [],
@@ -122,9 +116,6 @@ var BrowserModule;
                         page: handlerPage
                     }
                 };
-                if (handlerPage.view[event]) {
-                    handlerPage.view[event](eventObject);
-                }
                 if (handlerPage.controller && handlerPage.controller[event]) {
                     handlerPage.controller[event](eventObject);
                 }
@@ -173,15 +164,9 @@ var BrowserModule;
         get handlers() {
             return this._handlers;
         }
-        addPage(action, pageName, pagePath, container, view, htmlview, controllers, models, replace, append, unwind, key, events, parameters) {
-            /*if(typeof view != "string") {
-                throw "view must be a string";
-            }*/
-            if (htmlview) {
-                this._instances.push("text!" + htmlview);
-            }
+        addPage(action, pageName, pagePath, container, view, controllers, models, replace, append, unwind, key, events, parameters) {
             if (view) {
-                this._instances.push(view);
+                this._instances.push("text!" + view);
             }
             if (controllers) {
                 for (var i = 0; i < controllers.length; i++) {
@@ -198,8 +183,7 @@ var BrowserModule;
                 name: pageName,
                 action: action,
                 container: container,
-                view: view,
-                htmlview: htmlview ? "text!" + htmlview : undefined,
+                view: view ? "text!" + view : undefined,
                 controllers: controllers,
                 models: models,
                 replace: replace,
@@ -222,11 +206,8 @@ var BrowserModule;
                             this._resources[key] = loader.getInstance(this._resources[key]);
                         }
                         for (var key in this._pages) {
-                            if (typeof this._pages[key].view == "string") {
+                            if (this._pages[key].view) {
                                 this._pages[key].view = loader.getInstance(this._pages[key].view);
-                            }
-                            if (typeof this._pages[key].htmlview == "string") {
-                                this._pages[key].htmlview = loader.getInstance(this._pages[key].htmlview);
                             }
                             var controllers = [];
                             if (this._pages[key].controllers && Array.isArray(this._pages[key].controllers)) {
@@ -572,7 +553,6 @@ var BrowserModule;
                 action: page.action,
                 container: page.container,
                 view: page.view,
-                htmlview: page.htmlview,
                 controllers: page.controllers,
                 models: page.models,
                 parameters: page.parameters,
@@ -641,21 +621,15 @@ var BrowserModule;
             }));
         }
         renderView(page, viewParameters) {
-            /*if(!page.view.render) {
-                throw "an error occurred during render view: page method render missing";
-            }*/
-            if (page.htmlview) {
-                var html = this.resolveMarkup(page.htmlview, {
+            if (page.view) {
+                var html = this.resolveMarkup(page.view, {
                     data: viewParameters,
                     parameters: page.parameters,
                     resources: this._browser.defaultResources
                 });
                 return $(html);
             }
-            if (!page.view) {
-                return "";
-            }
-            return page.view.render(viewParameters, this._browser.defaultResources);
+            return $();
         }
         resolveMarkup(markup, context) {
             try {
@@ -736,9 +710,6 @@ var BrowserModule;
                                 }
                                 for (var p = 0; p < paths.length; p++) {
                                     var handlerPage = this._browser.pages[paths[p]];
-                                    /*if(handlerPage.view[handler]) {
-                                        this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.view[handler], parameters);
-                                    }*/
                                     for (var c = 0; c < handlerPage.controllers.length; c++) {
                                         if (handlerPage.controllers[c][handler]) {
                                             this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
@@ -902,8 +873,8 @@ var BrowserModule;
             var body = schema.body;
             if (body.view) {
                 browser.pages.__body.htmlElement = null;
-                browser.pages.__body.view = body.view;
-                browser.instances.push(body.view);
+                browser.pages.__body.view = "text!" + body.view;
+                browser.instances.push(browser.pages.__body.view);
             }
             if (body.controllers && Array.isArray(body.controllers)) {
                 browser.pages.__body.controllers = body.controllers;
@@ -957,7 +928,7 @@ var BrowserModule;
                 var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
                 var appendChildren = this.processChildrenSchema(pagePath, page.append);
                 var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
-                browser.addPage(action, pageName, pagePath, containerName, page.view, page.htmlview, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
+                browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
                 this.processSchema("replace", pagePath, page.replace, browser);
                 this.processSchema("append", pagePath, page.append, browser);
                 this.processSchema("unwind", pagePath, page.unwind, browser);

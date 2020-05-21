@@ -1,3 +1,19 @@
+/*!
+ * Browser JavaScript Library v0.0.1
+ * https://github.com/eagudio/browser
+ *
+ * Includes jquery.js
+ * http://jquery.com/
+ * 
+ * Includes require.js
+ * http://requirejs.com/
+ *
+ * Released under the MIT license
+ * https://github.com/eagudio/browser/blob/master/LICENSE
+ *
+ * Date: 2020-05-21T15:59Z
+ */
+
 module BrowserModule {
     export class Browser {
         private _home: string = "__body";
@@ -7,13 +23,7 @@ module BrowserModule {
         private _pages: any = {
             __body: {
                 container: "__body",
-                view: {
-                    render: (parameters: any) => {
-                        return new Promise((resolve, reject) => {
-                            resolve($("body"));
-                        });
-                    }
-                },
+                view: null,
                 controllers: [],
                 models: {},
                 events: [],
@@ -137,10 +147,6 @@ module BrowserModule {
                         page: handlerPage
                     }
                 };
-                
-                if(handlerPage.view[event]) {
-                    handlerPage.view[event](eventObject);
-                }
     
                 if(handlerPage.controller && handlerPage.controller[event]) {
                     handlerPage.controller[event](eventObject);
@@ -208,18 +214,10 @@ module BrowserModule {
             return this._handlers;
         }
 
-        addPage(action: string, pageName: string, pagePath: string, container: string, view: string, htmlview: string, controllers: any[], models: any, replace: any[], append: any[], unwind: any[], key: string, events: string[], parameters: any) {
-			/*if(typeof view != "string") {
-				throw "view must be a string";
-			}*/
-
-			if(htmlview) {
-				this._instances.push("text!" + htmlview);
+        addPage(action: string, pageName: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], unwind: any[], key: string, events: string[], parameters: any) {
+			if(view) {
+				this._instances.push("text!" + view);
 			}
-
-            if(view) {
-                this._instances.push(view);
-            }
 
 			if(controllers) {
 				for(var i=0; i<controllers.length; i++) {
@@ -237,8 +235,7 @@ module BrowserModule {
 				name: pageName,
 				action: action,
 				container: container,
-				view: view,
-				htmlview: htmlview ? "text!" + htmlview : undefined,
+				view: view ? "text!" + view : undefined,
 				controllers: controllers,
 				models: models,
 				replace: replace,
@@ -247,7 +244,7 @@ module BrowserModule {
 				key: key,
 				events: events,
 				parameters: parameters
-			};
+            };
         }
         
         private loadInstances() {
@@ -265,12 +262,8 @@ module BrowserModule {
                         }
 
                         for (var key in this._pages) {
-                            if(typeof this._pages[key].view == "string") {
+                            if(this._pages[key].view) {
                                 this._pages[key].view = loader.getInstance(this._pages[key].view);
-                            }
-
-                            if(typeof this._pages[key].htmlview == "string") {
-                                this._pages[key].htmlview = loader.getInstance(this._pages[key].htmlview);
                             }
 
                             var controllers: any[] = [];

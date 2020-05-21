@@ -23,9 +23,9 @@ module BrowserModule {
 
 			if(body.view) {
 				browser.pages.__body.htmlElement = null;
-				browser.pages.__body.view = body.view;
+				browser.pages.__body.view = "text!" + body.view;
 
-				browser.instances.push(body.view);
+				browser.instances.push(browser.pages.__body.view);
 			}
 
 			if(body.controllers && Array.isArray(body.controllers)) {
@@ -98,7 +98,7 @@ module BrowserModule {
 				var appendChildren = this.processChildrenSchema(pagePath, page.append);
 				var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
 
-				browser.addPage(action, pageName, pagePath, containerName, page.view, page.htmlview, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
+				browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
 
 				this.processSchema("replace", pagePath, page.replace, browser);
 				this.processSchema("append", pagePath, page.append, browser);

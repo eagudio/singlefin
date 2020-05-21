@@ -357,7 +357,6 @@ module BrowserModule {
 				action: page.action,
 				container: page.container,
 				view: page.view,
-				htmlview: page.htmlview,
 				controllers: page.controllers,
 				models: page.models,
 				parameters: page.parameters,
@@ -446,12 +445,8 @@ module BrowserModule {
 		}
 		
 		renderView(page: any, viewParameters: any) {
-			/*if(!page.view.render) {
-				throw "an error occurred during render view: page method render missing";
-			}*/
-
-			if(page.htmlview) {
-				var html = this.resolveMarkup(page.htmlview, {
+			if(page.view) {
+				var html = this.resolveMarkup(page.view, {
 					data: viewParameters,
 					parameters: page.parameters,
 					resources: this._browser.defaultResources
@@ -460,11 +455,7 @@ module BrowserModule {
 				return $(html);
 			}
 
-			if(!page.view) {
-				return "";
-			}
-
-			return page.view.render(viewParameters, this._browser.defaultResources);
+			return $();
 		}
 
 		resolveMarkup(markup: string, context: any) {
@@ -572,10 +563,6 @@ module BrowserModule {
 
 								for(var p=0; p<paths.length; p++) {
 									var handlerPage = this._browser.pages[paths[p]];
-									
-									/*if(handlerPage.view[handler]) {
-										this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.view[handler], parameters);
-									}*/
 
 									for(var c=0; c<handlerPage.controllers.length; c++) {
 										if(handlerPage.controllers[c][handler]) {
