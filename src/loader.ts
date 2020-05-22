@@ -8,7 +8,9 @@ module BrowserModule {
                 require(paths, function() {
                     resolve();
                 }, function (error: any) {
-                    reject(error);
+                    console.error("load module error: " + error);
+
+                    reject("load module error: " + error);
                 });
             });
         }

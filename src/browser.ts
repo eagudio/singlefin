@@ -292,14 +292,14 @@ module BrowserModule {
                         resolve();
                     }
                     catch(ex) {
-                        console.error("load instances error");
+                        console.error("load instances error: " + ex);
                         
-                        reject(ex);
+                        reject("load instances error: " + ex);
                     }
                 }, (error) => {
                     console.error("load instances error");
 
-                    reject(error);
+                    reject("load instances error");
                 });
 			});
         }

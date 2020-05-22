@@ -8,6 +8,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+/*!
+ * Browser JavaScript Library v0.0.1
+ * https://github.com/eagudio/browser
+ *
+ * Includes jquery.js
+ * http://jquery.com/
+ *
+ * Includes require.js
+ * http://requirejs.com/
+ *
+ * Released under the MIT license
+ * https://github.com/eagudio/browser/blob/master/LICENSE
+ *
+ * Date: 2020-05-21T15:59Z
+ */
 var BrowserModule;
 (function (BrowserModule) {
     class Browser {
@@ -228,12 +243,12 @@ var BrowserModule;
                         resolve();
                     }
                     catch (ex) {
-                        console.error("load instances error");
-                        reject(ex);
+                        console.error("load instances error: " + ex);
+                        reject("load instances error: " + ex);
                     }
                 }, (error) => {
                     console.error("load instances error");
-                    reject(error);
+                    reject("load instances error");
                 });
             }));
         }
@@ -957,7 +972,8 @@ var BrowserModule;
                 require(paths, function () {
                     resolve();
                 }, function (error) {
-                    reject(error);
+                    console.error("load module error: " + error);
+                    reject("load module error: " + error);
                 });
             });
         }
