@@ -194,10 +194,13 @@ var BrowserModule;
                     this._instances.push(models[modelKey]);
                 }
             }
+            var bodyRegexp = new RegExp("^(" + this.body + "/)");
+            var pathContainer = container.replace(bodyRegexp, "");
             this._pages[pagePath] = {
                 name: pageName,
                 action: action,
                 container: container,
+                path: pathContainer + "/" + pageName,
                 view: view ? "text!" + view : undefined,
                 controllers: controllers,
                 models: models,
@@ -563,9 +566,12 @@ var BrowserModule;
             }));
         }
         addSurrogate(path, name, page) {
+            var bodyRegexp = new RegExp("^(" + this._browser.body + "/)");
+            var container = page.container.replace(bodyRegexp, "");
             var surrogate = {
                 name: name,
                 action: page.action,
+                path: container + "/" + name,
                 container: page.container,
                 view: page.view,
                 controllers: page.controllers,

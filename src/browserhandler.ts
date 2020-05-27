@@ -352,9 +352,13 @@ module BrowserModule {
         }
 
         addSurrogate(path: string, name: string, page: any) {
+			var bodyRegexp = new RegExp("^(" + this._browser.body + "/)");
+			var container = page.container.replace(bodyRegexp, "");
+			
 			var surrogate = {
 				name: name,
 				action: page.action,
+				path: container + "/" + name,
 				container: page.container,
 				view: page.view,
 				controllers: page.controllers,

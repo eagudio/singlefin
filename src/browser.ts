@@ -230,11 +230,15 @@ module BrowserModule {
 					this._instances.push(models[modelKey]);
 				}
 			}
-			
+            
+            var bodyRegexp = new RegExp("^(" + this.body + "/)");
+			var pathContainer = container.replace(bodyRegexp, "");
+
 			this._pages[pagePath] = {
 				name: pageName,
 				action: action,
-				container: container,
+                container: container,
+                path: pathContainer + "/" + pageName,
 				view: view ? "text!" + view : undefined,
 				controllers: controllers,
 				models: models,
