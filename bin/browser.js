@@ -309,6 +309,7 @@ var BrowserModule;
                             this.addEventsHandlers(page, page.htmlElement, viewParameters);
                             this.drawItems(page, viewParameters).then(() => {
                                 this.addHtmlElement(htmlContainerElement, page);
+                                this.showPage(page, viewParameters);
                                 resolve(page.htmlElement);
                             }, (ex) => {
                                 if (ex) {
@@ -651,6 +652,27 @@ var BrowserModule;
                 return $(html);
             }
             return $();
+        }
+        showPage(page, parameters) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                if (!page.controllers) {
+                    return resolve(parameters);
+                }
+                var result = parameters;
+                for (var i = 0; i < page.controllers.length; i++) {
+                    if (page.controllers[i].show) {
+                        yield page.controllers[i].show(page, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                            result = _result;
+                        }), (ex) => {
+                            if (ex) {
+                                console.error("show page error: " + ex);
+                            }
+                            reject(ex);
+                        });
+                    }
+                }
+                resolve(result);
+            }));
         }
         resolveMarkup(markup, context) {
             try {

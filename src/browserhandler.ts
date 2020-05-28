@@ -30,6 +30,8 @@ module BrowserModule {
 							
 							this.drawItems(page, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, page);
+
+								this.showPage(page, viewParameters);
 	
 								resolve(page.htmlElement);
 							}, (ex: any) => {
@@ -460,6 +462,33 @@ module BrowserModule {
 			}
 
 			return $();
+		}
+
+		showPage(page: any, parameters: any) {
+			return new Promise(async (resolve, reject) => {
+			
+				if(!page.controllers) {
+					return resolve(parameters);
+				}
+
+				var result = parameters;
+                
+				for(var i=0; i<page.controllers.length; i++) {
+					if(page.controllers[i].show) {
+						await page.controllers[i].show(page, result).then(async (_result: any) => {
+							result = _result;
+						}, (ex: any) => {
+							if(ex) {
+								console.error("show page error: " + ex);
+							}
+							
+							reject(ex);
+						});
+					}
+				}
+
+				resolve(result);
+			});
 		}
 
 		resolveMarkup(markup: string, context: any) {
