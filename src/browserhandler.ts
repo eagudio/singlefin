@@ -493,7 +493,7 @@ module BrowserModule {
 
 		resolveMarkup(markup: string, context: any) {
             try {
-                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?"'(){}\/\s]{1,})[%][>]/m;
+                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?|&"'(){}\/\s]{1,})[%][>]/m;
 				
 				var str = markup;
 
@@ -552,7 +552,8 @@ module BrowserModule {
 			var browserTag = container.find("browser[" + pageName +"]");
 			
 			if(browserTag.length > 0) {
-				browserTag.parent().append(page.htmlElement);
+				//browserTag.parent().append(page.htmlElement);
+				browserTag.before(page.htmlElement);
 
 				return;
 			}
@@ -658,10 +659,10 @@ module BrowserModule {
 			});
         }
         
-		close(page: any) {
+		close(page: any, parameters: any) {
 			return new Promise((resolve, reject) => {
-				this.closeItems(page).then(() => {
-					this.closeController(page).then(() => {
+				this.closeItems(page, parameters).then(() => {
+					this.closeController(page, parameters).then(() => {
 						resolve();
 					}, (ex: any) => {
                         console.error("close error");
@@ -676,16 +677,18 @@ module BrowserModule {
 			});
         }
         
-		closeController(page: any) {
+		closeController(page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 				if(!page.controllers) {
-					return resolve();
+					return resolve(parameters);
 				}
+
+				var result = parameters;
 
 				for(var i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].close) {
-						await page.controllers[i].close().then(() => {
-
+						await page.controllers[i].close(page).then((_result: any) => {
+							result = _result;
 						}, (ex: any) => {
                             console.error("close controller error: " + ex);
                             
@@ -694,15 +697,15 @@ module BrowserModule {
 					}
 				}
 
-				return resolve();
+				resolve(result);
 			});
         }
         
-		closeItems(page: any) {
+		closeItems(page: any, parameters: any) {
 			return new Promise((resolve, reject) => {
-				this.closeChildren(page.replace).then(() => {
-					this.closeChildren(page.append).then(() => {
-						this.closeChildren(page.unwind).then(() => {
+				this.closeChildren(page.replace, parameters).then(() => {
+					this.closeChildren(page.append, parameters).then(() => {
+						this.closeChildren(page.unwind, parameters).then(() => {
 							resolve();
 						}, (ex) => {
 							if(ex) {
@@ -737,7 +740,7 @@ module BrowserModule {
 			});
         }
         
-		closeChildren(children: any) {
+		closeChildren(children: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 				if(!children) {
 					return resolve();
@@ -758,8 +761,8 @@ module BrowserModule {
 						}
 					}
 
-					await this.closeItems(page).then(async () => {
-						this.closeController(page).then(() => {
+					await this.closeItems(page, parameters).then(async () => {
+						this.closeController(page, parameters).then(() => {
 						}, (ex) => {
 							console.error("close children error");
 						});

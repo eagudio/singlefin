@@ -101,7 +101,7 @@ module BrowserModule {
             });
         }
         
-        close (pageName: string) {
+        close (pageName: string, parameters: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var page = this.pages[_pageName];
@@ -118,7 +118,7 @@ module BrowserModule {
 
                 var browserHandler = new BrowserHandler(this);
                 
-                browserHandler.close(page).then(() => {
+                browserHandler.close(page, parameters).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during close page '" + pageName + "'");
