@@ -115,7 +115,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.redraw(page, parameters).then(() => {
+                browserHandler.draw(page, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -124,8 +124,48 @@ module BrowserModule {
                 });
             });
         }
+
+        nextGroupStep(pageName: string, parameters: any) {
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+
+                var browserHandler = new BrowserHandler(this);
+
+                if(_pageName == this.body) {
+					return resolve(this._pages[_pageName]);
+				}
+				
+				var page = this.pages[_pageName];
+	
+				if(!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    
+                    return resolve();
+				}
+
+                browserHandler.nextStep(page, parameters).then(() => {
+                    resolve(page);
+                }, (error: any) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+    
+                    resolve();
+                });
+            });
+        }
+
+        previousGroupStep(pageName: string, parameters: any) {
+            //TODO: open previous group step...
+        }
+
+        openGroupStep() {
+            //TODO: open group step from index...
+        }
+
+        resetGroup() {
+            //TODO: reset group index...
+        }
         
-        close (pageName: string, parameters: any) {
+        close(pageName: string, parameters: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var page = this.pages[_pageName];

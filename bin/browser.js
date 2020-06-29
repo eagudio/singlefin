@@ -103,13 +103,42 @@ var BrowserModule;
                     console.error("an error occurred during refresh page '" + pageName + "': page not found");
                     return resolve();
                 }
-                browserHandler.redraw(page, parameters).then(() => {
+                browserHandler.draw(page, parameters).then(() => {
                     resolve(page);
                 }, (error) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
                     resolve();
                 });
             });
+        }
+        nextGroupStep(pageName, parameters) {
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+                var browserHandler = new BrowserModule.BrowserHandler(this);
+                if (_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    return resolve();
+                }
+                browserHandler.nextStep(page, parameters).then(() => {
+                    resolve(page);
+                }, (error) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    resolve();
+                });
+            });
+        }
+        previousGroupStep(pageName, parameters) {
+            //TODO: open previous group step...
+        }
+        openGroupStep() {
+            //TODO: open group step from index...
+        }
+        resetGroup() {
+            //TODO: reset group index...
         }
         close(pageName, parameters) {
             return new Promise((resolve) => {
@@ -382,6 +411,10 @@ var BrowserModule;
                 });
             });
         }
+        nextStep(page, parameters) {
+            page.groupIndex = page.groupIndex + 1;
+            return this.redraw(page, parameters);
+        }
         drawBody(parameters) {
             var body = this._browser.pages[this._browser.body];
             if (body.htmlElement) {
@@ -479,6 +512,11 @@ var BrowserModule;
                     var childPage = this._browser.pages[childPageName];
                     if (!childPage.models) {
                         childPage.models = parent.models;
+                    }
+                    if (childPage.action == "group") {
+                        if (parent.groupIndex != i) {
+                            continue;
+                        }
                     }
                     yield this.loadController(childPage, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         if (childPage.action == "unwind") {
@@ -1000,6 +1038,7 @@ var BrowserModule;
 (function (BrowserModule) {
     class Page {
         constructor(name, action, container, path, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
+            this._groupIndex = 0;
             this._name = name;
             this._action = action;
             this._container = container;
@@ -1104,6 +1143,12 @@ var BrowserModule;
         }
         set htmlElement(value) {
             this._htmlElement = value;
+        }
+        get groupIndex() {
+            return this._groupIndex;
+        }
+        set groupIndex(value) {
+            this._groupIndex = value;
         }
     }
     BrowserModule.Page = Page;

@@ -110,7 +110,13 @@ module BrowserModule {
 					}
 				});
 			});
-        }
+		}
+		
+		nextStep(page: Page, parameters: any) {
+			page.groupIndex = page.groupIndex + 1;
+
+			return this.redraw(page, parameters);
+		}
         
 		drawBody(parameters: any) {
 			var body = this._browser.pages[this._browser.body];
@@ -238,7 +244,13 @@ module BrowserModule {
 						childPage.models = parent.models;
 					}
 
-					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {						
+					if(childPage.action == "group") {
+						if(parent.groupIndex != i) {
+							continue;
+						}
+					}
+
+					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {
 						if(childPage.action == "unwind") {
 							await this.unwind(parent, childPageName, childPage, viewParameters).then(async () => {
 								
@@ -318,7 +330,7 @@ module BrowserModule {
 
 				resolve();
 			});
-        }
+		}
 
         addSurrogate(path: string, name: string, page: any) {
 			var bodyRegexp = new RegExp("^(" + this._browser.body + "/)");

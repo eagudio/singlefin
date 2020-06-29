@@ -16,6 +16,8 @@ module BrowserModule {
         private _events: string[];
         private _parameters: any;
         private _htmlElement: any;
+
+        private _groupIndex: number = 0;
         
 
         constructor(name: string, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
@@ -150,9 +152,17 @@ module BrowserModule {
         public get htmlElement(): any {
             return this._htmlElement;
         }
-        
+
         public set htmlElement(value: any) {
             this._htmlElement = value;
+        }
+
+        public get groupIndex(): number {
+            return this._groupIndex;
+        }
+        
+        public set groupIndex(value: number) {
+            this._groupIndex = value;
         }
     }
 }
