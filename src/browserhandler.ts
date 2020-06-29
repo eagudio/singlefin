@@ -7,21 +7,9 @@ module BrowserModule {
             this._browser = _browser;
         }
 
-        draw(pageName: string, parameters: any) {
+		draw(page: Page, parameters: any) {
 			return new Promise((resolve, reject) => {
 				this.drawBody(parameters).then(() => {
-					if(pageName == this._browser.body) {
-						return resolve(this._browser.pages.__body.htmlElement);
-					}
-					
-					var page = this._browser.pages[pageName];
-		
-					if(!page) {
-                        console.error("page not found");
-                        
-                        return reject("page not found");
-					}
-	
 					this.drawContainer(page, page.container, parameters).then((htmlContainerElement: any) => {
 						this.loadController(page, parameters).then((viewParameters: any) => {
 							page.htmlElement = this.renderView(page, viewParameters);
@@ -77,20 +65,8 @@ module BrowserModule {
 			});
         }
         
-        redraw(pageName: string, parameters: any) {
+        redraw(page: Page, parameters: any) {
 			return new Promise((resolve, reject) => {
-				if(pageName == this._browser.body) {
-					return resolve(this._browser.pages.__body.htmlElement);
-				}
-				
-				var page = this._browser.pages[pageName];
-	
-				if(!page) {
-                    console.error("page not found");
-                    
-                    return reject("page not found");
-				}
-
 				this.drawContainer(page, page.container, parameters).then((htmlContainerElement: any) => {
 					this.reloadController(page, parameters).then((viewParameters: any) => {
 						var previousPageHtmlElement = page.htmlElement;
@@ -180,38 +156,29 @@ module BrowserModule {
 		drawItems(parentPage: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 				this.drawChildren(parentPage, parentPage.replace, parameters).then(() => {
-					this.drawChildren(parentPage, parentPage.append, parameters).then(() => {
-						this.drawChildren(parentPage, parentPage.unwind, parameters).then(() => {
-							resolve();
-						}, (ex: any) => {
-							if(ex) {
-                                console.error("draw items error");
+					return this.drawChildren(parentPage, parentPage.append, parameters);
+				}, () => {
+					console.error("replace items error");
 
-								reject("draw items error");
-							}
-							else {
-								resolve();
-							}
-						});
-					}, (ex: any) => {
-						if(ex) {
-							console.error("draw items error");
+					reject("replace items error");
+				}).then(() => {
+					return this.drawChildren(parentPage, parentPage.group, parameters);
+				}, () => {
+					console.error("append items error");
 
-							reject("draw items error");
-						}
-						else {
-							resolve();
-						}
-					});
-				}, (ex: any) => {
-					if(ex) {
-						console.error("draw items error");
+					reject("append items error");
+				}).then(() => {
+					return this.drawChildren(parentPage, parentPage.unwind, parameters);
+				}, () => {
+					console.error("group items error");
 
-						reject("draw items error");
-					}
-					else {
-						resolve();
-					}
+					reject("group items error");
+				}).then(() => {
+					resolve();
+				}, () => {
+					console.error("unwind items error");
+
+					reject("unwind items error");
 				});
 			});
         }
@@ -564,6 +531,9 @@ module BrowserModule {
 			else if(page.action == "append") {
 				container.append(page.htmlElement);
 			}
+			else if(page.action == "group") {
+				container.html(page.htmlElement);
+			}
 			else if(page.action == "unwind") {
 				container.append(page.htmlElement);
 			}
@@ -659,7 +629,7 @@ module BrowserModule {
 			});
         }
         
-		close(page: any, parameters: any) {
+		close(page: Page, parameters: any) {
 			return new Promise((resolve, reject) => {
 				this.closeItems(page, parameters).then(() => {
 					this.closeController(page, parameters).then(() => {

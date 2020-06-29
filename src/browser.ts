@@ -74,9 +74,21 @@ module BrowserModule {
                 var _pageName = this._body + "/" + pageName;
 
                 var browserHandler = new BrowserHandler(this);
-            
-                browserHandler.draw(_pageName, parameters).then(() => {
-                    resolve(this._pages[_pageName]);
+
+                if(_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                
+                var page = this.pages[_pageName];
+    
+                if(!page) {
+                    console.error("an error occurred during open page '" + pageName + "': page not found");
+                    
+                    return resolve();
+                }
+
+                browserHandler.draw(page, parameters).then(() => {
+                    resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during open page '" + pageName + "'");
     
@@ -90,9 +102,21 @@ module BrowserModule {
                 var _pageName = this._body + "/" + pageName;
 
                 var browserHandler = new BrowserHandler(this);
-            
-                browserHandler.redraw(_pageName, parameters).then(() => {
-                    resolve(this.pages[_pageName]);
+
+                if(_pageName == this.body) {
+					return resolve(this._pages[_pageName]);
+				}
+				
+				var page = this.pages[_pageName];
+	
+				if(!page) {
+                    console.error("an error occurred during refresh page '" + pageName + "': page not found");
+                    
+                    return resolve();
+				}
+
+                browserHandler.redraw(page, parameters).then(() => {
+                    resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
     
@@ -214,7 +238,7 @@ module BrowserModule {
             return this._handlers;
         }
 
-        addPage(action: string, pageName: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], unwind: any[], key: string, events: string[], parameters: any) {
+        addPage(action: string, pageName: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -234,21 +258,7 @@ module BrowserModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
-			this._pages[pagePath] = {
-				name: pageName,
-				action: action,
-                container: container,
-                path: pathContainer + "/" + pageName,
-				view: view ? "text!" + view : undefined,
-				controllers: controllers,
-				models: models,
-				replace: replace,
-				append: append,
-				unwind: unwind,
-				key: key,
-				events: events,
-				parameters: parameters
-            };
+            this._pages[pagePath] = new Page(pageName, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
         }
         
         private loadInstances() {

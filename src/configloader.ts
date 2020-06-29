@@ -50,6 +50,7 @@ module BrowserModule {
 			
 			this.processSchema("append", browser.body, body.append, browser);
 			this.processSchema("replace", browser.body, body.replace, browser);
+			this.processSchema("group", browser.body, body.group, browser);
 			this.processSchema("unwind", browser.body, body.unwind, browser);
 		}
 
@@ -96,12 +97,14 @@ module BrowserModule {
 
 				var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
 				var appendChildren = this.processChildrenSchema(pagePath, page.append);
+				var groupChildren = this.processChildrenSchema(pagePath, page.group);
 				var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
 
-				browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
+				browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
 
 				this.processSchema("replace", pagePath, page.replace, browser);
 				this.processSchema("append", pagePath, page.append, browser);
+				this.processSchema("group", pagePath, page.group, browser);
 				this.processSchema("unwind", pagePath, page.unwind, browser);
 
 				this.addHandlers(pagePath, browser);

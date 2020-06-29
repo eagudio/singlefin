@@ -75,8 +75,16 @@ var BrowserModule;
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var browserHandler = new BrowserModule.BrowserHandler(this);
-                browserHandler.draw(_pageName, parameters).then(() => {
-                    resolve(this._pages[_pageName]);
+                if (_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during open page '" + pageName + "': page not found");
+                    return resolve();
+                }
+                browserHandler.draw(page, parameters).then(() => {
+                    resolve(page);
                 }, (error) => {
                     console.error("an error occurred during open page '" + pageName + "'");
                     resolve();
@@ -87,8 +95,16 @@ var BrowserModule;
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var browserHandler = new BrowserModule.BrowserHandler(this);
-                browserHandler.redraw(_pageName, parameters).then(() => {
-                    resolve(this.pages[_pageName]);
+                if (_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during refresh page '" + pageName + "': page not found");
+                    return resolve();
+                }
+                browserHandler.redraw(page, parameters).then(() => {
+                    resolve(page);
                 }, (error) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
                     resolve();
@@ -179,7 +195,7 @@ var BrowserModule;
         get handlers() {
             return this._handlers;
         }
-        addPage(action, pageName, pagePath, container, view, controllers, models, replace, append, unwind, key, events, parameters) {
+        addPage(action, pageName, pagePath, container, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
             if (view) {
                 this._instances.push("text!" + view);
             }
@@ -196,21 +212,7 @@ var BrowserModule;
             }
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var pathContainer = container.replace(bodyRegexp, "");
-            this._pages[pagePath] = {
-                name: pageName,
-                action: action,
-                container: container,
-                path: pathContainer + "/" + pageName,
-                view: view ? "text!" + view : undefined,
-                controllers: controllers,
-                models: models,
-                replace: replace,
-                append: append,
-                unwind: unwind,
-                key: key,
-                events: events,
-                parameters: parameters
-            };
+            this._pages[pagePath] = new BrowserModule.Page(pageName, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
         }
         loadInstances() {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -292,17 +294,9 @@ var BrowserModule;
         constructor(_browser) {
             this._browser = _browser;
         }
-        draw(pageName, parameters) {
+        draw(page, parameters) {
             return new Promise((resolve, reject) => {
                 this.drawBody(parameters).then(() => {
-                    if (pageName == this._browser.body) {
-                        return resolve(this._browser.pages.__body.htmlElement);
-                    }
-                    var page = this._browser.pages[pageName];
-                    if (!page) {
-                        console.error("page not found");
-                        return reject("page not found");
-                    }
                     this.drawContainer(page, page.container, parameters).then((htmlContainerElement) => {
                         this.loadController(page, parameters).then((viewParameters) => {
                             page.htmlElement = this.renderView(page, viewParameters);
@@ -349,16 +343,8 @@ var BrowserModule;
                 });
             });
         }
-        redraw(pageName, parameters) {
+        redraw(page, parameters) {
             return new Promise((resolve, reject) => {
-                if (pageName == this._browser.body) {
-                    return resolve(this._browser.pages.__body.htmlElement);
-                }
-                var page = this._browser.pages[pageName];
-                if (!page) {
-                    console.error("page not found");
-                    return reject("page not found");
-                }
                 this.drawContainer(page, page.container, parameters).then((htmlContainerElement) => {
                     this.reloadController(page, parameters).then((viewParameters) => {
                         var previousPageHtmlElement = page.htmlElement;
@@ -430,35 +416,25 @@ var BrowserModule;
         drawItems(parentPage, parameters) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 this.drawChildren(parentPage, parentPage.replace, parameters).then(() => {
-                    this.drawChildren(parentPage, parentPage.append, parameters).then(() => {
-                        this.drawChildren(parentPage, parentPage.unwind, parameters).then(() => {
-                            resolve();
-                        }, (ex) => {
-                            if (ex) {
-                                console.error("draw items error");
-                                reject("draw items error");
-                            }
-                            else {
-                                resolve();
-                            }
-                        });
-                    }, (ex) => {
-                        if (ex) {
-                            console.error("draw items error");
-                            reject("draw items error");
-                        }
-                        else {
-                            resolve();
-                        }
-                    });
-                }, (ex) => {
-                    if (ex) {
-                        console.error("draw items error");
-                        reject("draw items error");
-                    }
-                    else {
-                        resolve();
-                    }
+                    return this.drawChildren(parentPage, parentPage.append, parameters);
+                }, () => {
+                    console.error("replace items error");
+                    reject("replace items error");
+                }).then(() => {
+                    return this.drawChildren(parentPage, parentPage.group, parameters);
+                }, () => {
+                    console.error("append items error");
+                    reject("append items error");
+                }).then(() => {
+                    return this.drawChildren(parentPage, parentPage.unwind, parameters);
+                }, () => {
+                    console.error("group items error");
+                    reject("group items error");
+                }).then(() => {
+                    resolve();
+                }, () => {
+                    console.error("unwind items error");
+                    reject("unwind items error");
                 });
             }));
         }
@@ -728,6 +704,9 @@ var BrowserModule;
             else if (page.action == "append") {
                 container.append(page.htmlElement);
             }
+            else if (page.action == "group") {
+                container.html(page.htmlElement);
+            }
             else if (page.action == "unwind") {
                 container.append(page.htmlElement);
             }
@@ -938,6 +917,7 @@ var BrowserModule;
             this.addHandlers(browser.body, browser);
             this.processSchema("append", browser.body, body.append, browser);
             this.processSchema("replace", browser.body, body.replace, browser);
+            this.processSchema("group", browser.body, body.group, browser);
             this.processSchema("unwind", browser.body, body.unwind, browser);
         }
         processResources(resources, browser) {
@@ -973,10 +953,12 @@ var BrowserModule;
                 var page = schema[i][pageName];
                 var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
                 var appendChildren = this.processChildrenSchema(pagePath, page.append);
+                var groupChildren = this.processChildrenSchema(pagePath, page.group);
                 var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
-                browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, unwindChildren, page.key, page.events, page.parameters);
+                browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
                 this.processSchema("replace", pagePath, page.replace, browser);
                 this.processSchema("append", pagePath, page.append, browser);
+                this.processSchema("group", pagePath, page.group, browser);
                 this.processSchema("unwind", pagePath, page.unwind, browser);
                 this.addHandlers(pagePath, browser);
             }
@@ -1013,5 +995,117 @@ var BrowserModule;
         }
     }
     BrowserModule.Loader = Loader;
+})(BrowserModule || (BrowserModule = {}));
+var BrowserModule;
+(function (BrowserModule) {
+    class Page {
+        constructor(name, action, container, path, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
+            this._name = name;
+            this._action = action;
+            this._container = container;
+            this._path = path;
+            this._view = view;
+            this._controllers = controllers,
+                this._models = models,
+                this._replace = replace,
+                this._append = append,
+                this._group = group,
+                this._unwind = unwind,
+                this._key = key,
+                this._events = events,
+                this._parameters = parameters;
+        }
+        get name() {
+            return this._name;
+        }
+        set name(value) {
+            this._name = value;
+        }
+        get action() {
+            return this._action;
+        }
+        set action(value) {
+            this._action = value;
+        }
+        get container() {
+            return this._container;
+        }
+        set container(value) {
+            this._container = value;
+        }
+        get path() {
+            return this._path;
+        }
+        set path(value) {
+            this._path = value;
+        }
+        get view() {
+            return this._view;
+        }
+        set view(value) {
+            this._view = value;
+        }
+        get controllers() {
+            return this._controllers;
+        }
+        set controllers(value) {
+            this._controllers = value;
+        }
+        get models() {
+            return this._models;
+        }
+        set models(value) {
+            this._models = value;
+        }
+        get replace() {
+            return this._replace;
+        }
+        set replace(value) {
+            this._replace = value;
+        }
+        get append() {
+            return this._append;
+        }
+        set append(value) {
+            this._append = value;
+        }
+        get group() {
+            return this._group;
+        }
+        set group(value) {
+            this._group = value;
+        }
+        get unwind() {
+            return this._unwind;
+        }
+        set unwind(value) {
+            this._unwind = value;
+        }
+        get key() {
+            return this._key;
+        }
+        set key(value) {
+            this._key = value;
+        }
+        get events() {
+            return this._events;
+        }
+        set events(value) {
+            this._events = value;
+        }
+        get parameters() {
+            return this._parameters;
+        }
+        set parameters(value) {
+            this._parameters = value;
+        }
+        get htmlElement() {
+            return this._htmlElement;
+        }
+        set htmlElement(value) {
+            this._htmlElement = value;
+        }
+    }
+    BrowserModule.Page = Page;
 })(BrowserModule || (BrowserModule = {}));
 //# sourceMappingURL=browser.js.map
