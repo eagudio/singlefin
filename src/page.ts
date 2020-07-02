@@ -2,6 +2,7 @@
 module BrowserModule {
     export class Page {
         private _name: string;
+        private _disabled: boolean = false;
         private _action: string;
         private _container: string;
         private _path: string;
@@ -20,8 +21,9 @@ module BrowserModule {
         private _groupIndex: number = 0;
         
 
-        constructor(name: string, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
+        constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
             this._name = name;
+            this._disabled = disabled;
             this._action = action;
             this._container = container;
             this._path = path;
@@ -43,6 +45,14 @@ module BrowserModule {
 
         public set name(value: string) {
             this._name = value;
+        }
+
+        public get disabled(): boolean {
+            return this._disabled;
+        }
+
+        public set disabled(value: boolean) {
+            this._disabled = value;
         }
 
         public get action(): string {

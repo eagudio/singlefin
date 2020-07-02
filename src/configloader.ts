@@ -92,15 +92,22 @@ module BrowserModule {
 
 			for(var i=0; i<schema.length; i++) {
 				var pageName = Object.keys(schema[i])[0];
-				var pagePath = containerName + "/" + pageName;
 				var page = schema[i][pageName];
+
+				var disabled: boolean = pageName.startsWith("!");
+
+				if(disabled == true) {
+					pageName = pageName.substring(1);
+				}
+
+				var pagePath = containerName + "/" + pageName;
 
 				var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
 				var appendChildren = this.processChildrenSchema(pagePath, page.append);
 				var groupChildren = this.processChildrenSchema(pagePath, page.group);
 				var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
 
-				browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+				browser.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
 
 				this.processSchema("replace", pagePath, page.replace, browser);
 				this.processSchema("append", pagePath, page.append, browser);
@@ -119,7 +126,15 @@ module BrowserModule {
 			}
 
 			for(var i=0; i<childrenSchema.length; i++) {
-				var childPagePath = parentPagePath + "/" + Object.keys(childrenSchema[i])[0];
+				var childPageName = Object.keys(childrenSchema[i])[0];
+
+				var disabled: boolean = childPageName.startsWith("!");
+
+				if(disabled == true) {
+					childPageName = childPageName.substring(1);
+				}
+				
+				var childPagePath = parentPagePath + "/" + childPageName;
 
 				children.push(childPagePath);
 			}

@@ -114,6 +114,20 @@ module BrowserModule {
 		
 		nextStep(page: Page, parameters: any) {
 			page.groupIndex = page.groupIndex + 1;
+			
+			if(page.groupIndex >= page.group.length) {
+				page.groupIndex = page.group.length - 1;
+			}
+
+			return this.redraw(page, parameters);
+		}
+
+		previousStep(page: Page, parameters: any) {
+			page.groupIndex = page.groupIndex - 1;
+			
+			if(page.groupIndex < 0) {
+				page.groupIndex = 0;
+			}
 
 			return this.redraw(page, parameters);
 		}
@@ -248,6 +262,10 @@ module BrowserModule {
 						if(parent.groupIndex != i) {
 							continue;
 						}
+					}
+
+					if(childPage.disabled == true) {
+						continue;
 					}
 
 					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {
@@ -645,6 +663,10 @@ module BrowserModule {
 			return new Promise((resolve, reject) => {
 				this.closeItems(page, parameters).then(() => {
 					this.closeController(page, parameters).then(() => {
+						if(page.disabled == true) {
+							page.htmlElement.remove();
+						}
+
 						resolve();
 					}, (ex: any) => {
                         console.error("close error");

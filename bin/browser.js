@@ -132,7 +132,24 @@ var BrowserModule;
             });
         }
         previousGroupStep(pageName, parameters) {
-            //TODO: open previous group step...
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+                var browserHandler = new BrowserModule.BrowserHandler(this);
+                if (_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    return resolve();
+                }
+                browserHandler.previousStep(page, parameters).then(() => {
+                    resolve(page);
+                }, (error) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    resolve();
+                });
+            });
         }
         openGroupStep() {
             //TODO: open group step from index...
@@ -224,7 +241,7 @@ var BrowserModule;
         get handlers() {
             return this._handlers;
         }
-        addPage(action, pageName, pagePath, container, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
+        addPage(pageName, disabled, action, pagePath, container, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
             if (view) {
                 this._instances.push("text!" + view);
             }
@@ -241,7 +258,7 @@ var BrowserModule;
             }
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var pathContainer = container.replace(bodyRegexp, "");
-            this._pages[pagePath] = new BrowserModule.Page(pageName, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
+            this._pages[pagePath] = new BrowserModule.Page(pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
         }
         loadInstances() {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -413,6 +430,16 @@ var BrowserModule;
         }
         nextStep(page, parameters) {
             page.groupIndex = page.groupIndex + 1;
+            if (page.groupIndex >= page.group.length) {
+                page.groupIndex = page.group.length - 1;
+            }
+            return this.redraw(page, parameters);
+        }
+        previousStep(page, parameters) {
+            page.groupIndex = page.groupIndex - 1;
+            if (page.groupIndex < 0) {
+                page.groupIndex = 0;
+            }
             return this.redraw(page, parameters);
         }
         drawBody(parameters) {
@@ -517,6 +544,9 @@ var BrowserModule;
                         if (parent.groupIndex != i) {
                             continue;
                         }
+                    }
+                    if (childPage.disabled == true) {
+                        continue;
                     }
                     yield this.loadController(childPage, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         if (childPage.action == "unwind") {
@@ -823,6 +853,9 @@ var BrowserModule;
             return new Promise((resolve, reject) => {
                 this.closeItems(page, parameters).then(() => {
                     this.closeController(page, parameters).then(() => {
+                        if (page.disabled == true) {
+                            page.htmlElement.remove();
+                        }
                         resolve();
                     }, (ex) => {
                         console.error("close error");
@@ -987,13 +1020,17 @@ var BrowserModule;
             }
             for (var i = 0; i < schema.length; i++) {
                 var pageName = Object.keys(schema[i])[0];
-                var pagePath = containerName + "/" + pageName;
                 var page = schema[i][pageName];
+                var disabled = pageName.startsWith("!");
+                if (disabled == true) {
+                    pageName = pageName.substring(1);
+                }
+                var pagePath = containerName + "/" + pageName;
                 var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
                 var appendChildren = this.processChildrenSchema(pagePath, page.append);
                 var groupChildren = this.processChildrenSchema(pagePath, page.group);
                 var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
-                browser.addPage(action, pageName, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+                browser.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
                 this.processSchema("replace", pagePath, page.replace, browser);
                 this.processSchema("append", pagePath, page.append, browser);
                 this.processSchema("group", pagePath, page.group, browser);
@@ -1007,7 +1044,12 @@ var BrowserModule;
                 return children;
             }
             for (var i = 0; i < childrenSchema.length; i++) {
-                var childPagePath = parentPagePath + "/" + Object.keys(childrenSchema[i])[0];
+                var childPageName = Object.keys(childrenSchema[i])[0];
+                var disabled = childPageName.startsWith("!");
+                if (disabled == true) {
+                    childPageName = childPageName.substring(1);
+                }
+                var childPagePath = parentPagePath + "/" + childPageName;
                 children.push(childPagePath);
             }
             return children;
@@ -1037,9 +1079,11 @@ var BrowserModule;
 var BrowserModule;
 (function (BrowserModule) {
     class Page {
-        constructor(name, action, container, path, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
+        constructor(name, disabled, action, container, path, view, controllers, models, replace, append, group, unwind, key, events, parameters) {
+            this._disabled = false;
             this._groupIndex = 0;
             this._name = name;
+            this._disabled = disabled;
             this._action = action;
             this._container = container;
             this._path = path;
@@ -1059,6 +1103,12 @@ var BrowserModule;
         }
         set name(value) {
             this._name = value;
+        }
+        get disabled() {
+            return this._disabled;
+        }
+        set disabled(value) {
+            this._disabled = value;
         }
         get action() {
             return this._action;

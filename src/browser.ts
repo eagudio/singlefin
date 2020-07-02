@@ -154,15 +154,43 @@ module BrowserModule {
         }
 
         previousGroupStep(pageName: string, parameters: any) {
-            //TODO: open previous group step...
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+
+                var browserHandler = new BrowserHandler(this);
+
+                if(_pageName == this.body) {
+					return resolve(this._pages[_pageName]);
+				}
+				
+				var page = this.pages[_pageName];
+	
+				if(!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    
+                    return resolve();
+				}
+
+                browserHandler.previousStep(page, parameters).then(() => {
+                    resolve(page);
+                }, (error: any) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+    
+                    resolve();
+                });
+            });
         }
 
-        openGroupStep() {
+        openGroupStep(pageName: string, index: number) {
             //TODO: open group step from index...
         }
 
-        resetGroup() {
+        resetGroup(pageName: string) {
             //TODO: reset group index...
+        }
+
+        getGroupIndex(pageName: string) {
+            //TODO: get group index...
         }
         
         close(pageName: string, parameters: any) {
@@ -278,7 +306,7 @@ module BrowserModule {
             return this._handlers;
         }
 
-        addPage(action: string, pageName: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -298,7 +326,7 @@ module BrowserModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
-            this._pages[pagePath] = new Page(pageName, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
+            this._pages[pagePath] = new Page(pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
         }
         
         private loadInstances() {
