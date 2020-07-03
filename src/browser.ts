@@ -115,7 +115,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.draw(page, parameters).then(() => {
+                browserHandler.redraw(page, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -181,16 +181,56 @@ module BrowserModule {
             });
         }
 
-        openGroupStep(pageName: string, index: number) {
-            //TODO: open group step from index...
+        openGroupStep(pageName: string, index: number, parameters: any) {
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+
+                var browserHandler = new BrowserHandler(this);
+
+                if(_pageName == this.body) {
+					return resolve(this._pages[_pageName]);
+				}
+				
+				var page = this.pages[_pageName];
+	
+				if(!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    
+                    return resolve();
+				}
+
+                browserHandler.openGroupByIndex(page, index, parameters).then(() => {
+                    resolve(page);
+                }, (error: any) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+    
+                    resolve();
+                });
+            });
         }
 
-        resetGroup(pageName: string) {
-            //TODO: reset group index...
+        getGroupCount(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during get group count of page '" + pageName + "': page not found");
+            }
+
+            return page.group.length;
         }
 
         getGroupIndex(pageName: string) {
-            //TODO: get group index...
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during get group index of page '" + pageName + "': page not found");
+            }
+
+            return page.groupIndex;
         }
         
         close(pageName: string, parameters: any) {

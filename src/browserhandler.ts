@@ -131,6 +131,20 @@ module BrowserModule {
 
 			return this.redraw(page, parameters);
 		}
+
+		openGroupByIndex(page: Page, index: number, parameters: any) {
+			page.groupIndex = index;
+			
+			if(page.groupIndex < 0) {
+				page.groupIndex = 0;
+			}
+
+			if(page.groupIndex >= page.group.length) {
+				page.groupIndex = page.group.length - 1;
+			}
+
+			return this.redraw(page, parameters);
+		}
         
 		drawBody(parameters: any) {
 			var body = this._browser.pages[this._browser.body];
@@ -660,7 +674,7 @@ module BrowserModule {
         }
         
 		close(page: Page, parameters: any) {
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve, reject) => {				
 				this.closeItems(page, parameters).then(() => {
 					this.closeController(page, parameters).then(() => {
 						if(page.disabled == true) {
@@ -706,34 +720,49 @@ module BrowserModule {
         }
         
 		closeItems(page: any, parameters: any) {
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve, reject) => {				
+				if(page.group.length > 0) {
+					page.groupIndex = 0;
+				}
+				
 				this.closeChildren(page.replace, parameters).then(() => {
-					this.closeChildren(page.append, parameters).then(() => {
-						this.closeChildren(page.unwind, parameters).then(() => {
-							resolve();
-						}, (ex) => {
-							if(ex) {
-                                console.error("close itmes error");
-
-								reject("close itmes error");
-							}
-							else {
-								resolve();
-							}
-						});
-					}, (ex) => {
-						if(ex) {
-                            console.error("close itmes error");
-
-							reject("close itmes error");
-						}
-						else {
-							resolve();
-						}
-					});
+					return this.closeChildren(page.append, parameters);
 				}, (ex) => {
 					if(ex) {
-                        console.error("close itmes error");
+						console.error("close itmes error");
+
+						reject("close itmes error");
+					}
+					else {
+						resolve();
+					}
+				}).then(() => {
+					return this.closeChildren(page.group, parameters);
+				}, (ex) => {
+					if(ex) {
+						console.error("close itmes error");
+
+						reject("close itmes error");
+					}
+					else {
+						resolve();
+					}
+				}).then(() => {
+					return this.closeChildren(page.unwind, parameters);
+				}, (ex) => {
+					if(ex) {
+						console.error("close itmes error");
+
+						reject("close itmes error");
+					}
+					else {
+						resolve();
+					}
+				}).then(() => {
+					resolve();
+				}, (ex) => {
+					if(ex) {
+						console.error("close itmes error");
 
 						reject("close itmes error");
 					}

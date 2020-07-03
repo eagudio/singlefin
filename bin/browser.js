@@ -103,7 +103,7 @@ var BrowserModule;
                     console.error("an error occurred during refresh page '" + pageName + "': page not found");
                     return resolve();
                 }
-                browserHandler.draw(page, parameters).then(() => {
+                browserHandler.redraw(page, parameters).then(() => {
                     resolve(page);
                 }, (error) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -151,11 +151,41 @@ var BrowserModule;
                 });
             });
         }
-        openGroupStep() {
-            //TODO: open group step from index...
+        openGroupStep(pageName, index, parameters) {
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+                var browserHandler = new BrowserModule.BrowserHandler(this);
+                if (_pageName == this.body) {
+                    return resolve(this._pages[_pageName]);
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    return resolve();
+                }
+                browserHandler.openGroupByIndex(page, index, parameters).then(() => {
+                    resolve(page);
+                }, (error) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    resolve();
+                });
+            });
         }
-        resetGroup() {
-            //TODO: reset group index...
+        getGroupCount(pageName) {
+            var _pageName = this._body + "/" + pageName;
+            var page = this.pages[_pageName];
+            if (!page) {
+                console.error("an error occurred during get group count of page '" + pageName + "': page not found");
+            }
+            return page.group.length;
+        }
+        getGroupIndex(pageName) {
+            var _pageName = this._body + "/" + pageName;
+            var page = this.pages[_pageName];
+            if (!page) {
+                console.error("an error occurred during get group index of page '" + pageName + "': page not found");
+            }
+            return page.groupIndex;
         }
         close(pageName, parameters) {
             return new Promise((resolve) => {
@@ -439,6 +469,16 @@ var BrowserModule;
             page.groupIndex = page.groupIndex - 1;
             if (page.groupIndex < 0) {
                 page.groupIndex = 0;
+            }
+            return this.redraw(page, parameters);
+        }
+        openGroupByIndex(page, index, parameters) {
+            page.groupIndex = index;
+            if (page.groupIndex < 0) {
+                page.groupIndex = 0;
+            }
+            if (page.groupIndex >= page.group.length) {
+                page.groupIndex = page.group.length - 1;
             }
             return this.redraw(page, parameters);
         }
@@ -888,28 +928,41 @@ var BrowserModule;
         }
         closeItems(page, parameters) {
             return new Promise((resolve, reject) => {
+                if (page.group.length > 0) {
+                    page.groupIndex = 0;
+                }
                 this.closeChildren(page.replace, parameters).then(() => {
-                    this.closeChildren(page.append, parameters).then(() => {
-                        this.closeChildren(page.unwind, parameters).then(() => {
-                            resolve();
-                        }, (ex) => {
-                            if (ex) {
-                                console.error("close itmes error");
-                                reject("close itmes error");
-                            }
-                            else {
-                                resolve();
-                            }
-                        });
-                    }, (ex) => {
-                        if (ex) {
-                            console.error("close itmes error");
-                            reject("close itmes error");
-                        }
-                        else {
-                            resolve();
-                        }
-                    });
+                    return this.closeChildren(page.append, parameters);
+                }, (ex) => {
+                    if (ex) {
+                        console.error("close itmes error");
+                        reject("close itmes error");
+                    }
+                    else {
+                        resolve();
+                    }
+                }).then(() => {
+                    return this.closeChildren(page.group, parameters);
+                }, (ex) => {
+                    if (ex) {
+                        console.error("close itmes error");
+                        reject("close itmes error");
+                    }
+                    else {
+                        resolve();
+                    }
+                }).then(() => {
+                    return this.closeChildren(page.unwind, parameters);
+                }, (ex) => {
+                    if (ex) {
+                        console.error("close itmes error");
+                        reject("close itmes error");
+                    }
+                    else {
+                        resolve();
+                    }
+                }).then(() => {
+                    resolve();
                 }, (ex) => {
                     if (ex) {
                         console.error("close itmes error");
