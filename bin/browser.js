@@ -187,6 +187,22 @@ var BrowserModule;
             }
             return page.groupIndex;
         }
+        isFirstGroupStep(pageName) {
+            var _pageName = this._body + "/" + pageName;
+            var page = this.pages[_pageName];
+            if (!page) {
+                console.error("an error occurred during check first group step of page '" + pageName + "': page not found");
+            }
+            return page.groupIndex == 0;
+        }
+        isLastGroupStep(pageName) {
+            var _pageName = this._body + "/" + pageName;
+            var page = this.pages[_pageName];
+            if (!page) {
+                console.error("an error occurred during check last group step of page '" + pageName + "': page not found");
+            }
+            return page.groupIndex == page.group.length - 1;
+        }
         close(pageName, parameters) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
@@ -459,18 +475,44 @@ var BrowserModule;
             });
         }
         nextStep(page, parameters) {
+            var currentPage = this.getCurrentGroupPage(page);
             page.groupIndex = page.groupIndex + 1;
             if (page.groupIndex >= page.group.length) {
                 page.groupIndex = page.group.length - 1;
             }
-            return this.redraw(page, parameters);
+            return new Promise((resolve, reject) => {
+                this.nextController(currentPage, parameters).then(() => {
+                    return this.redraw(page, parameters);
+                }, () => {
+                    console.error("next step error");
+                    reject("next step error");
+                }).then((html) => {
+                    resolve(html);
+                }, () => {
+                    console.error("next step error");
+                    reject("next step error");
+                });
+            });
         }
         previousStep(page, parameters) {
+            var currentPage = this.getCurrentGroupPage(page);
             page.groupIndex = page.groupIndex - 1;
             if (page.groupIndex < 0) {
                 page.groupIndex = 0;
             }
-            return this.redraw(page, parameters);
+            return new Promise((resolve, reject) => {
+                this.previousController(currentPage, parameters).then(() => {
+                    return this.redraw(page, parameters);
+                }, () => {
+                    console.error("previous step error");
+                    reject("previous step error");
+                }).then((html) => {
+                    resolve(html);
+                }, () => {
+                    console.error("previous step error");
+                    reject("previous step error");
+                });
+            });
         }
         openGroupByIndex(page, index, parameters) {
             page.groupIndex = index;
@@ -650,6 +692,13 @@ var BrowserModule;
                 resolve();
             }));
         }
+        getCurrentGroupPage(page) {
+            if (!page) {
+                return null;
+            }
+            var pagePath = page.group[page.groupIndex];
+            return this._browser.pages[pagePath];
+        }
         addSurrogate(path, name, page) {
             var bodyRegexp = new RegExp("^(" + this._browser.body + "/)");
             var container = page.container.replace(bodyRegexp, "");
@@ -750,6 +799,48 @@ var BrowserModule;
                         }), (ex) => {
                             if (ex) {
                                 console.error("show page error: " + ex);
+                            }
+                            reject(ex);
+                        });
+                    }
+                }
+                resolve(result);
+            }));
+        }
+        nextController(page, parameters) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                if (!page.controllers) {
+                    return resolve(parameters);
+                }
+                var result = parameters;
+                for (var i = 0; i < page.controllers.length; i++) {
+                    if (page.controllers[i].next) {
+                        yield page.controllers[i].next(page, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                            result = _result;
+                        }), (ex) => {
+                            if (ex) {
+                                console.error("next controller error: " + ex);
+                            }
+                            reject(ex);
+                        });
+                    }
+                }
+                resolve(result);
+            }));
+        }
+        previousController(page, parameters) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                if (!page.controllers) {
+                    return resolve(parameters);
+                }
+                var result = parameters;
+                for (var i = 0; i < page.controllers.length; i++) {
+                    if (page.controllers[i].previous) {
+                        yield page.controllers[i].previous(page, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                            result = _result;
+                        }), (ex) => {
+                            if (ex) {
+                                console.error("next controller error: " + ex);
                             }
                             reject(ex);
                         });

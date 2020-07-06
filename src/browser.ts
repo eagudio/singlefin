@@ -232,6 +232,30 @@ module BrowserModule {
 
             return page.groupIndex;
         }
+
+        isFirstGroupStep(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during check first group step of page '" + pageName + "': page not found");
+            }
+
+            return page.groupIndex == 0;
+        }
+
+        isLastGroupStep(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during check last group step of page '" + pageName + "': page not found");
+            }
+
+            return page.groupIndex == page.group.length - 1;
+        }
         
         close(pageName: string, parameters: any) {
             return new Promise((resolve) => {

@@ -113,23 +113,55 @@ module BrowserModule {
 		}
 		
 		nextStep(page: Page, parameters: any) {
+			var currentPage = this.getCurrentGroupPage(page);
+			
 			page.groupIndex = page.groupIndex + 1;
 			
 			if(page.groupIndex >= page.group.length) {
 				page.groupIndex = page.group.length - 1;
 			}
 
-			return this.redraw(page, parameters);
+			return new Promise((resolve, reject) => {
+				this.nextController(currentPage, parameters).then(() => {
+					return this.redraw(page, parameters);
+				}, () => {
+					console.error("next step error");
+					
+					reject("next step error");
+				}).then((html) => {
+					resolve(html);
+				}, () => {
+					console.error("next step error");
+					
+					reject("next step error");
+				});
+			});
 		}
 
 		previousStep(page: Page, parameters: any) {
+			var currentPage = this.getCurrentGroupPage(page);
+			
 			page.groupIndex = page.groupIndex - 1;
 			
 			if(page.groupIndex < 0) {
 				page.groupIndex = 0;
 			}
 
-			return this.redraw(page, parameters);
+			return new Promise((resolve, reject) => {				
+				this.previousController(currentPage, parameters).then(() => {
+					return this.redraw(page, parameters);
+				}, () => {
+					console.error("previous step error");
+					
+					reject("previous step error");
+				}).then((html) => {
+					resolve(html);
+				}, () => {
+					console.error("previous step error");
+					
+					reject("previous step error");
+				});
+			});
 		}
 
 		openGroupByIndex(page: Page, index: number, parameters: any) {
@@ -364,6 +396,16 @@ module BrowserModule {
 			});
 		}
 
+		getCurrentGroupPage(page: Page) {
+            if(!page) {
+				return null;
+			}
+			
+			var pagePath = page.group[page.groupIndex];
+
+            return this._browser.pages[pagePath];
+        }
+
         addSurrogate(path: string, name: string, page: any) {
 			var bodyRegexp = new RegExp("^(" + this._browser.body + "/)");
 			var container = page.container.replace(bodyRegexp, "");
@@ -491,6 +533,59 @@ module BrowserModule {
 						}, (ex: any) => {
 							if(ex) {
 								console.error("show page error: " + ex);
+							}
+							
+							reject(ex);
+						});
+					}
+				}
+
+				resolve(result);
+			});
+		}
+
+		nextController(page: any, parameters: any) {
+			return new Promise(async (resolve, reject) => {
+				if(!page.controllers) {
+					return resolve(parameters);
+				}
+
+				var result = parameters;
+                
+				for(var i=0; i<page.controllers.length; i++) {
+					if(page.controllers[i].next) {
+						await page.controllers[i].next(page, result).then(async (_result: any) => {
+							result = _result;
+						}, (ex: any) => {
+							if(ex) {
+								console.error("next controller error: " + ex);
+							}
+							
+							reject(ex);
+						});
+					}
+				}
+
+				resolve(result);
+			});
+		}
+
+		previousController(page: any, parameters: any) {
+			return new Promise(async (resolve, reject) => {
+			
+				if(!page.controllers) {
+					return resolve(parameters);
+				}
+
+				var result = parameters;
+                
+				for(var i=0; i<page.controllers.length; i++) {
+					if(page.controllers[i].previous) {
+						await page.controllers[i].previous(page, result).then(async (_result: any) => {
+							result = _result;
+						}, (ex: any) => {
+							if(ex) {
+								console.error("next controller error: " + ex);
 							}
 							
 							reject(ex);
