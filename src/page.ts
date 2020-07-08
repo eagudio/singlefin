@@ -19,6 +19,8 @@ module BrowserModule {
         private _htmlElement: any;
 
         private _groupIndex: number = 0;
+        private _groupNextStepEnabled: boolean = true;
+        private _groupPreviousStepEnabled: boolean = true;
         
 
         constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
@@ -173,6 +175,22 @@ module BrowserModule {
         
         public set groupIndex(value: number) {
             this._groupIndex = value;
+        }
+
+        public get groupNextStepEnabled(): boolean {
+            return this._groupNextStepEnabled;
+        }
+        
+        public set groupNextStepEnabled(value: boolean) {
+            this._groupNextStepEnabled = value;
+        }
+
+        public get groupPreviousStepEnabled(): boolean {
+            return this._groupPreviousStepEnabled;
+        }
+
+        public set groupPreviousStepEnabled(value: boolean) {
+            this._groupPreviousStepEnabled = value;
         }
     }
 }

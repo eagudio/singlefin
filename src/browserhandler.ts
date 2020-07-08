@@ -19,9 +19,13 @@ module BrowserModule {
 							this.drawItems(page, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, page);
 
-								this.showPage(page, viewParameters);
-	
-								resolve(page.htmlElement);
+								this.showPage(page, viewParameters).then(() => {
+									resolve(page.htmlElement);
+								}, () => {
+									console.error("draw error");
+
+									reject("draw error");
+								});
 							}, (ex: any) => {
 								if(ex) {
                                     console.error("draw error");
@@ -176,6 +180,46 @@ module BrowserModule {
 			}
 
 			return this.redraw(page, parameters);
+		}
+
+		setNextGroupStepEnabled(page: Page, enabled: boolean) {
+            var nextPage: Page = this._browser.pages[page.group[page.groupIndex]];
+
+			if(!nextPage.parameters) {
+				nextPage.parameters = {};
+			}
+
+			nextPage.parameters.nextEnabled = enabled;
+        }
+
+		isNextGroupStepEnabled(page: Page) {
+			var nextPage: Page = this._browser.pages[page.group[page.groupIndex]];
+
+			if(nextPage.parameters) {
+				return nextPage.parameters.nextEnabled;
+			}
+
+			return true;
+		}
+
+		setPreviousGroupStepEnabled(page: Page, enabled: boolean) {
+            var previousPage: Page = this._browser.pages[page.group[page.groupIndex]];
+
+			if(!previousPage.parameters) {
+				previousPage.parameters = {};
+			}
+
+			previousPage.parameters.previousEnabled = enabled;
+		}
+		
+		isPreviousGroupStepEnabled(page: Page) {
+			var previousPage: Page = this._browser.pages[page.group[page.groupIndex]];
+
+			if(previousPage.parameters) {
+				return previousPage.parameters.previousEnabled;
+			}
+
+			return true;
 		}
         
 		drawBody(parameters: any) {
@@ -334,7 +378,13 @@ module BrowserModule {
 							this.addHtmlElement(parent.htmlElement, childPage);
 
 							await this.drawItems(childPage, viewParameters).then(async () => {
-								
+								await this.showPage(childPage, viewParameters).then(() => {
+
+								}, () => {
+									console.error("draw children error");
+
+									reject("draw children error");
+								});
 							}, (ex) => {
 								if(ex) {
                                     console.error("draw children error");
@@ -519,7 +569,6 @@ module BrowserModule {
 
 		showPage(page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
-			
 				if(!page.controllers) {
 					return resolve(parameters);
 				}

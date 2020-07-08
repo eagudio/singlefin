@@ -94,10 +94,10 @@ module BrowserModule {
 				var pageName = Object.keys(schema[i])[0];
 				var page = schema[i][pageName];
 
-				var disabled: boolean = pageName.startsWith("!");
+				var disabled: boolean = false;
 
-				if(disabled == true) {
-					pageName = pageName.substring(1);
+				if(page.parameters) {
+					disabled = page.parameters.disabled;
 				}
 
 				var pagePath = containerName + "/" + pageName;
@@ -127,12 +127,6 @@ module BrowserModule {
 
 			for(var i=0; i<childrenSchema.length; i++) {
 				var childPageName = Object.keys(childrenSchema[i])[0];
-
-				var disabled: boolean = childPageName.startsWith("!");
-
-				if(disabled == true) {
-					childPageName = childPageName.substring(1);
-				}
 				
 				var childPagePath = parentPagePath + "/" + childPageName;
 

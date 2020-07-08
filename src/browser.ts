@@ -256,6 +256,62 @@ module BrowserModule {
 
             return page.groupIndex == page.group.length - 1;
         }
+
+        setNextGroupStepEnabled(pageName: string, enabled: boolean) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during set next group step enabled of page '" + pageName + "': page not found");
+            }
+
+            var browserHandler = new BrowserHandler(this);
+
+            browserHandler.setNextGroupStepEnabled(page, enabled);
+        }
+
+        isNextGroupStepEnabled(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during check next group step enabled of page '" + pageName + "': page not found");
+            }
+
+            var browserHandler = new BrowserHandler(this);
+
+            return browserHandler.isNextGroupStepEnabled(page);
+        }
+
+        setPreviousGroupStepEnabled(pageName: string, enabled: boolean) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during set previous group step enabled of page '" + pageName + "': page not found");
+            }
+
+            var browserHandler = new BrowserHandler(this);
+
+            browserHandler.setPreviousGroupStepEnabled(page, enabled);
+        }
+
+        isPreviousGroupStepEnabled(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during check previous group step enabled of page '" + pageName + "': page not found");
+            }
+
+            var browserHandler = new BrowserHandler(this);
+
+            return browserHandler.isPreviousGroupStepEnabled(page);
+        }
         
         close(pageName: string, parameters: any) {
             return new Promise((resolve) => {
