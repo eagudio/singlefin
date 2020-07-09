@@ -14,32 +14,27 @@
  * Date: 2020-05-21T15:59Z
  */
 
-module BrowserModule {
-    export class Browser {
+module SinglefinModule {
+    export class Singlefin {
         private _home: string = "__body";
         private _body: string = "__body";
         private _instances: any[] = [];
         private _styles: string[] = [];
-        private _pages: any = {
-            __body: {
-                container: "__body",
-                view: null,
-                controllers: [],
-                models: {},
-                events: [],
-                htmlElement: $("body")
-            }
-        };
-        private _surrogates: any = {};
+        private _pages: any = {};
         private _handlers: any = {};
         private _defaultLanguage: string = "it-IT";
         private _resources: any = {
             "it-IT": {}
         };
 
-
         init(config: any, onInit: any) {
             try {
+                var body: Page = new Page("body", false, "", this._body, "", null, [], {}, [], [], [], [], "", [], null);
+
+                body.htmlElement = $("body");
+
+                this._pages[this._body] = body;
+
                 var params = this.getUrlParams(window.location.href);
 
                 var configLoader = new ConfigLoader();
@@ -65,7 +60,7 @@ module BrowserModule {
                 });
             }
             catch(ex) {
-                console.error("an error occurred during init browser: " + ex);
+                console.error("an error occurred during init singlefin: " + ex);
             }
         }
 
@@ -73,13 +68,11 @@ module BrowserModule {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
-                var browserHandler = new BrowserHandler(this);
-
                 if(_pageName == this.body) {
                     return resolve(this._pages[_pageName]);
                 }
                 
-                var page = this.pages[_pageName];
+                var page: Page = this.pages[_pageName];
     
                 if(!page) {
                     console.error("an error occurred during open page '" + pageName + "': page not found");
@@ -87,7 +80,7 @@ module BrowserModule {
                     return resolve();
                 }
 
-                browserHandler.draw(page, parameters).then(() => {
+                page.draw(this, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during open page '" + pageName + "'");
@@ -101,13 +94,11 @@ module BrowserModule {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
-                var browserHandler = new BrowserHandler(this);
-
                 if(_pageName == this.body) {
 					return resolve(this._pages[_pageName]);
 				}
 				
-				var page = this.pages[_pageName];
+				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
                     console.error("an error occurred during refresh page '" + pageName + "': page not found");
@@ -115,7 +106,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.redraw(page, parameters).then(() => {
+                page.redraw(this, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -129,13 +120,11 @@ module BrowserModule {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
-                var browserHandler = new BrowserHandler(this);
-
                 if(_pageName == this.body) {
 					return resolve(this._pages[_pageName]);
 				}
 				
-				var page = this.pages[_pageName];
+				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
                     console.error("an error occurred during next step of page '" + pageName + "': page not found");
@@ -143,7 +132,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.nextStep(page, parameters).then(() => {
+                page.nextStep(this, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -157,13 +146,11 @@ module BrowserModule {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
-                var browserHandler = new BrowserHandler(this);
-
                 if(_pageName == this.body) {
 					return resolve(this._pages[_pageName]);
 				}
 				
-				var page = this.pages[_pageName];
+				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
                     console.error("an error occurred during next step of page '" + pageName + "': page not found");
@@ -171,7 +158,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.previousStep(page, parameters).then(() => {
+                page.previousStep(this, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -185,13 +172,11 @@ module BrowserModule {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
-                var browserHandler = new BrowserHandler(this);
-
                 if(_pageName == this.body) {
 					return resolve(this._pages[_pageName]);
 				}
 				
-				var page = this.pages[_pageName];
+				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
                     console.error("an error occurred during next step of page '" + pageName + "': page not found");
@@ -199,7 +184,7 @@ module BrowserModule {
                     return resolve();
 				}
 
-                browserHandler.openGroupByIndex(page, index, parameters).then(() => {
+                page.openGroupByIndex(this, index, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -266,9 +251,7 @@ module BrowserModule {
                 console.error("an error occurred during set next group step enabled of page '" + pageName + "': page not found");
             }
 
-            var browserHandler = new BrowserHandler(this);
-
-            browserHandler.setNextGroupStepEnabled(page, enabled);
+            page.setNextGroupStepEnabled(this, enabled);
         }
 
         isNextGroupStepEnabled(pageName: string) {
@@ -280,9 +263,7 @@ module BrowserModule {
                 console.error("an error occurred during check next group step enabled of page '" + pageName + "': page not found");
             }
 
-            var browserHandler = new BrowserHandler(this);
-
-            return browserHandler.isNextGroupStepEnabled(page);
+            return page.isNextGroupStepEnabled(this);
         }
 
         setPreviousGroupStepEnabled(pageName: string, enabled: boolean) {
@@ -294,9 +275,7 @@ module BrowserModule {
                 console.error("an error occurred during set previous group step enabled of page '" + pageName + "': page not found");
             }
 
-            var browserHandler = new BrowserHandler(this);
-
-            browserHandler.setPreviousGroupStepEnabled(page, enabled);
+            page.setPreviousGroupStepEnabled(this, enabled);
         }
 
         isPreviousGroupStepEnabled(pageName: string) {
@@ -308,29 +287,21 @@ module BrowserModule {
                 console.error("an error occurred during check previous group step enabled of page '" + pageName + "': page not found");
             }
 
-            var browserHandler = new BrowserHandler(this);
-
-            return browserHandler.isPreviousGroupStepEnabled(page);
+            return page.isPreviousGroupStepEnabled(this);
         }
         
         close(pageName: string, parameters: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                var page: Page = this.pages[_pageName];
     
                 if(!page) {
-                    page = this._surrogates[_pageName];
+                    console.error("an error occured during close page: page '" + pageName + "' not found");
                     
-                    if(!page) {
-                        console.error("an error occured during close page: page '" + pageName + "' not found");
-                    
-                        return resolve();
-                    }
+                    return resolve();
                 }
-
-                var browserHandler = new BrowserHandler(this);
                 
-                browserHandler.close(page, parameters).then(() => {
+                page.close(this, parameters).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during close page '" + pageName + "'");
@@ -418,15 +389,11 @@ module BrowserModule {
             return this._pages;
         }
 
-        get surrogates() {
-            return this._surrogates;
-        }
-
         get handlers() {
             return this._handlers;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any): Page {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -447,6 +414,37 @@ module BrowserModule {
 			var pathContainer = container.replace(bodyRegexp, "");
 
             this._pages[pagePath] = new Page(pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
+
+            return this._pages[pagePath];
+        }
+
+        addSurrogate(name: string, path: string, page: Page) {
+            var replaceChildren = this.createSurrogates(path, page.replace);
+            var appendChildren = this.createSurrogates(path, page.append);
+            var groupChildren = this.createSurrogates(path, page.group);
+            var unwindChildren = this.createSurrogates(path, page.unwind);
+
+            var bodyRegexp = new RegExp("^(" + this.body + "/)");
+            var pathContainer = page.container.replace(bodyRegexp, "");
+
+            this._pages[path] = new Page(name, page.disabled, page.action, page.container, pathContainer + "/" + name, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+
+            return this._pages[path];
+        }
+
+        createSurrogates(path: string, pagesPath: string[]) {
+            var surrogates = [];
+			
+			for(var i=0; i<pagesPath.length; i++) {
+                var page: Page = this.pages[pagesPath[i]];
+                var pagePath = path + "/" + page.name;
+
+				surrogates.push(pagePath);
+
+				this.addSurrogate(page.name, pagePath, page);
+            }
+
+			return surrogates;
         }
         
         private loadInstances() {
@@ -544,8 +542,10 @@ module BrowserModule {
 
 interface Window {
     browser: any;
-    $b: any;
+    singlefin: any;
+    $s: any;
 }
 
-window.browser = window.browser || new BrowserModule.Browser();
-window.$b = window.$b || window.browser || new BrowserModule.Browser();
+window.browser = window.browser || new SinglefinModule.Singlefin();
+window.singlefin = window.singlefin || window.browser || new SinglefinModule.Singlefin();
+window.$s = window.$s || window.browser || new SinglefinModule.Singlefin();

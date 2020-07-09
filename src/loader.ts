@@ -1,6 +1,6 @@
 declare var require: any;
 
-module BrowserModule {
+module SinglefinModule {
     export class Loader {
 
         load(paths: string[]) {
