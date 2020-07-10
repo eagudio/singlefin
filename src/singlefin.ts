@@ -27,7 +27,7 @@ module SinglefinModule {
             "it-IT": {}
         };
 
-        init(config: any, onInit: any) {
+        init(config: any) {
             try {
                 var body: Page = new Page("body", false, "", this._body, "", null, [], {}, [], [], [], [], "", [], null);
 
@@ -52,9 +52,7 @@ module SinglefinModule {
                         }
                     }
                     
-                    this.open(_homepage).then(() => {
-                        onInit();
-                    });
+                    return this.open(_homepage);
                 }, () => {
 
                 });
@@ -337,7 +335,7 @@ module SinglefinModule {
             }
         }
         
-        getURLPath() {
+        static getURLPath() {
             var path = window.location.href;
     
             var paths = path.split("/");
@@ -541,11 +539,13 @@ module SinglefinModule {
 }
 
 interface Window {
-    browser: any;
-    singlefin: any;
-    $s: any;
+    //browser: any;
+    //singlefin: any;
+    Singlefin: SinglefinModule.Singlefin;
+    //$s: any;
 }
 
-window.browser = window.browser || new SinglefinModule.Singlefin();
-window.singlefin = window.singlefin || window.browser || new SinglefinModule.Singlefin();
-window.$s = window.$s || window.browser || new SinglefinModule.Singlefin();
+//window.browser = window.browser || new SinglefinModule.Singlefin();
+//window.singlefin = window.singlefin || window.browser || new SinglefinModule.Singlefin();
+window.Singlefin = window.Singlefin || SinglefinModule.Singlefin;
+//window.$s = window.$s || window.browser || new SinglefinModule.Singlefin();

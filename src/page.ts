@@ -197,7 +197,7 @@ module SinglefinModule {
 			return new Promise((resolve, reject) => {
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
-						this.loadController(this, parameters).then((viewParameters: any) => {
+						this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
 							this.htmlElement = this.renderView(singlefin, this, viewParameters);
 	
 							this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
@@ -205,7 +205,7 @@ module SinglefinModule {
 							this.drawItems(singlefin, this, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, this);
 
-								this.showPage(this, viewParameters).then(() => {
+								this.showPage(singlefin, this, viewParameters).then(() => {
 									resolve(this.htmlElement);
 								}, () => {
 									console.error("draw error");
@@ -258,7 +258,7 @@ module SinglefinModule {
         redraw(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
 				this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
-					this.reloadController(this, parameters).then((viewParameters: any) => {
+					this.reloadController(singlefin, this, parameters).then((viewParameters: any) => {
 						var previousPageHtmlElement = this.htmlElement;
 
 						this.htmlElement = this.renderView(singlefin, this, viewParameters);
@@ -312,7 +312,7 @@ module SinglefinModule {
 			}
 
 			return new Promise((resolve, reject) => {
-				this.nextController(currentPage, parameters).then(() => {
+				this.nextController(singlefin, currentPage, parameters).then(() => {
 					return this.redraw(singlefin, parameters);
 				}, () => {
 					console.error("next step error");
@@ -338,7 +338,7 @@ module SinglefinModule {
 			}
 
 			return new Promise((resolve, reject) => {				
-				this.previousController(currentPage, parameters).then(() => {
+				this.previousController(singlefin, currentPage, parameters).then(() => {
 					return this.redraw(singlefin, parameters);
 				}, () => {
 					console.error("previous step error");
@@ -416,7 +416,7 @@ module SinglefinModule {
 			}
 
 			return new Promise((resolve, reject) => {
-				this.loadController(body, parameters).then(async (viewParameters: any) => {
+				this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
 					body.htmlElement = this.renderView(singlefin, body, viewParameters);
 	
 					resolve(body.htmlElement);
@@ -498,7 +498,7 @@ module SinglefinModule {
 						page.models = parentPage.models;
 					}
 
-					this.loadController(parentPage, parameters).then(async (viewParameters: any) => {
+					this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
 						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
 
 						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, viewParameters);
@@ -544,7 +544,7 @@ module SinglefinModule {
 						continue;
 					}
 
-					await this.loadController(childPage, parameters).then(async (viewParameters: any) => {
+					await this.loadController(singlefin, childPage, parameters).then(async (viewParameters: any) => {
 						if(childPage.action == "unwind") {
 							await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters).then(async () => {
 								
@@ -564,7 +564,7 @@ module SinglefinModule {
 							this.addHtmlElement(parent.htmlElement, childPage);
 
 							await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
-								await this.showPage(childPage, viewParameters).then(() => {
+								await this.showPage(singlefin, childPage, viewParameters).then(() => {
 
 								}, () => {
 									console.error("draw children error");
@@ -605,7 +605,7 @@ module SinglefinModule {
 				for(var i=0; i<parameters.length; i++) {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page);
 
-					await this.resolveUnwindItem(surrogate, parameters[i]).then(async (viewParameters: any) => {
+					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, page, viewParameters);
 
 						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
@@ -642,7 +642,7 @@ module SinglefinModule {
             return singlefin.pages[pagePath];
         }
         
-		loadController(page: any, parameters: any) {
+		loadController(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 			
 				if(!page.controllers) {
@@ -652,7 +652,7 @@ module SinglefinModule {
 				var result = parameters;
                 
 				for(var i=0; i<page.controllers.length; i++) {
-                    await page.controllers[i].load(page, result).then(async (_result: any) => {
+                    await page.controllers[i].load(singlefin, page, result).then(async (_result: any) => {
 						result = _result;
 					}, (ex: any) => {
                         if(ex) {
@@ -667,7 +667,7 @@ module SinglefinModule {
 			});
         }
         
-		reloadController(page: any, parameters: any) {			
+		reloadController(singlefin: Singlefin, page: any, parameters: any) {			
 			return new Promise(async (resolve, reject) => {
 				if(!page.controllers) {
 					return resolve(parameters);
@@ -677,7 +677,7 @@ module SinglefinModule {
 				
 				for(var i=0; i<page.controllers.length; i++) {					
 					if(page.controllers[i].reload) {
-						await page.controllers[i].reload(page, result).then(async (_result: any) => {
+						await page.controllers[i].reload(singlefin, page, result).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
                             console.error("reload controller error: " + ex);
@@ -705,7 +705,7 @@ module SinglefinModule {
 			return $();
 		}
 
-		showPage(page: Page, parameters: any) {
+		showPage(singlefin: Singlefin, page: Page, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 				if(!page.controllers) {
 					return resolve(parameters);
@@ -715,7 +715,7 @@ module SinglefinModule {
                 
 				for(var i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].show) {
-						await page.controllers[i].show(page, result).then(async (_result: any) => {
+						await page.controllers[i].show(singlefin, page, result).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
 							if(ex) {
@@ -731,7 +731,7 @@ module SinglefinModule {
 			});
 		}
 
-		nextController(page: any, parameters: any) {
+		nextController(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 				if(!page.controllers) {
 					return resolve(parameters);
@@ -741,7 +741,7 @@ module SinglefinModule {
                 
 				for(var i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].next) {
-						await page.controllers[i].next(page, result).then(async (_result: any) => {
+						await page.controllers[i].next(singlefin, page, result).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
 							if(ex) {
@@ -757,7 +757,7 @@ module SinglefinModule {
 			});
 		}
 
-		previousController(page: any, parameters: any) {
+		previousController(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 			
 				if(!page.controllers) {
@@ -768,7 +768,7 @@ module SinglefinModule {
                 
 				for(var i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].previous) {
-						await page.controllers[i].previous(page, result).then(async (_result: any) => {
+						await page.controllers[i].previous(singlefin, page, result).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
 							if(ex) {
@@ -815,7 +815,7 @@ module SinglefinModule {
             }
         }
         
-		resolveUnwindItem(page: Page, parameters: any) {
+		resolveUnwindItem(singlefin: Singlefin, page: Page, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 			
 				if(!page.controllers) {
@@ -826,7 +826,7 @@ module SinglefinModule {
 				
 				for(var i=0; i<page.controllers.length; i++) {					
 					if(page.controllers[i].unwind) {
-						await page.controllers[i].unwind(page, result).then(async (_result: any) => {
+						await page.controllers[i].unwind(singlefin, page, result).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
                             console.error("resolve unwind item error: " + ex);
@@ -895,7 +895,7 @@ module SinglefinModule {
 
 									for(var c=0; c<handlerPage.controllers.length; c++) {
 										if(handlerPage.controllers[c][handler]) {
-											this.addEventHandler(handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
+											this.addEventHandler(singlefin, handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
 										}
 									}
 								}
@@ -932,8 +932,8 @@ module SinglefinModule {
 			});
         }
         
-		addEventHandler(handlerPage: any, page: any, path: string, htmlElement: any, event: any, handler: any, data: any) {
-			htmlElement.on(event, {
+		addEventHandler(singlefin: Singlefin, handlerPage: any, page: any, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
+			/*htmlElement.on(event, {
 				event: event,
 				handler: handler,
 				data: data,
@@ -951,6 +951,33 @@ module SinglefinModule {
 				event.data = null;
 
 				browserEventObject.handler(event);
+			});*/
+			htmlElement.on(eventType, {
+				app: singlefin,
+				event: eventType,
+				handler: handler,
+				data: data,
+				path: path,
+				page: page,
+				target: handlerPage,
+				htmlElement: htmlElement
+			}, (event: any) => {
+				var jqueryEventData = event.data;
+				
+				var eventObject = {
+					jQueryEvent: event,
+					htmlElement: jqueryEventData.htmlElement,
+					target: jqueryEventData.target,
+					path: jqueryEventData.path,
+					eventType: jqueryEventData.eventType
+				};
+
+				//TODO: workaround: per gli elementi surrogati di unwind non si ha sempre disponibile l'htmlElement perchè in realtà viene passato l'oggetto originale (non il surrogato)
+				eventObject.target = eventObject.target.htmlElement ? eventObject.target.htmlElement : eventObject.htmlElement;
+
+				event.data = null;
+
+				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.page, jqueryEventData.data, eventObject);
 			});
         }
         
