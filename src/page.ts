@@ -20,7 +20,9 @@ module SinglefinModule {
 
         private _groupIndex: number = 0;
         private _groupNextStepEnabled: boolean = true;
-        private _groupPreviousStepEnabled: boolean = true;
+		private _groupPreviousStepEnabled: boolean = true;
+
+		private _binding: Binding = new Binding();
         
 
         constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
@@ -191,7 +193,7 @@ module SinglefinModule {
 
         public set groupPreviousStepEnabled(value: boolean) {
             this._groupPreviousStepEnabled = value;
-        }
+		}
 
         draw(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
@@ -606,7 +608,7 @@ module SinglefinModule {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page);
 
 					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
-						surrogate.htmlElement = this.renderView(singlefin, page, viewParameters);
+						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
 						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
 
@@ -693,13 +695,18 @@ module SinglefinModule {
 		
 		renderView(singlefin: Singlefin, page: Page, viewParameters: any) {
 			if(page.view) {
-				var html = this.resolveMarkup(page.view, {
+				var html: string = this.resolveMarkup(page.view, {
 					data: viewParameters,
 					parameters: page.parameters,
-					resources: singlefin.defaultResources
+					resources: singlefin.defaultResources,
+					models: page.models
 				});
 
-				return $(html);
+				var element = $(html);
+
+				this._binding.bind(element, viewParameters);
+
+				return element;
 			}
 
 			return $();
@@ -784,9 +791,9 @@ module SinglefinModule {
 			});
 		}
 
-		resolveMarkup(markup: string, context: any) {
+		resolveMarkup(markup: string, context: any): string {
             try {
-                var markupRegex = /[<][%]([a-zA-z0-9.,;:\+\-\*><=!?|&"'(){}\/\s]{1,})[%][>]/m;
+				var markupRegex = /<%(.*?)%>/sm;
 				
 				var str = markup;
 
@@ -795,9 +802,14 @@ module SinglefinModule {
 				while(match) {
 					var result: any = null;
                 
-					var code = "(() => {" +
-						"result = " + match[1] + ";" +
-					"})()";
+					var code = `(() => {
+						var data = context.data;
+						var parameters = context.parameters;
+						var resources = context.resources;
+						var models = context.models;
+						
+						result = ` + match[1] + `;
+					})()`;
 					
 					eval(code);
 
@@ -813,7 +825,7 @@ module SinglefinModule {
                 
                 return markup;
             }
-        }
+		}
         
 		resolveUnwindItem(singlefin: Singlefin, page: Page, parameters: any) {
 			return new Promise(async (resolve, reject) => {
@@ -982,7 +994,7 @@ module SinglefinModule {
         }
         
 		close(singlefin: Singlefin, parameters: any) {
-			return new Promise((resolve, reject) => {				
+			return new Promise((resolve, reject) => {
 				this.closeItems(singlefin, this, parameters).then(() => {
 					this.closeController(this, parameters).then(() => {
 						if(this.disabled == true) {
@@ -1028,7 +1040,7 @@ module SinglefinModule {
         }
         
 		closeItems(singlefin: Singlefin, page: any, parameters: any) {
-			return new Promise((resolve, reject) => {				
+			return new Promise((resolve, reject) => {
 				if(page.group.length > 0) {
 					page.groupIndex = 0;
 				}
