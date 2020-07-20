@@ -27,14 +27,48 @@ module SinglefinModule {
             "it-IT": {}
         };
 
+        get instances() {
+            return this._instances;
+        }
+
+        set resources(_resources: any) {
+            this._resources = _resources;
+        }
+
+        get resources() {
+            return this._resources;
+        }
+
+        get defaultResources() {
+            return this._resources[this._defaultLanguage];
+        }
+
+        set styles(_styles: string[]) {
+            this._styles = _styles;
+        }
+
+        get styles() {
+            return this._styles;
+        }
+
+        get body() {
+            return this._body;
+        }
+
+        get pages() {
+            return this._pages;
+        }
+
+        get handlers() {
+            return this._handlers;
+        }
+
+        getBody() {
+            return this._pages[this._body];
+        }
+
         init(config: any) {
             try {
-                var body: Page = new Page("body", false, "", this._body, "", null, [], {}, [], [], [], [], "", [], null);
-
-                body.htmlElement = $("body");
-
-                this._pages[this._body] = body;
-
                 var params = this.getUrlParams(window.location.href);
 
                 var configLoader = new ConfigLoader();
@@ -355,40 +389,10 @@ module SinglefinModule {
             return "/";
         }
 
-        get instances() {
-            return this._instances;
-        }
+        addBody(name: string) {
+            var body: Page = new Page(name, false, "", this._body, "", null, [], {}, [], [], [], [], "", [], null);
 
-        set resources(_resources: any) {
-            this._resources = _resources;
-        }
-
-        get resources() {
-            return this._resources;
-        }
-
-        get defaultResources() {
-            return this._resources[this._defaultLanguage];
-        }
-
-        set styles(_styles: string[]) {
-            this._styles = _styles;
-        }
-
-        get styles() {
-            return this._styles;
-        }
-
-        get body() {
-            return this._body;
-        }
-
-        get pages() {
-            return this._pages;
-        }
-
-        get handlers() {
-            return this._handlers;
+            this._pages[this._body] = body;
         }
 
         addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any): Page {

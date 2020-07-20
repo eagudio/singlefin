@@ -411,7 +411,7 @@ module SinglefinModule {
 		}
         
 		drawBody(singlefin: Singlefin, parameters: any) {
-			var body = singlefin.pages[singlefin.body];
+			var body = singlefin.getBody();
 			
 			if(body.htmlElement) {
 				return Promise.resolve(body.htmlElement);
@@ -419,7 +419,13 @@ module SinglefinModule {
 
 			return new Promise((resolve, reject) => {
 				this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
-					body.htmlElement = this.renderView(singlefin, body, viewParameters);
+					var bodyHtmlElement = $("#" + body.name);
+
+					var view = this.renderView(singlefin, body, viewParameters);
+
+					bodyHtmlElement.append(view);
+					
+					body.htmlElement = bodyHtmlElement;
 	
 					resolve(body.htmlElement);
 				}, (ex: any) => {
@@ -484,7 +490,7 @@ module SinglefinModule {
 		drawParent(singlefin: Singlefin, page: any, pageName: string, parameters: any) {
 			return new Promise((resolve, reject) => {
 				if(pageName == singlefin.body) {
-					return resolve(singlefin.pages.__body.htmlElement);
+					return resolve(singlefin.getBody().htmlElement);
 				}
 				
 				var parentPage = singlefin.pages[pageName];

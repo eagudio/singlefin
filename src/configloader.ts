@@ -10,26 +10,26 @@ module SinglefinModule {
 			if(!schema) {
 				throw "schema cannot be null or undefined";
 			}
-	
-			if(!schema.body) {
-				throw "schema body missing";
-			}
 
 			this.processResources(resources, singlefin);
 			
 			singlefin.styles = styles;
-    
-			var body = schema.body;
+	
+			var bodyName = Object.keys(schema)[0];
+
+			singlefin.addBody(bodyName);
+
+			var body = schema[bodyName];
 
 			if(body.view) {
-				singlefin.pages.__body.htmlElement = null;
-				singlefin.pages.__body.view = "text!" + body.view;
+				singlefin.getBody().htmlElement = null;
+				singlefin.getBody().view = "text!" + body.view;
 
-				singlefin.instances.push(singlefin.pages.__body.view);
+				singlefin.instances.push(singlefin.getBody().view);
 			}
 
 			if(body.controllers && Array.isArray(body.controllers)) {
-				singlefin.pages.__body.controllers = body.controllers;
+				singlefin.getBody().controllers = body.controllers;
 				
 				for(var i=0; i<body.controllers.length; i++) {
 					singlefin.instances.push(body.controllers[i]);
@@ -37,14 +37,14 @@ module SinglefinModule {
 			}
 
 			if(body.models) {
-				singlefin.pages.__body.models = body.models;
+				singlefin.getBody().models = body.models;
 
 				for (var modelKey in body.models) {
 					singlefin.instances.push(body.models[modelKey]);
 				}
 			}
 
-			singlefin.pages.__body.events = body.events;
+			singlefin.getBody().events = body.events;
 
 			this.addHandlers(singlefin.body, singlefin);
 			
