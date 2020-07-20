@@ -8,7 +8,6 @@ module SinglefinModule {
         private _path: string;
         private _view: string;
         private _controllers: any[];
-        private _models: any[];
         private _replace: any[];
         private _append: any[];
         private _group: any[];
@@ -25,7 +24,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
+        constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
             this._name = name;
             this._disabled = disabled;
             this._action = action;
@@ -33,7 +32,6 @@ module SinglefinModule {
             this._path = path;
             this._view = view;
             this._controllers = controllers,
-            this._models = models,
             this._replace = replace,
             this._append = append,
             this._group = group,
@@ -97,14 +95,6 @@ module SinglefinModule {
         
         public set controllers(value: any[]) {
             this._controllers = value;
-        }
-
-        public get models(): any[] {
-            return this._models;
-        }
-        
-        public set models(value: any[]) {
-            this._models = value;
         }
 
         public get replace(): any[] {
@@ -502,10 +492,6 @@ module SinglefinModule {
 				}
 				
 				this.drawContainer(singlefin, page, parentPage.container, parameters).then((htmlContainerElement) => {
-                    if(!page.models) {
-						page.models = parentPage.models;
-					}
-
 					this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
 						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
 
@@ -537,10 +523,6 @@ module SinglefinModule {
 				for(var i=0; i<children.length; i++) {
 					var childPageName = children[i];
                     var childPage = singlefin.pages[childPageName];
-
-					if(!childPage.models) {
-						childPage.models = parent.models;
-					}
 
 					if(childPage.action == "group") {
 						if(parent.groupIndex != i) {
@@ -705,7 +687,7 @@ module SinglefinModule {
 					data: viewParameters,
 					parameters: page.parameters,
 					resources: singlefin.defaultResources,
-					models: page.models
+					models: singlefin.models
 				});
 
 				var element = $(html);

@@ -5,21 +5,30 @@ module SinglefinModule {
         load(config: any, singlefin: Singlefin) {
 			var resources = config.resources;
 			var styles = config.styles;
-			var schema = config.schema;
+			var models = config.models;
+			var pages = config.pages;
 			
-			if(!schema) {
-				throw "schema cannot be null or undefined";
+			if(!pages) {
+				throw "pages cannot be null or undefined";
 			}
 
 			this.processResources(resources, singlefin);
 			
 			singlefin.styles = styles;
+
+			if(models) {
+				singlefin.models = models;
+
+				for (var modelKey in models) {
+					singlefin.instances.push(models[modelKey]);
+				}
+			}
 	
-			var bodyName = Object.keys(schema)[0];
+			var bodyName = Object.keys(pages)[0];
 
 			singlefin.addBody(bodyName);
 
-			var body = schema[bodyName];
+			var body = pages[bodyName];
 
 			if(body.view) {
 				singlefin.getBody().htmlElement = null;
@@ -36,22 +45,14 @@ module SinglefinModule {
 				}
 			}
 
-			if(body.models) {
-				singlefin.getBody().models = body.models;
-
-				for (var modelKey in body.models) {
-					singlefin.instances.push(body.models[modelKey]);
-				}
-			}
-
 			singlefin.getBody().events = body.events;
 
 			this.addHandlers(singlefin.body, singlefin);
 			
-			this.processSchema("append", singlefin.body, body.append, singlefin);
-			this.processSchema("replace", singlefin.body, body.replace, singlefin);
-			this.processSchema("group", singlefin.body, body.group, singlefin);
-			this.processSchema("unwind", singlefin.body, body.unwind, singlefin);
+			this.processPages("append", singlefin.body, body.append, singlefin);
+			this.processPages("replace", singlefin.body, body.replace, singlefin);
+			this.processPages("group", singlefin.body, body.group, singlefin);
+			this.processPages("unwind", singlefin.body, body.unwind, singlefin);
 		}
 
 		processResources(resources: any, singlefin: Singlefin) {
@@ -77,7 +78,7 @@ module SinglefinModule {
 			}
         }
         
-        processSchema(action: string, containerName: string, schema: any, singlefin: Singlefin) {
+        processPages(action: string, containerName: string, pages: any, singlefin: Singlefin) {
 			if(!action) {
 				return;
 			}
@@ -86,13 +87,13 @@ module SinglefinModule {
 				throw "container missed";
 			}
 
-			if(schema == null) {
+			if(pages == null) {
 				return;
 			}
 
-			for(var i=0; i<schema.length; i++) {
-				var pageName = Object.keys(schema[i])[0];
-				var page = schema[i][pageName];
+			for(var i=0; i<pages.length; i++) {
+				var pageName = Object.keys(pages[i])[0];
+				var page = pages[i][pageName];
 
 				var disabled: boolean = false;
 
@@ -102,31 +103,31 @@ module SinglefinModule {
 
 				var pagePath = containerName + "/" + pageName;
 
-				var replaceChildren = this.processChildrenSchema(pagePath, page.replace);
-				var appendChildren = this.processChildrenSchema(pagePath, page.append);
-				var groupChildren = this.processChildrenSchema(pagePath, page.group);
-				var unwindChildren = this.processChildrenSchema(pagePath, page.unwind);
+				var replaceChildren = this.processChildrenPage(pagePath, page.replace);
+				var appendChildren = this.processChildrenPage(pagePath, page.append);
+				var groupChildren = this.processChildrenPage(pagePath, page.group);
+				var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
 
-				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
 
-				this.processSchema("replace", pagePath, page.replace, singlefin);
-				this.processSchema("append", pagePath, page.append, singlefin);
-				this.processSchema("group", pagePath, page.group, singlefin);
-				this.processSchema("unwind", pagePath, page.unwind, singlefin);
+				this.processPages("replace", pagePath, page.replace, singlefin);
+				this.processPages("append", pagePath, page.append, singlefin);
+				this.processPages("group", pagePath, page.group, singlefin);
+				this.processPages("unwind", pagePath, page.unwind, singlefin);
 
 				this.addHandlers(pagePath, singlefin);
 			}
         }
         
-		processChildrenSchema(parentPagePath: string, childrenSchema: any[]) {
+		processChildrenPage(parentPagePath: string, childrenPage: any[]) {
 			var children: any[] = [];
 			
-			if(!childrenSchema) {
+			if(!childrenPage) {
 				return children;
 			}
 
-			for(var i=0; i<childrenSchema.length; i++) {
-				var childPageName = Object.keys(childrenSchema[i])[0];
+			for(var i=0; i<childrenPage.length; i++) {
+				var childPageName = Object.keys(childrenPage[i])[0];
 				
 				var childPagePath = parentPagePath + "/" + childPageName;
 

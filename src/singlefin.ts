@@ -21,6 +21,7 @@ module SinglefinModule {
         private _instances: any[] = [];
         private _styles: string[] = [];
         private _pages: any = {};
+        private _models: any = {};
         private _handlers: any = {};
         private _defaultLanguage: string = "it-IT";
         private _resources: any = {
@@ -57,6 +58,14 @@ module SinglefinModule {
 
         get pages() {
             return this._pages;
+        }
+
+        set models(_models: any) {
+            this._models = _models;
+        }
+
+        get models() {
+            return this._models;
         }
 
         get handlers() {
@@ -390,12 +399,12 @@ module SinglefinModule {
         }
 
         addBody(name: string) {
-            var body: Page = new Page(name, false, "", this._body, "", null, [], {}, [], [], [], [], "", [], null);
+            var body: Page = new Page(name, false, "", this._body, "", null, [], [], [], [], [], "", [], null);
 
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], models: any, replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any): Page {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any): Page {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -405,17 +414,11 @@ module SinglefinModule {
 					this._instances.push(controllers[i]);
 				};
 			}
-
-			if(models) {				
-				for (var modelKey in models) {
-					this._instances.push(models[modelKey]);
-				}
-			}
             
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
-            this._pages[pagePath] = new Page(pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, models, replace, append, group, unwind, key, events, parameters);
+            this._pages[pagePath] = new Page(pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters);
 
             return this._pages[pagePath];
         }
@@ -429,7 +432,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var pathContainer = page.container.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(name, page.disabled, page.action, page.container, pathContainer + "/" + name, page.view, page.controllers, page.models, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+            this._pages[path] = new Page(name, page.disabled, page.action, page.container, pathContainer + "/" + name, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
 
             return this._pages[path];
         }
@@ -463,6 +466,10 @@ module SinglefinModule {
                             this._resources[key] = loader.getInstance(this._resources[key]);
                         }
 
+                        for (var key in this._models) {
+                            this._models[key] = loader.getInstance(this._models[key]);
+                        }
+
                         for (var key in this._pages) {
                             if(this._pages[key].view) {
                                 this._pages[key].view = loader.getInstance(this._pages[key].view);
@@ -477,18 +484,6 @@ module SinglefinModule {
                             }
 
                             this._pages[key].controllers = controllers;
-
-                            var models: any = null;
-
-                            if(this._pages[key].models) {
-                                models = {};
-
-                                for (var modelKey in this._pages[key].models) {
-                                    models[modelKey] = loader.getInstance(this._pages[key].models[modelKey]);
-                                }
-                            }
-
-                            this._pages[key].models = models;
                         }
 
                         resolve();
