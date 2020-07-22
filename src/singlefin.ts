@@ -84,7 +84,7 @@ module SinglefinModule {
 
                 configLoader.load(config, this);
 
-                this.loadInstances().then(() => {
+                this.loadInstances(config.paths).then(() => {
                     var _homepage = config.homepage;
                 
                     if(params) {
@@ -452,34 +452,34 @@ module SinglefinModule {
 			return surrogates;
         }
         
-        private loadInstances() {
+        private loadInstances(pathsMap: any) {
 			return new Promise(async (resolve, reject) => {
                 var loader = new Loader();
 
-                loader.load(this._instances).then(() => {
+                loader.load(this._instances, pathsMap).then(() => {
                     try {
                         for(var i=0; i<this._styles.length; i++) {
                             $('head').append(`<link rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
                         }
 
                         for (var key in this._resources) {
-                            this._resources[key] = loader.getInstance(this._resources[key]);
+                            this._resources[key] = loader.getInstance(this._resources[key], pathsMap);
                         }
 
                         for (var key in this._models) {
-                            this._models[key] = loader.getInstance(this._models[key]);
+                            this._models[key] = loader.getInstance(this._models[key], pathsMap);
                         }
 
                         for (var key in this._pages) {
                             if(this._pages[key].view) {
-                                this._pages[key].view = loader.getInstance(this._pages[key].view);
+                                this._pages[key].view = loader.getInstance(this._pages[key].view, pathsMap);
                             }
 
                             var controllers: any[] = [];
 
                             if(this._pages[key].controllers && Array.isArray(this._pages[key].controllers)) {
                                 controllers = this._pages[key].controllers.map((controller: string) => {
-                                    return loader.getInstance(controller);
+                                    return loader.getInstance(controller, pathsMap);
                                 });
                             }
 
