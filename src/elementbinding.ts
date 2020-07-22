@@ -28,26 +28,50 @@ module SinglefinModule {
         is(container: any, element: any, data: any, key: string) {
         }
 
-        outClass(container: any, element: any, data: any, exp: string) {
-            var validator: any = {
-                set: function(target: any, prop: any, value: any) {
-                    //TODO: esegue il codice di exp
-                    //TODO: ottiene un oggetto di nome classe e boolean (true se la classe deve essere aggiunta, false se deve essere tolta)
-                    //TODO: scorre l'oggetto e aggiunge e toglie classi
-                    console.log("hi!!!");
-                    
-                    target[prop] = value;
-                    
-                    return true;
+        outClass(container: any, element: any, dataProxy: DataProxy, exp: string) {
+            dataProxy.setHandler({
+                element: element,
+                exp: exp,
+                data: dataProxy.proxy
+            }, (parameters: any) => {
+                try {
+                    var proxyDataObject = new ProxyDataObject();
+                    var classes: any = proxyDataObject.build(parameters.data, exp);
+
+                    for(var key in classes) {
+                        if(classes[key] == true) {
+                            parameters.element.addClass(key);
+                        }
+                        else {
+                            parameters.element.removeClass(key);
+                        }
+                    }
                 }
-            };
-            
-            //TODO: data deve essere un Proxy... dove!?
-            const proxy = new Proxy(data, validator);
+                catch(ex) {
+                    console.error("element class binding error: " + ex);
+                }
+            });
         }
 
-        outAttribute() {
+        outAttribute(container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
+            dataProxy.setHandler({
+                element: element,
+                key: key,
+                exp: exp,
+                data: dataProxy.proxy
+            }, (parameters: any) => {
+                try {
+                    var proxyDataObject = new ProxyDataObject();
+                    var result: any = proxyDataObject.build(parameters.data, exp);
 
+                    parameters.element.attr(parameters.key, result);
+
+                    console.log(result);
+                }
+                catch(ex) {
+                    console.error("element attribute binding error: " + ex);
+                }
+            });
         }
     }
 }

@@ -190,9 +190,11 @@ module SinglefinModule {
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
 						this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
-							this.htmlElement = this.renderView(singlefin, this, viewParameters);
+							var dataProxy: DataProxy = new DataProxy(viewParameters);
+							
+							this.htmlElement = this.renderView(singlefin, this, dataProxy);
 	
-							this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
+							this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
 							
 							this.drawItems(singlefin, this, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, this);
@@ -253,9 +255,11 @@ module SinglefinModule {
 					this.reloadController(singlefin, this, parameters).then((viewParameters: any) => {
 						var previousPageHtmlElement = this.htmlElement;
 
-						this.htmlElement = this.renderView(singlefin, this, viewParameters);
+						var dataProxy: DataProxy = new DataProxy(viewParameters);
 
-						this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
+						this.htmlElement = this.renderView(singlefin, this, dataProxy);
+
+						this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
 						
 						this.drawItems(singlefin, this, viewParameters).then(() => {
 							previousPageHtmlElement.replaceWith(this.htmlElement);
@@ -411,7 +415,9 @@ module SinglefinModule {
 				this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
 					var bodyHtmlElement = $("#" + body.name);
 
-					var view = this.renderView(singlefin, body, viewParameters);
+					var dataProxy: DataProxy = new DataProxy(viewParameters);
+
+					var view = this.renderView(singlefin, body, dataProxy);
 
 					bodyHtmlElement.append(view);
 					
@@ -493,9 +499,11 @@ module SinglefinModule {
 				
 				this.drawContainer(singlefin, page, parentPage.container, parameters).then((htmlContainerElement) => {
 					this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
-						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
+						var dataProxy: DataProxy = new DataProxy(viewParameters);
+						
+						parentPage.htmlElement = this.renderView(singlefin, parentPage, dataProxy);
 
-						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, viewParameters);
+						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, dataProxy.proxy);
 						
 						this.addHtmlElement(htmlContainerElement, parentPage);
 
@@ -547,9 +555,11 @@ module SinglefinModule {
 							});
 						}
 						else {
-							childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
+							var dataProxy: DataProxy = new DataProxy(viewParameters);
 
-							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, viewParameters);
+							childPage.htmlElement = this.renderView(singlefin, childPage, dataProxy);
+
+							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, dataProxy.proxy);
 
 							this.addHtmlElement(parent.htmlElement, childPage);
 
@@ -596,9 +606,11 @@ module SinglefinModule {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page);
 
 					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
-						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
+						var dataProxy: DataProxy = new DataProxy(viewParameters);
 
-						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
+						surrogate.htmlElement = this.renderView(singlefin, surrogate, dataProxy);
+
+						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, dataProxy.proxy);
 
 						await this.drawItems(singlefin, surrogate, viewParameters).then(async () => {
 							this.addHtmlElement(parent.htmlElement, surrogate);
@@ -681,23 +693,23 @@ module SinglefinModule {
 			});
 		}
 		
-		renderView(singlefin: Singlefin, page: Page, viewParameters: any) {
-			if(page.view) {
-				var html: string = this.resolveMarkup(page.view, {
-					data: viewParameters,
-					parameters: page.parameters,
-					resources: singlefin.defaultResources,
-					models: singlefin.models
-				});
-
-				var element = $(html);
-
-				this._binding.bind(element, viewParameters);
-
-				return element;
+		renderView(singlefin: Singlefin, page: Page, dataProxy: DataProxy) {
+			if(!page.view) {
+				return $();
 			}
 
-			return $();
+			var html: string = this.resolveMarkup(page.view, {
+				data: dataProxy.proxy,
+				parameters: page.parameters,
+				resources: singlefin.defaultResources,
+				models: singlefin.models
+			});
+
+			var element = $(html);
+
+			this._binding.bind(element, dataProxy);
+
+			return element;
 		}
 
 		showPage(singlefin: Singlefin, page: Page, parameters: any) {
