@@ -28,6 +28,11 @@ module SinglefinModule {
             "it-IT": {}
         };
 
+
+        constructor(config: any) {
+            this.init(config);
+        }
+
         get instances() {
             return this._instances;
         }

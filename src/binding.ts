@@ -11,7 +11,14 @@ module SinglefinModule {
             if(!element) {
 				return;
 			}
-            
+ 
+            this.in(element, dataProxy);
+            this.is(element, dataProxy);
+            this.outClass(element, dataProxy);
+            this.outAttribute(element, dataProxy);
+        }
+
+        in(element: any, dataProxy: DataProxy) {
             var children = element.find("[in]");
 
             for(var i=0; i<children.length; i++) {
@@ -26,7 +33,9 @@ module SinglefinModule {
                 this.radioBinding.in(element, child, dataProxy.proxy, key);
                 this.selectBinding.in(element, child, dataProxy.proxy, key);
             }
+        }
 
+        is(element: any, dataProxy: DataProxy) {
             var children = element.find("[is]");
 
             for(var i=0; i<children.length; i++) {
@@ -41,7 +50,9 @@ module SinglefinModule {
                 this.radioBinding.is(element, child, dataProxy.proxy, key);
                 this.selectBinding.is(element, child, dataProxy.proxy, key);
             }
+        }
 
+        outClass(element: any, dataProxy: DataProxy) {
             var children = element.find("[out-class]");
 
             for(var i=0; i<children.length; i++) {
@@ -51,13 +62,9 @@ module SinglefinModule {
 
                 this.elementBinding.outClass(element, child, dataProxy, key);
             }
-
-            this.findAttributeByNameStartWith(element, "out-attribute-", ((child: any, attributeName: string, attributeValue: string) => {
-                this.elementBinding.outAttribute(element, child, dataProxy, attributeName, attributeValue);
-            }));
         }
 
-        findAttributeByNameStartWith(element: any, attributeName: string, action: any) {
+        outAttribute(element: any, dataProxy: DataProxy) {
             if(!element) {
 				return;
             }
@@ -65,11 +72,13 @@ module SinglefinModule {
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
 					if(attribute.specified) {
-						if(attribute.name.startsWith(attributeName)) {
-                            var onAttribute = attribute.name.split(attributeName);
+						if(!attribute.name.startsWith("out-class") && attribute.name.startsWith("out-")) {
+                            var onAttribute = attribute.name.split("out-");
                             var elementAttributeName = onAttribute[1];
                             
-                            action(element, elementAttributeName, attribute.value);
+                            this.elementBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.inputBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.textareaBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
                         }
                     }
                 });
@@ -78,7 +87,7 @@ module SinglefinModule {
             var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.findAttributeByNameStartWith($(item), attributeName, action);
+				this.outAttribute($(item), dataProxy);
 			});
         }
     }

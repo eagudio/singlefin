@@ -29,7 +29,7 @@ module SinglefinModule {
         }
 
         outClass(container: any, element: any, dataProxy: DataProxy, exp: string) {
-            dataProxy.setHandler({
+            dataProxy.addHandler({
                 element: element,
                 exp: exp,
                 data: dataProxy.proxy
@@ -54,7 +54,17 @@ module SinglefinModule {
         }
 
         outAttribute(container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
-            dataProxy.setHandler({
+            if(element.is('textarea') || element.is('input') || element.is('select')) {
+                return;
+            }
+
+            if(!key) {
+                console.error("textarea attribute binding error: variable key is undefined or null");
+                
+                return;
+            }
+
+            dataProxy.addHandler({
                 element: element,
                 key: key,
                 exp: exp,
@@ -65,8 +75,6 @@ module SinglefinModule {
                     var result: any = proxyDataObject.build(parameters.data, exp);
 
                     parameters.element.attr(parameters.key, result);
-
-                    console.log(result);
                 }
                 catch(ex) {
                     console.error("element attribute binding error: " + ex);

@@ -199,7 +199,7 @@ module SinglefinModule {
 							this.drawItems(singlefin, this, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, this);
 
-								this.showPage(singlefin, this, viewParameters).then(() => {
+								this.showPage(singlefin, this, dataProxy.proxy).then(() => {
 									resolve(this.htmlElement);
 								}, () => {
 									console.error("draw error");
@@ -564,7 +564,7 @@ module SinglefinModule {
 							this.addHtmlElement(parent.htmlElement, childPage);
 
 							await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
-								await this.showPage(singlefin, childPage, viewParameters).then(() => {
+								await this.showPage(singlefin, childPage, dataProxy.proxy).then(() => {
 
 								}, () => {
 									console.error("draw children error");
@@ -876,7 +876,7 @@ module SinglefinModule {
 			}
         }
         
-		addEventsHandlers(singlefin: Singlefin, page: any, element: any, parameters: any) {
+		addEventsHandlers(singlefin: Singlefin, page: Page, element: any, parameters: any) {
 			if(!element) {
 				return;
 			}
@@ -900,6 +900,15 @@ module SinglefinModule {
 
 								if(singlefin.handlers[handler]) {
 									paths = singlefin.handlers[handler];
+								}
+
+								for(var z=0; z<page.controllers.length; z++) {
+									var controller = page.controllers[z];
+									var method = controller[handler];
+
+									if(method) {
+										this.addEventHandler(singlefin, page, page, page.path, element, event, method, parameters);
+									}
 								}
 
 								for(var p=0; p<paths.length; p++) {
@@ -945,25 +954,6 @@ module SinglefinModule {
         }
         
 		addEventHandler(singlefin: Singlefin, handlerPage: any, page: any, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
-			/*htmlElement.on(event, {
-				event: event,
-				handler: handler,
-				data: data,
-				path: path,
-				page: page,
-				target: handlerPage,
-				htmlElement: htmlElement
-			}, (event: any) => {
-				var browserEventObject = event.data;
-
-				//TODO: workaround: per gli elementi surrogati di unwind non si ha sempre disponibile l'htmlElement perchè in realtà viene passato l'oggetto originale (non il surrogato)
-				browserEventObject.target = browserEventObject.target.htmlElement ? browserEventObject.target.htmlElement : browserEventObject.htmlElement;
-
-				event.browser = browserEventObject;
-				event.data = null;
-
-				browserEventObject.handler(event);
-			});*/
 			htmlElement.on(eventType, {
 				app: singlefin,
 				event: eventType,
