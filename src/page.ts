@@ -912,7 +912,7 @@ module SinglefinModule {
 								}
 
 								for(var p=0; p<paths.length; p++) {
-									var handlerPage = singlefin.pages[paths[p]];
+									var handlerPage: Page = singlefin.pages[paths[p]];
 
 									for(var c=0; c<handlerPage.controllers.length; c++) {
 										if(handlerPage.controllers[c][handler]) {
@@ -953,7 +953,7 @@ module SinglefinModule {
 			});
         }
         
-		addEventHandler(singlefin: Singlefin, handlerPage: any, page: any, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
+		addEventHandler(singlefin: Singlefin, handlerPage: Page, page: Page, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
 			htmlElement.on(eventType, {
 				app: singlefin,
 				event: eventType,
@@ -969,17 +969,18 @@ module SinglefinModule {
 				var eventObject = {
 					jQueryEvent: event,
 					htmlElement: jqueryEventData.htmlElement,
+					htmlElementTarget: jqueryEventData.htmlElement,
 					target: jqueryEventData.target,
 					path: jqueryEventData.path,
 					eventType: jqueryEventData.eventType
 				};
 
 				//TODO: workaround: per gli elementi surrogati di unwind non si ha sempre disponibile l'htmlElement perchè in realtà viene passato l'oggetto originale (non il surrogato)
-				eventObject.target = eventObject.target.htmlElement ? eventObject.target.htmlElement : eventObject.htmlElement;
+				eventObject.htmlElementTarget = eventObject.target.htmlElement ? eventObject.target.htmlElement : eventObject.htmlElement;
 
 				event.data = null;
 
-				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.target, jqueryEventData.data, eventObject);
+				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.page, jqueryEventData.data, eventObject);
 			});
         }
         
