@@ -603,7 +603,7 @@ module SinglefinModule {
 				//TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
 
 				for(var i=0; i<parameters.length; i++) {
-                    var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page);
+                    var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 
 					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
 						var dataProxy: DataProxy = new DataProxy(viewParameters);
@@ -979,7 +979,7 @@ module SinglefinModule {
 
 				event.data = null;
 
-				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.page, jqueryEventData.data, eventObject);
+				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.target, jqueryEventData.data, eventObject);
 			});
         }
         

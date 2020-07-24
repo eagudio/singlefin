@@ -428,16 +428,16 @@ module SinglefinModule {
             return this._pages[pagePath];
         }
 
-        addSurrogate(name: string, path: string, page: Page) {
+        addSurrogate(name: string, path: string, containerPath: string, page: Page) {
             var replaceChildren = this.createSurrogates(path, page.replace);
             var appendChildren = this.createSurrogates(path, page.append);
             var groupChildren = this.createSurrogates(path, page.group);
             var unwindChildren = this.createSurrogates(path, page.unwind);
 
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
-            var pathContainer = page.container.replace(bodyRegexp, "");
+            var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(name, page.disabled, page.action, page.container, pathContainer + "/" + name, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+            this._pages[path] = new Page(name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
 
             return this._pages[path];
         }
@@ -451,7 +451,7 @@ module SinglefinModule {
 
 				surrogates.push(pagePath);
 
-				this.addSurrogate(page.name, pagePath, page);
+				this.addSurrogate(page.name, pagePath, path, page);
             }
 
 			return surrogates;
