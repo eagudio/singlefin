@@ -28,6 +28,9 @@ module SinglefinModule {
             "it-IT": {}
         };
 
+        private _model: any = {};
+        private _modelProxy: any;
+
 
         constructor(config: any) {
             this.init(config);
@@ -77,12 +80,22 @@ module SinglefinModule {
             return this._handlers;
         }
 
+        public get modelProxy(): any {
+            return this._modelProxy;
+        }
+
+        public get model(): any {
+            return this._modelProxy.proxy;
+        }
+
         getBody() {
             return this._pages[this._body];
         }
 
         init(config: any) {
             try {
+                this._modelProxy = new DataProxy(this._model);
+
                 var params = this.getUrlParams(window.location.href);
 
                 var configLoader = new ConfigLoader();
@@ -139,7 +152,7 @@ module SinglefinModule {
         refresh(pageName: string, parameters: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
-
+                
                 if(_pageName == this.body) {
 					return resolve(this._pages[_pageName]);
 				}
@@ -150,7 +163,7 @@ module SinglefinModule {
                     console.error("an error occurred during refresh page '" + pageName + "': page not found");
                     
                     return resolve();
-				}
+                }
 
                 page.redraw(this, parameters).then(() => {
                     resolve(page);
@@ -543,13 +556,7 @@ module SinglefinModule {
 }
 
 interface Window {
-    //browser: any;
-    //singlefin: any;
     Singlefin: SinglefinModule.Singlefin;
-    //$s: any;
 }
 
-//window.browser = window.browser || new SinglefinModule.Singlefin();
-//window.singlefin = window.singlefin || window.browser || new SinglefinModule.Singlefin();
 window.Singlefin = window.Singlefin || SinglefinModule.Singlefin;
-//window.$s = window.$s || window.browser || new SinglefinModule.Singlefin();

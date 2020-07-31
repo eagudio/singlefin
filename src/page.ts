@@ -705,11 +705,20 @@ module SinglefinModule {
 				models: singlefin.models
 			});
 
-			var element = $(html);
+			var htmlElement = $(html);
 
-			this._binding.bind(element, dataProxy);
+			/*this._binding = new Binding();
 
-			return element;
+			this._binding.bind(page, htmlElement, singlefin.modelProxy);*/
+			page.bind(singlefin, htmlElement);
+
+			return htmlElement;
+		}
+
+		bind(singlefin: Singlefin, htmlElement: any) {
+			this._binding = new Binding();
+
+			this._binding.bind(this, htmlElement, singlefin.modelProxy);
 		}
 
 		showPage(singlefin: Singlefin, page: Page, parameters: any) {

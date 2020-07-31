@@ -28,7 +28,7 @@ module SinglefinModule {
         is(container: any, element: any, data: any, key: string) {
         }
 
-        outAttribute(container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
+        outAttribute(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
             if(!element.is('input')) {
                 return;
             }
@@ -39,7 +39,7 @@ module SinglefinModule {
                 return;
             }
 
-            dataProxy.addHandler({
+            var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 key: key,
                 exp: exp,
@@ -60,6 +60,8 @@ module SinglefinModule {
                     console.error("element attribute binding error: " + ex);
                 }
             });
+
+            dataProxyHandlers.push(dataProxyHandler);
         }
     }
 }

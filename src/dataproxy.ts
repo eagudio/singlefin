@@ -3,20 +3,29 @@ module SinglefinModule {
         private _data: any;
         private _proxy: any = null;
         private _proxyHandler: any = null;
-        private _dataProxyHandlers: DataProxyHandler[] = [];
+        private _dataProxyHandlers: any = {};
         
         constructor(_data: any) {
             this._data = _data;
             this._proxy = _data;
 
             this._proxyHandler = {
-                set: ((target: any, prop: any, value: any) => {
-                    target[prop] = value;
+                get(target: any, key: any) {
+                    if (typeof target[key] === 'object' && target[key] !== null) {
+                        return new Proxy(target[key], this._proxyHandler)
+                    }
 
-                    for(var i=0; i<this._dataProxyHandlers.length; i++) {
-                        var dataProxyHandler: DataProxyHandler = this._dataProxyHandlers[i];
+                    return target[key];
+                },
+                set: ((target: any, key: any, value: any) => {
+                    target[key] = value;
 
-                        dataProxyHandler.handler(dataProxyHandler.parameters);
+                    for(var dataProxyHandlerKey in this._dataProxyHandlers) {
+                        var dataProxyHandlers: DataProxyHandler[] = this._dataProxyHandlers[dataProxyHandlerKey];
+
+                        for(var i=0; i<dataProxyHandlers.length; i++) {
+                            dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
+                        }
                     }
                     
                     return true;
@@ -32,10 +41,8 @@ module SinglefinModule {
             return this._proxy;
         }
 
-        addHandler(parameters: any, handler: any) {
-            var dataProxyHandler: DataProxyHandler = new DataProxyHandler(parameters, handler);
-            
-            this._dataProxyHandlers.push(dataProxyHandler);
+        addHandlers(page: Page, dataProxyHandlers: DataProxyHandler[]) {
+            this._dataProxyHandlers[page.path] = dataProxyHandlers;
         }
     }
 }

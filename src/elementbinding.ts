@@ -28,8 +28,8 @@ module SinglefinModule {
         is(container: any, element: any, data: any, key: string) {
         }
 
-        outClass(container: any, element: any, dataProxy: DataProxy, exp: string) {
-            dataProxy.addHandler({
+        outClass(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, exp: string) {
+            var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 exp: exp,
                 data: dataProxy.proxy
@@ -51,9 +51,11 @@ module SinglefinModule {
                     console.error("element class binding error: " + ex);
                 }
             });
+
+            dataProxyHandlers.push(dataProxyHandler);
         }
 
-        outAttribute(container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
+        outAttribute(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
             if(element.is('textarea') || element.is('input') || element.is('select')) {
                 return;
             }
@@ -64,7 +66,7 @@ module SinglefinModule {
                 return;
             }
 
-            dataProxy.addHandler({
+            var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 key: key,
                 exp: exp,
@@ -80,6 +82,8 @@ module SinglefinModule {
                     console.error("element attribute binding error: " + ex);
                 }
             });
+
+            dataProxyHandlers.push(dataProxyHandler);
         }
     }
 }

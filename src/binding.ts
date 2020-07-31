@@ -7,15 +7,25 @@ module SinglefinModule {
         private radioBinding: RadioBinding = new RadioBinding();
         private selectBinding: SelectBinding = new SelectBinding();
 
-        bind(element: any, dataProxy: DataProxy) {
+        private _dataProxyHandlers: DataProxyHandler[] = [];
+        
+
+        //TODO: la memoria potrebbe crescere con l'aumentare dei surrogati, perchè vengono instanziati nuovi handler. Eliminare gli handler quando vengono eliminati i surrogati
+        bind(page: Page, element: any, dataProxy: DataProxy) {
             if(!element) {
 				return;
-			}
+            }
+            
+            if(!dataProxy) {
+				return;
+            }
+            
+            dataProxy.addHandlers(page, this._dataProxyHandlers);
  
             this.in(element, dataProxy);
             this.is(element, dataProxy);
-            this.outClass(element, dataProxy);
-            this.outAttribute(element, dataProxy);
+            this.outClass(page, element, dataProxy);
+            this.outAttribute(page, element, dataProxy);
         }
 
         in(element: any, dataProxy: DataProxy) {
@@ -52,7 +62,7 @@ module SinglefinModule {
             }
         }
 
-        outClass(element: any, dataProxy: DataProxy) {
+        outClass(page: Page, element: any, dataProxy: DataProxy) {
             var children = element.find("[out-class]");
 
             for(var i=0; i<children.length; i++) {
@@ -60,11 +70,11 @@ module SinglefinModule {
 
                 var key = child.attr("out-class");
 
-                this.elementBinding.outClass(element, child, dataProxy, key);
+                this.elementBinding.outClass(this._dataProxyHandlers, page, element, child, dataProxy, key);
             }
         }
 
-        outAttribute(element: any, dataProxy: DataProxy) {
+        outAttribute(page: Page, element: any, dataProxy: DataProxy) {
             if(!element) {
 				return;
             }
@@ -76,9 +86,9 @@ module SinglefinModule {
                             var onAttribute = attribute.name.split("out-");
                             var elementAttributeName = onAttribute[1];
                             
-                            this.elementBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
-                            this.inputBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
-                            this.textareaBinding.outAttribute(element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.elementBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.inputBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.textareaBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
                         }
                     }
                 });
@@ -87,7 +97,7 @@ module SinglefinModule {
             var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.outAttribute($(item), dataProxy);
+				this.outAttribute(page, $(item), dataProxy);
 			});
         }
     }
