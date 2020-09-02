@@ -29,6 +29,15 @@ module SinglefinModule {
         }
 
         in(element: any, dataProxy: DataProxy) {
+            var key = element.attr("in");
+
+            this.elementBinding.in(element, element, dataProxy.proxy, key);
+            this.inputBinding.in(element, element, dataProxy.proxy, key);
+            this.textareaBinding.in(element, element, dataProxy.proxy, key);
+            this.checkboxBinding.in(element, element, dataProxy.proxy, key);
+            this.radioBinding.in(element, element, dataProxy.proxy, key);
+            this.selectBinding.in(element, element, dataProxy.proxy, key);
+
             var children = element.find("[in]");
 
             for(var i=0; i<children.length; i++) {
@@ -46,6 +55,15 @@ module SinglefinModule {
         }
 
         is(element: any, dataProxy: DataProxy) {
+            var key = element.attr("is");
+
+            this.elementBinding.is(element, element, dataProxy.proxy, key);
+            this.inputBinding.is(element, element, dataProxy.proxy, key);
+            this.textareaBinding.is(element, element, dataProxy.proxy, key);
+            this.checkboxBinding.is(element, element, dataProxy.proxy, key);
+            this.radioBinding.is(element, element, dataProxy.proxy, key);
+            this.selectBinding.is(element, element, dataProxy.proxy, key);
+            
             var children = element.find("[is]");
 
             for(var i=0; i<children.length; i++) {
@@ -63,6 +81,10 @@ module SinglefinModule {
         }
 
         outClass(page: Page, element: any, dataProxy: DataProxy) {
+            var key = element.attr("out-class");
+            
+            this.elementBinding.outClass(this._dataProxyHandlers, page, element, element, dataProxy, key);
+            
             var children = element.find("[out-class]");
 
             for(var i=0; i<children.length; i++) {

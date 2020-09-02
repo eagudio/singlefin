@@ -195,6 +195,7 @@ module SinglefinModule {
 							this.htmlElement = this.renderView(singlefin, this, dataProxy);
 	
 							this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
+							this.bind(singlefin, this.htmlElement);
 							
 							this.drawItems(singlefin, this, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, this);
@@ -260,6 +261,7 @@ module SinglefinModule {
 						this.htmlElement = this.renderView(singlefin, this, dataProxy);
 
 						this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
+						this.bind(singlefin, this.htmlElement);
 						
 						this.drawItems(singlefin, this, viewParameters).then(() => {
 							previousPageHtmlElement.replaceWith(this.htmlElement);
@@ -504,6 +506,7 @@ module SinglefinModule {
 						parentPage.htmlElement = this.renderView(singlefin, parentPage, dataProxy);
 
 						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, dataProxy.proxy);
+						parentPage.bind(singlefin, htmlContainerElement);
 						
 						this.addHtmlElement(htmlContainerElement, parentPage);
 
@@ -560,6 +563,7 @@ module SinglefinModule {
 							childPage.htmlElement = this.renderView(singlefin, childPage, dataProxy);
 
 							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, dataProxy.proxy);
+							childPage.bind(singlefin, childPage.htmlElement);
 
 							this.addHtmlElement(parent.htmlElement, childPage);
 
@@ -611,9 +615,12 @@ module SinglefinModule {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, dataProxy);
 
 						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, dataProxy.proxy);
+						surrogate.bind(singlefin, surrogate.htmlElement);
 
 						await this.drawItems(singlefin, surrogate, viewParameters).then(async () => {
 							this.addHtmlElement(parent.htmlElement, surrogate);
+							
+							parent.bind(singlefin, parent.htmlElement);
 						}, (ex) => {
 							if(ex) {
                                 console.error("unwind error");
@@ -706,11 +713,6 @@ module SinglefinModule {
 			});
 
 			var htmlElement = $(html);
-
-			/*this._binding = new Binding();
-
-			this._binding.bind(page, htmlElement, singlefin.modelProxy);*/
-			page.bind(singlefin, htmlElement);
 
 			return htmlElement;
 		}

@@ -7,8 +7,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("input binding error: variable key is undefined or null");
-                
                 return;
             }
 
@@ -34,8 +32,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("input attribute binding error: variable key is undefined or null");
-                
                 return;
             }
 

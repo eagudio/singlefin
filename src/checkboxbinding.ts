@@ -7,8 +7,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("checkbox binding error: variable key is undefined or null");
-                
                 return;
             }
 
@@ -38,8 +36,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("checkbox binding error: variable key is undefined or null");
-                
                 return;
             }
 

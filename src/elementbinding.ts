@@ -7,8 +7,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("textarea binding error: variable key is undefined or null");
-                
                 return;
             }
 
@@ -61,8 +59,6 @@ module SinglefinModule {
             }
 
             if(!key) {
-                console.error("textarea attribute binding error: variable key is undefined or null");
-                
                 return;
             }
 
