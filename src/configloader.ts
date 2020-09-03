@@ -57,9 +57,11 @@ module SinglefinModule {
 
 		processResources(resources: any, singlefin: Singlefin) {
 			singlefin.resources = resources;
-			
-			for (var key in resources) {
-				singlefin.instances.push(resources[key]);
+
+			for (var languageKey in resources) {
+				for (var resourceKey in resources[languageKey]) {
+					singlefin.instances.push(resources[languageKey][resourceKey]);
+				}
 			}
 		}
 

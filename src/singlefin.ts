@@ -480,8 +480,10 @@ module SinglefinModule {
                             $('head').append(`<link rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
                         }
 
-                        for (var key in this._resources) {
-                            this._resources[key] = loader.getInstance(this._resources[key], pathsMap);
+                        for (var languageKey in this._resources) {
+                            for (var resourceKey in this._resources[languageKey]) {
+                                this._resources[languageKey][resourceKey] = loader.getInstance(this._resources[languageKey][resourceKey], pathsMap);
+                            }
                         }
 
                         for (var key in this._models) {
