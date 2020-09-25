@@ -804,7 +804,7 @@ module SinglefinModule {
 
 		resolveMarkup(markup: string, context: any): string {
             try {
-				var markupRegex = /<%(.*?)%>/sm;
+				var markupRegex = /<%(.[\s\S]*?)%>/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
 				
 				var str = markup;
 
