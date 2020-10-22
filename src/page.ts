@@ -190,17 +190,15 @@ module SinglefinModule {
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
 						this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
-							var dataProxy: DataProxy = new DataProxy(viewParameters);
-							
-							this.htmlElement = this.renderView(singlefin, this, dataProxy);
+							this.htmlElement = this.renderView(singlefin, this, viewParameters);
 	
-							this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
+							this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
 							this.bind(singlefin, this.htmlElement);
 							
 							this.drawItems(singlefin, this, viewParameters).then(() => {
 								this.addHtmlElement(htmlContainerElement, this);
 
-								this.showPage(singlefin, this, dataProxy.proxy).then(() => {
+								this.showPage(singlefin, this, viewParameters).then(() => {
 									resolve(this.htmlElement);
 								}, () => {
 									console.error("draw error");
@@ -256,11 +254,9 @@ module SinglefinModule {
 					this.reloadController(singlefin, this, parameters).then((viewParameters: any) => {
 						var previousPageHtmlElement = this.htmlElement;
 
-						var dataProxy: DataProxy = new DataProxy(viewParameters);
+						this.htmlElement = this.renderView(singlefin, this, viewParameters);
 
-						this.htmlElement = this.renderView(singlefin, this, dataProxy);
-
-						this.addEventsHandlers(singlefin, this, this.htmlElement, dataProxy.proxy);
+						this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
 						this.bind(singlefin, this.htmlElement);
 						
 						this.drawItems(singlefin, this, viewParameters).then(() => {
@@ -417,9 +413,7 @@ module SinglefinModule {
 				this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
 					var bodyHtmlElement = $("#" + body.name);
 
-					var dataProxy: DataProxy = new DataProxy(viewParameters);
-
-					var view = this.renderView(singlefin, body, dataProxy);
+					var view = this.renderView(singlefin, body, viewParameters);
 
 					bodyHtmlElement.append(view);
 					
@@ -501,11 +495,9 @@ module SinglefinModule {
 				
 				this.drawContainer(singlefin, page, parentPage.container, parameters).then((htmlContainerElement) => {
 					this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
-						var dataProxy: DataProxy = new DataProxy(viewParameters);
-						
-						parentPage.htmlElement = this.renderView(singlefin, parentPage, dataProxy);
+						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
 
-						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, dataProxy.proxy);
+						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, viewParameters);
 						parentPage.bind(singlefin, htmlContainerElement);
 						
 						this.addHtmlElement(htmlContainerElement, parentPage);
@@ -558,17 +550,15 @@ module SinglefinModule {
 							});
 						}
 						else {
-							var dataProxy: DataProxy = new DataProxy(viewParameters);
+							childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
 
-							childPage.htmlElement = this.renderView(singlefin, childPage, dataProxy);
-
-							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, dataProxy.proxy);
+							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, viewParameters);
 							childPage.bind(singlefin, childPage.htmlElement);
 
 							this.addHtmlElement(parent.htmlElement, childPage);
 
 							await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
-								await this.showPage(singlefin, childPage, dataProxy.proxy).then(() => {
+								await this.showPage(singlefin, childPage, viewParameters).then(() => {
 
 								}, () => {
 									console.error("draw children error");
@@ -610,11 +600,9 @@ module SinglefinModule {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 
 					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
-						var dataProxy: DataProxy = new DataProxy(viewParameters);
+						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
-						surrogate.htmlElement = this.renderView(singlefin, surrogate, dataProxy);
-
-						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, dataProxy.proxy);
+						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
 						surrogate.bind(singlefin, surrogate.htmlElement);
 
 						await this.drawItems(singlefin, surrogate, viewParameters).then(async () => {
@@ -700,13 +688,13 @@ module SinglefinModule {
 			});
 		}
 		
-		renderView(singlefin: Singlefin, page: Page, dataProxy: DataProxy) {
+		renderView(singlefin: Singlefin, page: Page, data: any) {
 			if(!page.view) {
 				return $();
 			}
 
 			var html: string = this.resolveMarkup(page.view, {
-				data: dataProxy.proxy,
+				data: data,
 				parameters: page.parameters,
 				resources: singlefin.defaultResources,
 				models: singlefin.models
@@ -863,7 +851,9 @@ module SinglefinModule {
 			});
         }
         
-		addHtmlElement(container: any, page: any) {			
+		addHtmlElement(container: any, page: any) {
+			var element = container;
+			
 			var pageName = page.name.split('#')[0];
 			var pageTag = container.find("page[" + pageName +"]");
 			
@@ -873,17 +863,23 @@ module SinglefinModule {
 				return;
 			}
 
+			var containerPageAttribute = container.find("[page=" + pageName +"]")
+
+			if(containerPageAttribute.length > 0) {
+				element = containerPageAttribute;
+			}
+
 			if(page.action == "replace") {
-				container.html(page.htmlElement);
+				element.html(page.htmlElement);
 			}
 			else if(page.action == "append") {
-				container.append(page.htmlElement);
+				element.append(page.htmlElement);
 			}
 			else if(page.action == "group") {
-				container.html(page.htmlElement);
+				element.html(page.htmlElement);
 			}
 			else if(page.action == "unwind") {
-				container.append(page.htmlElement);
+				element.append(page.htmlElement);
 			}
         }
         
