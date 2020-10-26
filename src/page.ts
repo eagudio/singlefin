@@ -660,15 +660,17 @@ module SinglefinModule {
 				var result = parameters;
                 
 				for(var i=0; i<page.controllers.length; i++) {
-                    await page.controllers[i].load(singlefin, page, result).then(async (_result: any) => {
-						result = _result;
-					}, (ex: any) => {
-                        if(ex) {
-                            console.error("load controller error: " + ex);
-                        }
-                        
-                        reject(ex);
-					});
+					if(page.controllers[i].load) {
+						await page.controllers[i].load(singlefin, page, result).then(async (_result: any) => {
+							result = _result;
+						}, (ex: any) => {
+							if(ex) {
+								console.error("load controller error: " + ex);
+							}
+							
+							reject(ex);
+						});
+					}
 				}
 
 				resolve(result);
