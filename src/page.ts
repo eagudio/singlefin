@@ -708,7 +708,8 @@ module SinglefinModule {
 				data: data,
 				parameters: page.parameters,
 				resources: singlefin.defaultResources,
-				models: singlefin.models
+				models: singlefin.models,
+				model: singlefin.model
 			});
 
 			var htmlElement = $(html);
@@ -817,6 +818,7 @@ module SinglefinModule {
 						var parameters = context.parameters;
 						var resources = context.resources;
 						var models = context.models;
+						var model = context.model;
 						
 						result = ` + match[1] + `;
 					})()`;
