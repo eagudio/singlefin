@@ -262,7 +262,18 @@ module SinglefinModule {
 						this.drawItems(singlefin, this, viewParameters).then(() => {
 							previousPageHtmlElement.replaceWith(this.htmlElement);
 
-							resolve(this.htmlElement);
+							this.showPage(singlefin, this, viewParameters).then(() => {
+								resolve(this.htmlElement);
+							}, (ex: any) => {
+								if(ex) {
+									console.error("redraw error");
+
+									reject("redraw error");
+								}
+								else {
+									resolve($(``));
+								}
+							});
 						}, (ex: any) => {
 							if(ex) {
                                 console.error("redraw error");
@@ -539,7 +550,7 @@ module SinglefinModule {
 
 					await this.loadController(singlefin, childPage, parameters).then(async (viewParameters: any) => {
 						if(childPage.action == "unwind") {
-							await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters).then(async () => {
+							await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters, parameters).then(async () => {
 								
 							}, (ex) => {
 								if(ex) {
@@ -586,7 +597,7 @@ module SinglefinModule {
 			});
         }
         
-		unwindItems(singlefin: Singlefin, parent: any, pageName: string, page: any, parameters: any) {
+		unwindItems(singlefin: Singlefin, parent: any, pageName: string, page: any, parameters: any, controllerParameters: any) {
 			return new Promise(async (resolve, reject) => {
                 if(!Array.isArray(parameters)) {
                     console.error("unwind error page '" + pageName + "': controller must return an array");
@@ -599,7 +610,7 @@ module SinglefinModule {
 				for(var i=0; i<parameters.length; i++) {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 
-					await this.resolveUnwindItem(singlefin, surrogate, parameters[i]).then(async (viewParameters: any) => {
+					await this.resolveUnwindItem(singlefin, surrogate, parameters[i], controllerParameters).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
 						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
@@ -826,7 +837,7 @@ module SinglefinModule {
             }
 		}
         
-		resolveUnwindItem(singlefin: Singlefin, page: Page, parameters: any) {
+		resolveUnwindItem(singlefin: Singlefin, page: Page, parameters: any, controllerParameters: any) {
 			return new Promise(async (resolve, reject) => {
 			
 				if(!page.controllers) {
@@ -837,7 +848,7 @@ module SinglefinModule {
 				
 				for(var i=0; i<page.controllers.length; i++) {					
 					if(page.controllers[i].unwind) {
-						await page.controllers[i].unwind(singlefin, page, result).then(async (_result: any) => {
+						await page.controllers[i].unwind(singlefin, page, result, controllerParameters).then(async (_result: any) => {
 							result = _result;
 						}, (ex: any) => {
                             console.error("resolve unwind item error: " + ex);
