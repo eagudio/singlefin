@@ -27,14 +27,19 @@ module SinglefinModule {
         }
 
         outClass(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, exp: string) {
+            if(!exp) {
+                return;
+            }
+            
             var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 exp: exp,
-                data: dataProxy.proxy
+                dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
                     var proxyDataObject = new ProxyDataObject();
-                    var classes: any = proxyDataObject.build(parameters.data, exp);
+                    
+                    var classes: any = proxyDataObject.build(parameters.dataProxy.data, exp);
 
                     for(var key in classes) {
                         if(classes[key] == true) {
@@ -62,15 +67,19 @@ module SinglefinModule {
                 return;
             }
 
+            if(!exp) {
+                return;
+            }
+
             var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 key: key,
                 exp: exp,
-                data: dataProxy.proxy
+                dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
                     var proxyDataObject = new ProxyDataObject();
-                    var result: any = proxyDataObject.build(parameters.data, exp);
+                    var result: any = proxyDataObject.build(parameters.dataProxy.data, exp);
 
                     parameters.element.attr(parameters.key, result);
                 }

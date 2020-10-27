@@ -29,7 +29,7 @@ module SinglefinModule {
         }
 
         in(element: any, dataProxy: DataProxy) {
-            var key = element.attr("in");
+            var key = element.attr("model-value");
 
             this.elementBinding.in(element, element, dataProxy.proxy, key);
             this.inputBinding.in(element, element, dataProxy.proxy, key);
@@ -38,12 +38,12 @@ module SinglefinModule {
             this.radioBinding.in(element, element, dataProxy.proxy, key);
             this.selectBinding.in(element, element, dataProxy.proxy, key);
 
-            var children = element.find("[in]");
+            var children = element.find("[model-value]");
 
             for(var i=0; i<children.length; i++) {
                 var child = $(children[i]);
 
-                var key = child.attr("in");
+                var key = child.attr("model-value");
 
                 this.elementBinding.in(element, child, dataProxy.proxy, key);
                 this.inputBinding.in(element, child, dataProxy.proxy, key);
@@ -81,16 +81,16 @@ module SinglefinModule {
         }
 
         outClass(page: Page, element: any, dataProxy: DataProxy) {
-            var key = element.attr("out-class");
+            var key = element.attr("model-class");
             
             this.elementBinding.outClass(this._dataProxyHandlers, page, element, element, dataProxy, key);
             
-            var children = element.find("[out-class]");
+            var children = element.find("[model-class]");
 
             for(var i=0; i<children.length; i++) {
                 var child = $(children[i]);
 
-                var key = child.attr("out-class");
+                var key = child.attr("model-class");
 
                 this.elementBinding.outClass(this._dataProxyHandlers, page, element, child, dataProxy, key);
             }
@@ -104,8 +104,8 @@ module SinglefinModule {
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
 					if(attribute.specified) {
-						if(!attribute.name.startsWith("out-class") && attribute.name.startsWith("out-")) {
-                            var onAttribute = attribute.name.split("out-");
+						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
+                            var onAttribute = attribute.name.split("model-");
                             var elementAttributeName = onAttribute[1];
                             
                             this.elementBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);

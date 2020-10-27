@@ -35,15 +35,19 @@ module SinglefinModule {
                 return;
             }
 
+            if(!exp) {
+                return;
+            }
+
             var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 key: key,
                 exp: exp,
-                data: dataProxy.proxy
+                dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
                     var proxyDataObject = new ProxyDataObject();
-                    var result: any = proxyDataObject.build(parameters.data, exp);
+                    var result: any = proxyDataObject.build(parameters.dataProxy.data, exp);
 
                     if(parameters.key == "value") {
                         parameters.element.val(result);
