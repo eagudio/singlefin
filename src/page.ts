@@ -1,6 +1,7 @@
 
 module SinglefinModule {
     export class Page {
+		private _app: App;
         private _name: string;
         private _disabled: boolean = false;
         private _action: string;
@@ -14,8 +15,9 @@ module SinglefinModule {
         private _unwind: any[];
         private _key: string;
         private _events: string[];
-        private _parameters: any;
-        private _htmlElement: any;
+		private _parameters: any;
+		private _isWidget: boolean;
+		private _htmlElement: any;
 
         private _groupIndex: number = 0;
         private _groupNextStepEnabled: boolean = true;
@@ -24,8 +26,9 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any) {
-            this._name = name;
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean) {
+			this._app = app;
+			this._name = name;
             this._disabled = disabled;
             this._action = action;
             this._container = container;
@@ -38,7 +41,16 @@ module SinglefinModule {
             this._unwind = unwind,
             this._key = key,
             this._events = events,
-            this._parameters = parameters
+			this._parameters = parameters
+			this._isWidget = isWidget;
+        }
+
+		public get app(): App {
+            return this._app;
+        }
+
+        public set app(value: App) {
+            this._app = value;
         }
 
         public get name(): string {
@@ -151,6 +163,14 @@ module SinglefinModule {
 
         public set parameters(value: any) {
             this._parameters = value;
+		}
+		
+		public get isWidget(): any {
+            return this._isWidget;
+        }
+
+        public set isWidget(value: any) {
+            this._isWidget = value;
         }
 
         public get htmlElement(): any {
@@ -878,12 +898,17 @@ module SinglefinModule {
 				return;
 			}
 
-			var containerPageAttribute = container.find("[page=" + pageName +"]")
+			var containerPageAttribute = container.find("[page]")
 
 			if(containerPageAttribute.length > 0) {
-				element = containerPageAttribute;
+				var pageAttributeValues = containerPageAttribute.attr("page");
+				var pages = pageAttributeValues.split(',');
+				
+				if(pages.indexOf(pageName) >= 0) {
+					element = containerPageAttribute;
+				}
 			}
-
+			
 			if(page.action == "replace") {
 				element.html(page.htmlElement);
 			}
@@ -1002,7 +1027,7 @@ module SinglefinModule {
 
 				event.data = null;
 
-				jqueryEventData.handler(jqueryEventData.app, jqueryEventData.page, jqueryEventData.data, eventObject);
+				jqueryEventData.handler(jqueryEventData.page.app, jqueryEventData.page, jqueryEventData.data, eventObject);
 			});
         }
         

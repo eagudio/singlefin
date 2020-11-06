@@ -49,10 +49,10 @@ module SinglefinModule {
 
 			this.addHandlers(singlefin.body, singlefin);
 			
-			this.processPages("append", singlefin.body, body.append, singlefin);
-			this.processPages("replace", singlefin.body, body.replace, singlefin);
-			this.processPages("group", singlefin.body, body.group, singlefin);
-			this.processPages("unwind", singlefin.body, body.unwind, singlefin);
+			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false);
+			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false);
+			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false);
+			this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false);
 		}
 
 		processResources(resources: any, singlefin: Singlefin) {
@@ -80,7 +80,7 @@ module SinglefinModule {
 			}
         }
         
-        processPages(action: string, containerName: string, pages: any, singlefin: Singlefin) {
+        processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean) {
 			if(!action) {
 				return;
 			}
@@ -96,6 +96,7 @@ module SinglefinModule {
 			for(var i=0; i<pages.length; i++) {
 				var pageName = Object.keys(pages[i])[0];
 				var page = pages[i][pageName];
+				page.isWidget = isWidget;
 
 				var disabled: boolean = false;
 
@@ -105,17 +106,28 @@ module SinglefinModule {
 
 				var pagePath = containerName + "/" + pageName;
 
+				if(page.widget) {
+					//TODO: probabilmente si deve clonare l'oggetto
+					page.isWidget = true;
+					page.view = widgets[page.widget].view;
+					page.controllers = widgets[page.widget].controllers;
+					page.replace = widgets[page.widget].replace;
+					page.append = widgets[page.widget].append;
+					page.group = widgets[page.widget].group;
+					page.unwind = widgets[page.widget].unwind;
+				}
+
 				var replaceChildren = this.processChildrenPage(pagePath, page.replace);
 				var appendChildren = this.processChildrenPage(pagePath, page.append);
 				var groupChildren = this.processChildrenPage(pagePath, page.group);
 				var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
 
-				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters);
+				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget);
 
-				this.processPages("replace", pagePath, page.replace, singlefin);
-				this.processPages("append", pagePath, page.append, singlefin);
-				this.processPages("group", pagePath, page.group, singlefin);
-				this.processPages("unwind", pagePath, page.unwind, singlefin);
+				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget);
+				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget);
+				this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget);
+				this.processPages("unwind", pagePath, page.unwind, widgets, singlefin, page.isWidget);
 
 				this.addHandlers(pagePath, singlefin);
 			}
@@ -137,6 +149,6 @@ module SinglefinModule {
 			}
 
 			return children;
-        }
+		}
     }
 }
