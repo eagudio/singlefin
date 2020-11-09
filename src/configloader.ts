@@ -49,10 +49,10 @@ module SinglefinModule {
 
 			this.addHandlers(singlefin.body, singlefin);
 			
-			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false);
-			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false);
-			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false);
-			this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false);
+			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
+			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
+			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
+			this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false, singlefin.body);
 		}
 
 		processResources(resources: any, singlefin: Singlefin) {
@@ -80,7 +80,7 @@ module SinglefinModule {
 			}
         }
         
-        processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean) {
+        processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {
 			if(!action) {
 				return;
 			}
@@ -97,6 +97,7 @@ module SinglefinModule {
 				var pageName = Object.keys(pages[i])[0];
 				var page = pages[i][pageName];
 				page.isWidget = isWidget;
+				page.appRootPath = appRootPath;
 
 				var disabled: boolean = false;
 
@@ -115,6 +116,7 @@ module SinglefinModule {
 					page.append = widgets[page.widget].append;
 					page.group = widgets[page.widget].group;
 					page.unwind = widgets[page.widget].unwind;
+					page.appRootPath = pagePath;
 				}
 
 				var replaceChildren = this.processChildrenPage(pagePath, page.replace);
@@ -122,12 +124,12 @@ module SinglefinModule {
 				var groupChildren = this.processChildrenPage(pagePath, page.group);
 				var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
 
-				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget);
+				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.appRootPath);
 
-				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget);
-				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget);
-				this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget);
-				this.processPages("unwind", pagePath, page.unwind, widgets, singlefin, page.isWidget);
+				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
+				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
+				this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget, page.appRootPath);
+				this.processPages("unwind", pagePath, page.unwind, widgets, singlefin, page.isWidget, page.appRootPath);
 
 				this.addHandlers(pagePath, singlefin);
 			}

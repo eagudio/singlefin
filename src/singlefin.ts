@@ -424,7 +424,7 @@ module SinglefinModule {
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean): Page {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, appRootPath: string): Page {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -441,8 +441,9 @@ module SinglefinModule {
             var app: App = new App(this);
 
             if(isWidget) {
-                //TODO: BUG! il path deve essere lo stesso per tutti i sotto elementi del widget...
-                app.rootPath = pathContainer + "/";
+                var rootPath = appRootPath.replace(bodyRegexp, "");
+
+                app.rootPath = rootPath + "/";
             }
 
             this._pages[pagePath] = new Page(app, pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget);
@@ -459,9 +460,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            var app: App = new App(this);
-
-            this._pages[path] = new Page(app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget);
+            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget);
 
             return this._pages[path];
         }

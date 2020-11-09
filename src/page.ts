@@ -212,7 +212,7 @@ module SinglefinModule {
 						this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
 							this.htmlElement = this.renderView(singlefin, this, viewParameters);
 	
-							this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
+							this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters);
 							this.bind(singlefin, this.htmlElement);
 							
 							this.drawItems(singlefin, this, viewParameters).then(() => {
@@ -276,7 +276,7 @@ module SinglefinModule {
 
 						this.htmlElement = this.renderView(singlefin, this, viewParameters);
 
-						this.addEventsHandlers(singlefin, this, this.htmlElement, viewParameters);
+						this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters);
 						this.bind(singlefin, this.htmlElement);
 						
 						this.drawItems(singlefin, this, viewParameters).then(() => {
@@ -528,7 +528,7 @@ module SinglefinModule {
 					this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
 						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
 
-						this.addEventsHandlers(singlefin, parentPage, htmlContainerElement, viewParameters);
+						this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters);
 						parentPage.bind(singlefin, htmlContainerElement);
 						
 						this.addHtmlElement(htmlContainerElement, parentPage);
@@ -583,7 +583,7 @@ module SinglefinModule {
 						else {
 							childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
 
-							this.addEventsHandlers(singlefin, childPage, childPage.htmlElement, viewParameters);
+							this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters);
 							childPage.bind(singlefin, childPage.htmlElement);
 
 							this.addHtmlElement(parent.htmlElement, childPage);
@@ -633,7 +633,7 @@ module SinglefinModule {
 					await this.resolveUnwindItem(singlefin, surrogate, parameters[i], controllerParameters).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
-						this.addEventsHandlers(singlefin, surrogate, surrogate.htmlElement, viewParameters);
+						this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters);
 						surrogate.bind(singlefin, surrogate.htmlElement);
 
 						await this.drawItems(singlefin, surrogate, viewParameters).then(async () => {
@@ -923,7 +923,7 @@ module SinglefinModule {
 			}
         }
         
-		addEventsHandlers(singlefin: Singlefin, page: Page, element: any, parameters: any) {
+		addEventsHandlers(singlefin: Singlefin, app: App, page: Page, element: any, parameters: any) {
 			if(!element) {
 				return;
 			}
@@ -954,7 +954,7 @@ module SinglefinModule {
 									var method = controller[handler];
 
 									if(method) {
-										this.addEventHandler(singlefin, page, page, page.path, element, event, method, parameters);
+										this.addEventHandler(singlefin, app, page, page, page.path, element, event, method, parameters);
 									}
 								}
 
@@ -963,7 +963,7 @@ module SinglefinModule {
 
 									for(var c=0; c<handlerPage.controllers.length; c++) {
 										if(handlerPage.controllers[c][handler]) {
-											this.addEventHandler(singlefin, handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
+											this.addEventHandler(singlefin, app, handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
 										}
 									}
 								}
@@ -996,11 +996,11 @@ module SinglefinModule {
 			var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.addEventsHandlers(singlefin, page, $(item), parameters);
+				this.addEventsHandlers(singlefin, app, page, $(item), parameters);
 			});
         }
         
-		addEventHandler(singlefin: Singlefin, handlerPage: Page, page: Page, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
+		addEventHandler(singlefin: Singlefin, app: App, handlerPage: Page, page: Page, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
 			htmlElement.on(eventType, {
 				app: singlefin,
 				event: eventType,
@@ -1027,7 +1027,7 @@ module SinglefinModule {
 
 				event.data = null;
 
-				jqueryEventData.handler(jqueryEventData.page.app, jqueryEventData.page, jqueryEventData.data, eventObject);
+				jqueryEventData.handler(jqueryEventData.target.app, jqueryEventData.page, jqueryEventData.data, eventObject);
 			});
         }
         
