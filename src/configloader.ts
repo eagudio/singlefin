@@ -4,7 +4,6 @@ module SinglefinModule {
     export class ConfigLoader {
         load(config: any, singlefin: Singlefin) {
 			var resources = config.resources;
-			var styles = config.styles;
 			var models = config.models;
 			var pages = config.pages;
 			
@@ -13,8 +12,6 @@ module SinglefinModule {
 			}
 
 			this.processResources(resources, singlefin);
-			
-			singlefin.styles = styles;
 
 			if(models) {
 				singlefin.models = models;
@@ -116,6 +113,7 @@ module SinglefinModule {
 					page.append = widgets[page.widget].append;
 					page.group = widgets[page.widget].group;
 					page.unwind = widgets[page.widget].unwind;
+					page.styles = widgets[page.widget].styles;
 					page.appRootPath = pagePath;
 				}
 
@@ -124,7 +122,7 @@ module SinglefinModule {
 				var groupChildren = this.processChildrenPage(pagePath, page.group);
 				var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
 
-				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.appRootPath);
+				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.appRootPath);
 
 				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
 				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);

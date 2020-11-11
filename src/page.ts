@@ -17,6 +17,7 @@ module SinglefinModule {
         private _events: string[];
 		private _parameters: any;
 		private _isWidget: boolean;
+		private _styles: string[];
 		private _htmlElement: any;
 
         private _groupIndex: number = 0;
@@ -26,7 +27,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[]) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -43,6 +44,7 @@ module SinglefinModule {
             this._events = events,
 			this._parameters = parameters
 			this._isWidget = isWidget;
+			this._styles = styles;
         }
 
 		public get app(): App {
@@ -171,6 +173,14 @@ module SinglefinModule {
 
         public set isWidget(value: any) {
             this._isWidget = value;
+		}
+		
+		public get styles(): string[] {
+            return this._styles;
+        }
+
+        public set styles(value: string[]) {
+            this._styles = value;
         }
 
         public get htmlElement(): any {
@@ -207,6 +217,10 @@ module SinglefinModule {
 
         draw(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
+				if(this.action == "replace") {
+					this.removeStyles();
+				}
+
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
 						this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
@@ -465,7 +479,7 @@ module SinglefinModule {
         }
         
 		drawContainer(singlefin: Singlefin, page: any, containerName: string, parameters: any) {
-			var container = singlefin.pages[containerName];
+			var container: Page = singlefin.pages[containerName];
 
 			if(!container) {
                 console.error("container page '" + containerName + "' not found");
@@ -886,8 +900,10 @@ module SinglefinModule {
 			});
         }
         
-		addHtmlElement(container: any, page: any) {
+		addHtmlElement(container: any, page: Page) {
 			var element = container;
+
+			page.appendStyles();
 			
 			var pageName = page.name.split('#')[0];
 			var pageTag = container.find("page[" + pageName +"]");
@@ -921,7 +937,33 @@ module SinglefinModule {
 			else if(page.action == "unwind") {
 				element.append(page.htmlElement);
 			}
-        }
+		}
+		
+		removeStyles() {
+			var styles = $('head').find("[page]");
+
+			styles.each((i: number, item: any) => {
+				var style = $(item);
+
+				if(!this._path.startsWith(style.attr("page"))) {
+					style.remove();
+				}
+			});
+		}
+
+		appendStyles() {
+			if(!this._styles) {
+				return;
+			}
+			
+			for(var i=0; i<this._styles.length; i++) {
+				var style = $('head').find("[page='" + this._path + "']");
+
+				if(style.length == 0) {
+					$('head').append(`<link page="` + this._path + `" rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
+				}
+			}
+		}
         
 		addEventsHandlers(singlefin: Singlefin, app: App, page: Page, element: any, parameters: any) {
 			if(!element) {

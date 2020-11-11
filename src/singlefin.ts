@@ -19,7 +19,6 @@ module SinglefinModule {
         private _home: string = "__body";
         private _body: string = "__body";
         private _instances: any[] = [];
-        private _styles: string[] = [];
         private _pages: any = {};
         private _models: any = {};
         private _handlers: any = {};
@@ -50,14 +49,6 @@ module SinglefinModule {
 
         get defaultResources() {
             return this._resources[this._defaultLanguage];
-        }
-
-        set styles(_styles: string[]) {
-            this._styles = _styles;
-        }
-
-        get styles() {
-            return this._styles;
         }
 
         get body() {
@@ -419,12 +410,12 @@ module SinglefinModule {
         addBody(name: string) {
             var app: App = new App(this);
 
-            var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false);
+            var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, []);
 
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, appRootPath: string): Page {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -446,7 +437,13 @@ module SinglefinModule {
                 app.rootPath = rootPath + "/";
             }
 
-            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, pathContainer + "/" + pageName, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget);
+            var relativePath = pathContainer + "/" + pageName;
+
+            if(pathContainer == this.body) {
+                relativePath = pageName;
+            }
+
+            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
 
             return this._pages[pagePath];
         }
@@ -460,7 +457,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget);
+            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles);
 
             return this._pages[path];
         }
@@ -486,9 +483,9 @@ module SinglefinModule {
 
                 loader.load(this._instances, pathsMap).then(() => {
                     try {
-                        for(var i=0; i<this._styles.length; i++) {
+                        /*for(var i=0; i<this._styles.length; i++) {
                             $('head').append(`<link rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
-                        }
+                        }*/
 
                         for (var languageKey in this._resources) {
                             for (var resourceKey in this._resources[languageKey]) {
