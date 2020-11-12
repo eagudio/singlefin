@@ -960,7 +960,7 @@ module SinglefinModule {
 				var style = $('head').find("[page='" + this._path + "']");
 
 				if(style.length == 0) {
-					$('head').append(`<link page="` + this._path + `" rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
+					$('head').append(`<link page="` + this._path + `" rel="stylesheet" href="./` + this._styles[i] + `.css" type="text/css" />`);
 				}
 			}
 		}

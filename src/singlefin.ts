@@ -511,6 +511,18 @@ module SinglefinModule {
                             }
 
                             this._pages[key].controllers = controllers;
+
+                            var styles: string[] = [];
+
+                            if(this._pages[key].styles && Array.isArray(this._pages[key].styles)) {
+                                styles = this._pages[key].styles.map((style: string) => {
+                                    //TODO: gli stili non vengono caricati con require, quindi i path sono differenti (require deve avere un 'aggiustamento' perchè considera il path dalla cartella in cui risiede lo script require.js)
+                                    //      si dovrebbe quindi eliminare l'utilizzo di require e pensare ad un sistema per creare un bundle con view e controller
+                                    return loader.normalizePath(style, pathsMap);
+                                });
+                            }
+
+                            this._pages[key].styles = styles;
                         }
 
                         resolve();
