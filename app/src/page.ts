@@ -217,9 +217,9 @@ module SinglefinModule {
 
         draw(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
-				if(this.action == "replace") {
+				/*if(this.action == "replace") {
 					this.removeStyles();
-				}
+				}*/
 
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
@@ -903,7 +903,7 @@ module SinglefinModule {
 		addHtmlElement(container: any, page: Page) {
 			var element = container;
 
-			page.appendStyles();
+			//page.appendStyles();
 			
 			var pageName = page.name.split('#')[0];
 			var pageTag = container.find("page[" + pageName +"]");
@@ -937,9 +937,11 @@ module SinglefinModule {
 			else if(page.action == "unwind") {
 				element.append(page.htmlElement);
 			}
+
+			page.appendStyles();
 		}
 		
-		removeStyles() {
+		/*removeStyles() {
 			var styles = $('head').find("[page]");
 
 			styles.each((i: number, item: any) => {
@@ -949,10 +951,10 @@ module SinglefinModule {
 					style.remove();
 				}
 			});
-		}
+		}*/
 
 		appendStyles() {
-			if(!this._styles) {
+			/*if(!this._styles) {
 				return;
 			}
 			
@@ -961,6 +963,17 @@ module SinglefinModule {
 
 				if(style.length == 0) {
 					$('head').append(`<link page="` + this._path + `" rel="stylesheet" href="./` + this._styles[i] + `.css" type="text/css" />`);
+				}
+			}*/
+			if(!this._styles) {
+				return;
+			}
+			
+			for(var i=0; i<this._styles.length; i++) {
+				var style = $('head').find("[page='" + this._path + "']");
+
+				if(style.length == 0) {
+					this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
 				}
 			}
 		}

@@ -1,0 +1,476 @@
+{
+    "paths": {
+        "root": "../../aentitycpk/public",
+        "its": "../../aentitycpk/public/its",
+        "wms": "../../aentitywms/public",
+        "eshop": "../../aentityeshopdemo/public"
+    },
+    "resources": {
+        "it-IT": {
+            "its": "@root/gui/resources/it-IT",
+            "wms": "@wms/gui/resources/it-IT"
+        }
+    },
+    "homepage": "eshop",
+    "models": {
+        "its": "@root/gui/its/itsmodel",
+        "accounting": "@root/gui/its/accountingmodel",
+        "auth": "@root/gui/auth",
+        "wms": "@wms/gui/wms"
+    },
+    "widgets": {
+        "calendarpicker": {
+            "view": "@root/gui/calendarpicker/calendarpickerview.html",
+            "controllers": ["@root/gui/calendarpicker/calendarpickercontroller"],
+            "replace": [{
+                "content": {
+                    "view": "@root/gui/calendarpicker/calendarpickercontentview.html",
+                    "controllers": ["@root/gui/calendarpicker/calendarpickercontentcontroller"],
+                    "unwind": [{
+                        "week": {
+                            "view": "@root/gui/calendarpicker/calendarpickerweekview.html",
+                            "controllers": ["@root/gui/calendarpicker/calendarpickerweekcontroller"],
+                            "unwind": [{
+                                "day": {
+                                    "view": "@root/gui/calendarpicker/calendarpickerdayview.html",
+                                    "controllers": ["@root/gui/calendarpicker/calendarpickerdaycontroller"]
+                                }
+                            }]
+                        }
+                    }]
+                }
+            }]
+        }
+    },
+    "pages": {
+        "main": {
+            "view": "@root/gui/its/mainview.html",
+            "controllers": ["@root/gui/its/maincontroller"],
+            "append": [{
+                "alertload": {
+                    "controllers": ["@root/gui/alerts/alertloadcontroller"]
+                }
+            },{
+                "alertlogin": {
+                    "controllers": ["@root/gui/alerts/alertlogincontroller"]
+                }
+            },{
+                "alertlogout": {
+                    "controllers": ["@root/gui/alerts/alertlogoutcontroller"]
+                }
+            },{
+                "alertconfirm": {
+                    "controllers": ["@root/gui/alerts/alertconfirmcontroller"]
+                }
+            },{
+                "alertsuccess": {
+                    "controllers": ["@root/gui/alerts/alertsuccesscontroller"]
+                }
+            },{
+                "alerterror": {
+                    "controllers": ["@root/gui/alerts/alerterrorcontroller"]
+                }
+            },{
+                "logout": {
+                    "controllers": ["@root/gui/logoutcontroller"],
+                    "events": ["logout"]
+                }
+            }],
+            "replace": [{
+                "eshop": {
+                    "view": "@eshop/gui/eshopview.html",
+                    "controllers": ["@eshop/gui/eshopcontroller"],
+                    "styles": ["@eshop/gui/styles/eshopstyle"]
+                }
+            },{
+                "itsapp": {
+                    "view": "@root/gui/its/itsappview.html",
+                    "controllers": ["@root/gui/its/itsappcontroller"],
+                    "styles": ["@root/gui/styles/aentity"],
+                    "parameters": {
+                        "policy": {
+                            "group": ["admin", "contributor"]
+                        }
+                    },
+                    "append": [{
+                        "toolbar":{
+                            "view": "@root/gui/its/itsapptoolbarview.html",
+                            "controllers": ["@root/gui/its/itsapptoolbarcontroller"],
+                            "append": [{
+                                "filter":{
+                                    "view": "@root/gui/its/itsapptoolbaritemsview.html",
+                                    "controllers": ["@root/gui/its/itsapptoolbaritemscontroller"],
+                                    "append": [{
+                                        "businesssearch": {
+                                            "view": "@root/gui/its/ticketsfilterbusinesssearchview.html",
+                                            "controllers": ["@root/gui/its/ticketsfilterbusinesssearchcontroller"]
+                                        }
+                                    },{
+                                        "newticketbutton": {
+                                            "view": "@root/gui/its/newticketbuttonview.html"
+                                        }
+                                    },{
+                                        "businesssearchbutton": {
+                                            "view": "@root/gui/its/ticketsfilterbusinesssearchbuttonview.html",
+                                            "controllers": ["@root/gui/its/ticketsfilterbusinesssearchbuttoncontroller"]
+                                        }
+                                    },{
+                                        "button": {
+                                            "view": "@root/gui/its/ticketsfilterbuttonview.html",
+                                            "controllers": ["@root/gui/its/ticketsfilterbuttoncontroller"]
+                                        }
+                                    },{
+                                        "form": {
+                                            "view": "@root/gui/its/ticketsfilterformview.html",
+                                            "controllers": ["@root/gui/its/ticketsfilterformcontroller"]
+                                        }
+                                    }]
+                                }
+                            }]
+                        }
+                    },{
+                        "newticket": {
+                            "view": "@root/gui/its/newticketview.html",
+                            "controllers": ["@root/gui/its/newticketcontroller"],
+                            "events": ["show_newticket", "next_ticket_step", "previous_ticket_step", "confirm_ticket"],
+                            "parameters": {
+                                "disabled": true
+                            },
+                            "append": [{
+                                "content": {
+                                    "view": "@root/gui/its/newticketcontentview.html",
+                                    "controllers": ["@root/gui/its/newticketcontentcontroller"],
+                                    "group": [{
+                                        "form": {
+                                            "view": "@root/gui/its/newticketformview.html",
+                                            "controllers": ["@root/gui/its/newticketformcontroller"],
+                                            "events": ["calendarpicker_set_date", "set_customer"]
+                                        }
+                                    },{
+                                        "duedateselection": {
+                                            "view": "@root/gui/its/duedateselectionview.html",
+                                            "controllers": ["@root/gui/its/duedateselectioncontroller"],
+                                            "append": [{
+                                                "duedatepicker": {
+                                                    "widget": "calendarpicker"
+                                                }
+                                            }]
+                                        }
+                                    },{
+                                        "customerselection": {
+                                            "view": "@root/gui/its/customerselectionview.html",
+                                            "controllers": ["@root/gui/its/customerselectioncontroller"],
+                                            "unwind": [{
+                                                "item": {
+                                                    "view": "@root/gui/its/customerselectionitemview.html",
+                                                    "controllers": ["@root/gui/its/customerselectionitemcontroller"]
+                                                }
+                                            }]
+                                        }
+                                    }]
+                                }
+                            }]
+                        }
+                    },{
+                        "tickets": {
+                            "view": "@root/gui/its/ticketsview.html",
+                            "controllers": ["@root/gui/its/ticketscontroller"],
+                            "unwind": [{
+                                "item": {
+                                    "view": "@root/gui/its/ticketsitemview.html",
+                                    "controllers": ["@root/gui/its/ticketsitemcontroller"],
+                                    "replace": [{
+                                        "month": {
+                                            "view": "@root/gui/its/ticketmonthview.html",
+                                            "controllers": ["@root/gui/its/ticketmonthcontroller"]
+                                        }
+                                    },{
+                                        "day": {
+                                            "view": "@root/gui/its/ticketdayview.html",
+                                            "controllers": ["@root/gui/its/ticketdaycontroller"]
+                                        }
+                                    },{
+                                        "ticket": {
+                                            "view": "@root/gui/its/ticketview.html",
+                                            "controllers": ["@root/gui/its/ticketcontroller"],
+                                            "append": [{
+                                                "headerfirstrow": {
+                                                    "view": "@root/gui/its/ticketheaderview.html",
+                                                    "append": [{
+                                                        "business": {
+                                                            "view": "@root/gui/its/ticketheaderbusinessview.html",
+                                                            "controllers": ["@root/gui/its/ticketheaderbusinesscontroller"],
+                                                            "append": [{
+                                                                "openstatus": {
+                                                                    "view": "@root/gui/its/ticketstatusopenview.html",
+                                                                    "controllers": ["@root/gui/its/ticketstatusopencontroller"]
+                                                                }
+                                                            },{
+                                                                "inprogressstatus": {
+                                                                    "view": "@root/gui/its/ticketstatusinprogressview.html",
+                                                                    "controllers": ["@root/gui/its/ticketstatusinprogresscontroller"]
+                                                                }
+                                                            },{
+                                                                "closestatus": {
+                                                                    "view": "@root/gui/its/ticketstatusclosedview.html",
+                                                                    "controllers": ["@root/gui/its/ticketstatusclosedcontroller"]
+                                                                }
+                                                            },{
+                                                                "billed": {
+                                                                    "view": "@root/gui/its/ticketbilledview.html",
+                                                                    "controllers": ["@root/gui/its/ticketbilledcontroller"]
+                                                                }
+                                                            },{
+                                                                "settled": {
+                                                                    "view": "@root/gui/its/ticketsettledview.html",
+                                                                    "controllers": ["@root/gui/its/ticketsettledcontroller"]
+                                                                }
+                                                            }]
+                                                        }
+                                                    }]
+                                                }
+                                            },{
+                                                "headersecondrow": {
+                                                    "view": "@root/gui/its/ticketheaderview.html",
+                                                    "append": [{
+                                                        "highpriority": {
+                                                            "view": "@root/gui/its/ticketpriorityhighview.html",
+                                                            "controllers": ["@root/gui/its/ticketpriorityhighcontroller"]
+                                                        }
+                                                    },{
+                                                        "mediumpriority": {
+                                                            "view": "@root/gui/its/ticketprioritymediumview.html",
+                                                            "controllers": ["@root/gui/its/ticketprioritymediumcontroller"]
+                                                        }
+                                                    },{
+                                                        "lowpriority": {
+                                                            "view": "@root/gui/its/ticketprioritylowview.html",
+                                                            "controllers": ["@root/gui/its/ticketprioritylowcontroller"]
+                                                        }
+                                                    },{
+                                                        "due": {
+                                                            "view": "@root/gui/its/ticketschedulebuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketschedulebuttoncontroller"]
+                                                        }
+                                                    },{
+                                                        "notification": {
+                                                            "view": "@root/gui/its/ticketnotificationview.html",
+                                                            "controllers": ["@root/gui/its/ticketnotificationcontroller"]
+                                                        }
+                                                    }]
+                                                }
+                                            },{
+                                                "ticketform": {
+                                                    "view": "@root/gui/its/ticketformview.html",
+                                                    "controllers": ["@root/gui/its/ticketformcontroller"],
+                                                    "append": [{
+                                                        "openstatus": {
+                                                            "view": "@root/gui/its/ticketstatusopenview.html",
+                                                            "controllers": ["@root/gui/its/ticketstatusopencontroller"]
+                                                        }
+                                                    },{
+                                                        "inprogressstatus": {
+                                                            "view": "@root/gui/its/ticketstatusinprogressview.html",
+                                                            "controllers": ["@root/gui/its/ticketstatusinprogresscontroller"]
+                                                        }
+                                                    },{
+                                                        "closestatus": {
+                                                            "view": "@root/gui/its/ticketstatusclosedview.html",
+                                                            "controllers": ["@root/gui/its/ticketstatusclosedcontroller"]
+                                                        }
+                                                    },{
+                                                        "issuedescription": {
+                                                            "view": "@root/gui/its/ticketissuedescriptionview.html",
+                                                            "controllers": ["@root/gui/its/ticketissuedescriptioncontroller"],
+                                                            "events": ["show_ticket_form", "close_ticket_form"]
+                                                        }
+                                                    },{
+                                                        "fixingdescription": {
+                                                            "view": "@root/gui/its/ticketfixingdescriptionview.html",
+                                                            "controllers": ["@root/gui/its/ticketfixingdescriptioncontroller"]
+                                                        }
+                                                    },{
+                                                        "cancelbutton": {
+                                                            "view": "@root/gui/its/ticketcancelbuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketcancelbuttoncontroller"]
+                                                        }
+                                                    },{
+                                                        "loggedoperatorbutton": {
+                                                            "view": "@root/gui/its/ticketloggedoperatorbuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketloggedoperatorbuttoncontroller"],
+                                                            "unwind": [{
+                                                                "operatorsbuttonuser": {
+                                                                    "view": "@root/gui/its/ticketloggedoperatoroperatorsbuttonview.html",
+                                                                    "controllers": ["@root/gui/its/ticketloggedoperatoroperatorsbuttoncontroller"]
+                                                                }
+                                                            }]
+                                                        }
+                                                    },{
+                                                        "operatorbutton": {
+                                                            "view": "@root/gui/its/ticketoperatorbuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketoperatorbuttoncontroller"],
+                                                            "unwind": [{
+                                                                "operatorsbuttonuser": {
+                                                                    "view": "@root/gui/its/ticketoperatoroperatorsbuttonview.html",
+                                                                    "controllers": ["@root/gui/its/ticketoperatoroperatorsbuttoncontroller"]
+                                                                }
+                                                            }]
+                                                        }
+                                                    },{
+                                                        "startbutton": {
+                                                            "view": "@root/gui/its/ticketstartbuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketstartbuttoncontroller"]
+                                                        }
+                                                    },{
+                                                        "closebutton": {
+                                                            "view": "@root/gui/its/ticketclosebuttonview.html",
+                                                            "controllers": ["@root/gui/its/ticketclosebuttoncontroller"]
+                                                        }
+                                                    }]
+                                                }
+                                            }]
+                                        }
+                                    }]
+                                }
+                            }]
+                        }
+                    }]
+                }
+            },{
+                "wmsapp": {
+                    "view": "@wms/gui/appview.html",
+                    "controllers": ["@wms/gui/appcontroller"],
+                    "styles": ["@root/gui/styles/aentity"],
+                    "append": [{
+                        "toolbar":{
+                            "view": "@wms/gui/apptoolbarview.html",
+                            "controllers": ["@wms/gui/apptoolbarcontroller"],
+                            "append": [{
+                                "filter":{
+                                    "view": "@wms/gui/apptoolbaritemsview.html",
+                                    "controllers": ["@wms/gui/apptoolbaritemscontroller"],
+                                    "append": [{
+                                        "productsearch": {
+                                            "view": "@wms/gui/productsfilternamesearchview.html",
+                                            "controllers": ["@wms/gui/productsfilternamesearchcontroller"]
+                                        }
+                                    },{
+                                        "newproductbutton": {
+                                            "view": "@wms/gui/newproductbuttonview.html",
+                                            "controllers": ["@wms/gui/newproductbuttoncontroller"]
+                                        }
+                                    },{
+                                        "productsearchbutton": {
+                                            "view": "@wms/gui/productsfilternamesearchbuttonview.html",
+                                            "controllers": ["@wms/gui/productsfilternamesearchbuttoncontroller"]
+                                        }
+                                    },{
+                                        "button": {
+                                            "view": "@wms/gui/productsfilterbuttonview.html",
+                                            "controllers": ["@wms/gui/productsfilterbuttoncontroller"]
+                                        }
+                                    },{
+                                        "form": {
+                                            "view": "@wms/gui/productsfilterformview.html",
+                                            "controllers": ["@wms/gui/productsfilterformcontroller"]
+                                        }
+                                    }]
+                                }
+                            }]
+                        }
+                    },{
+                        "newproduct": {
+                            "view": "@wms/gui/newproductview.html",
+                            "controllers": ["@wms/gui/newproductcontroller"],
+                            "parameters": {
+                                "disabled": true
+                            },
+                            "replace": [{
+                                "form": {
+                                    "view": "@wms/gui/newproductformview.html",
+                                    "controllers": ["@wms/gui/newproductformcontroller"],
+                                    "append": [{
+                                        "managements": {
+                                            "view": "@wms/gui/newproductmanagementsview.html",
+                                            "controllers": ["@wms/gui/newproductmanagementscontroller"],
+                                            "unwind": [{
+                                                "management": {
+                                                    "view": "@wms/gui/newproductmanagementview.html",
+                                                    "controllers": ["@wms/gui/newproductmanagementcontroller"]		
+                                                }
+                                            }]
+                                        }
+                                    },{
+                                        "categories": {
+                                            "view": "@wms/gui/newproductcategoriesview.html",
+                                            "controllers": ["@wms/gui/newproductcategoriescontroller"],
+                                            "unwind": [{
+                                                "category": {
+                                                    "view": "@wms/gui/newproductcategoryview.html",
+                                                    "controllers": ["@wms/gui/newproductcategorycontroller"]		
+                                                }
+                                            }]
+                                        }
+                                    }]
+                                }
+                            },{
+                                "success": {
+                                    "view": "@wms/gui/newproductsuccessview.html",
+                                    "controllers": ["@wms/gui/newproductsuccesscontroller"],
+                                    "parameters": {
+                                        "disabled": true
+                                    }
+                                }
+                            }]
+                        }
+                    },{
+                        "productcategorypaths": {
+                            "view": "@wms/gui/productcategorybreadcrumbview.html",
+                            "controllers": ["@wms/gui/productcategorybreadcrumbcontroller"],
+                            "unwind": [{
+                                "paths": {
+                                    "view": "@wms/gui/productcategorypathview.html",
+                                    "controllers": ["@wms/gui/productcategorypathcontroller"]
+                                }
+                            }]
+                        }
+                    },{
+                        "productcategories": {
+                            "view": "@wms/gui/productcategoriesview.html",
+                            "controllers": ["@wms/gui/productcategoriescontroller"],
+                            "unwind": [{
+                                "category": {
+                                    "view": "@wms/gui/productcategoryview.html",
+                                    "controllers": ["@wms/gui/productcategorycontroller"]
+                                }
+                            }]
+                        }
+                    },{
+                        "products": {
+                            "view": "@wms/gui/productsview.html",
+                            "controllers": ["@wms/gui/productscontroller"],
+                            "replace": [{
+                                "emptylist": {
+                                    "view": "@wms/gui/productsemptylistview.html",
+                                    "controllers": ["@wms/gui/productsemptylistcontroller"]
+                                }
+                            }],
+                            "unwind": [{
+                                "item": {
+                                    "view": "@wms/gui/productitemsview.html",
+                                    "controllers": ["@wms/gui/productitemscontroller"],
+                                    "replace": [{
+                                        "product": {
+                                            "view": "@wms/gui/productview.html",
+                                            "controllers": ["@wms/gui/productcontroller"]
+                                        }
+                                    }]
+                                }
+                            }]
+                        }
+                    }]
+                }
+            }]
+        }
+    }
+}

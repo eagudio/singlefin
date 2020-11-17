@@ -93,7 +93,7 @@ module SinglefinModule {
 
                 configLoader.load(config, this);
 
-                this.loadInstances(config.paths).then(() => {
+                /*this.loadInstances(config.paths).then(() => {
                     var _homepage = config.homepage;
                 
                     if(params) {
@@ -107,7 +107,19 @@ module SinglefinModule {
                     return this.open(_homepage);
                 }, () => {
 
-                });
+                });*/
+
+                var _homepage = config.homepage;
+                
+                if(params) {
+                    if(params.page) {
+                        this._home = params.page;
+    
+                        _homepage = this._home;
+                    }
+                }
+                
+                return this.open(_homepage);
             }
             catch(ex) {
                 console.error("an error occurred during init singlefin: " + ex);
@@ -415,7 +427,30 @@ module SinglefinModule {
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {            
+            var bodyRegexp = new RegExp("^(" + this.body + "/)");
+			var pathContainer = container.replace(bodyRegexp, "");
+
+            var app: App = new App(this);
+
+            if(isWidget) {
+                var rootPath = appRootPath.replace(bodyRegexp, "");
+
+                app.rootPath = rootPath + "/";
+            }
+
+            var relativePath = pathContainer + "/" + pageName;
+
+            if(pathContainer == this.body) {
+                relativePath = pageName;
+            }
+
+            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
+
+            return this._pages[pagePath];
+        }
+
+        /*addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
 			if(view) {
 				this._instances.push("text!" + view);
 			}
@@ -446,7 +481,7 @@ module SinglefinModule {
             this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
 
             return this._pages[pagePath];
-        }
+        }*/
 
         addSurrogate(name: string, path: string, containerPath: string, page: Page) {
             var replaceChildren = this.createSurrogates(path, page.replace);
