@@ -7,22 +7,14 @@ var SinglefinBundleModule;
             this._schema = {};
             this._paths = {};
         }
-        make(schema) {
-            //TODO:
-            //  scorro tutto lo schema
-            //  per ogni controller
-            //      lo indicizzo, cioè tramite un contatore sostituisco il path con l'index corrente e aggiorno un nuovo schema che salverò nel file
-            //      carico il contenuto del file
-            //      lo salvo in un file
-            //  per ogni view la stessa cosa del controller
-            //  per ogni stile la stessa cosa del controller
+        make(schema, targetPath) {
             this._paths = schema.paths;
             this._schema.homepage = schema.homepage;
             this.bundleResources(schema.resources);
             this.bundleModels(schema.models);
             this.bundleWidgets(schema.widgets);
             this.bundlePages(schema.pages);
-            this.save('../bundles/bundle.json');
+            this.save(targetPath);
         }
         bundleResources(resources) {
             this._schema.resources = {};
@@ -32,7 +24,7 @@ var SinglefinBundleModule;
             for (var languageKey in resources) {
                 this._schema.resources[languageKey] = {};
                 for (var resourceKey in resources[languageKey]) {
-                    var fileBundle = this.bundleFile(resources[languageKey][resourceKey] + ".js");
+                    var fileBundle = this.bundleFile(resources[languageKey][resourceKey]);
                     this._schema.resources[languageKey][resourceKey] = fileBundle;
                 }
             }
@@ -44,7 +36,7 @@ var SinglefinBundleModule;
             }
             for (var model in models) {
                 this._schema.models[model] = {};
-                var fileBundle = this.bundleFile(models[model] + ".js");
+                var fileBundle = this.bundleFile(models[model]);
                 this._schema.models[model] = fileBundle;
             }
         }
@@ -83,6 +75,9 @@ var SinglefinBundleModule;
             if (_page.styles) {
                 page.styles = this.bundleStyles(_page.styles);
             }
+            if (_page.scripts) {
+                page.scripts = this.bundleScripts(_page.scripts);
+            }
             if (_page.append) {
                 page.append = this.bundlePageMethod(_page.append);
             }
@@ -103,7 +98,7 @@ var SinglefinBundleModule;
         bundleControllers(_controllers) {
             var controllers = [];
             for (var i = 0; i < _controllers.length; i++) {
-                var controller = this.bundleFile(_controllers[i] + ".js");
+                var controller = this.bundleFile(_controllers[i]);
                 controllers.push(controller);
             }
             return controllers;
@@ -111,10 +106,18 @@ var SinglefinBundleModule;
         bundleStyles(_styles) {
             var styles = [];
             for (var i = 0; i < _styles.length; i++) {
-                var style = this.bundleFile(_styles[i] + ".css");
+                var style = this.bundleFile(_styles[i]);
                 styles.push(style);
             }
             return styles;
+        }
+        bundleScripts(_scripts) {
+            var scripts = [];
+            for (var i = 0; i < _scripts.length; i++) {
+                var script = this.bundleFile(_scripts[i]);
+                scripts.push(script);
+            }
+            return scripts;
         }
         bundlePageMethod(_method) {
             var method = [];
@@ -180,10 +183,13 @@ var SinglefinBundleModule;
     }
     SinglefinBundleModule.Bundle = Bundle;
 })(SinglefinBundleModule || (SinglefinBundleModule = {}));
+const process = require('process');
 var SinglefinBundleModule;
 (function (SinglefinBundleModule) {
-    var schema = require('../../examples/schema.json');
+    var schemaPath = process.argv[2];
+    var targetPath = process.argv[3];
+    var schema = require(schemaPath);
     var bundle = new SinglefinBundleModule.Bundle();
-    bundle.make(schema);
+    bundle.make(schema, targetPath);
 })(SinglefinBundleModule || (SinglefinBundleModule = {}));
 //# sourceMappingURL=bundle.js.map

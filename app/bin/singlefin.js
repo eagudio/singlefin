@@ -201,9 +201,7 @@ var SinglefinModule;
             }
             this.processResources(resources, singlefin);
             if (models) {
-                //singlefin.models = models;
                 for (var modelKey in models) {
-                    //singlefin.instances.push(models[modelKey]);
                     singlefin.models[modelKey] = this.unbundleJavascriptObject(models[modelKey]);
                 }
             }
@@ -212,18 +210,11 @@ var SinglefinModule;
             var body = pages[bodyName];
             if (body.view) {
                 singlefin.getBody().htmlElement = null;
-                //singlefin.getBody().view = "text!" + body.view;
-                //singlefin.instances.push(singlefin.getBody().view);
-                singlefin.getBody().view = this.unbundleView(body.view);
             }
-            if (body.controllers && Array.isArray(body.controllers)) {
-                //singlefin.getBody().controllers = body.controllers;
-                singlefin.getBody().controllers = [];
-                for (var i = 0; i < body.controllers.length; i++) {
-                    //singlefin.instances.push(body.controllers[i]);
-                    singlefin.getBody().controllers.push(this.unbundleJavascriptObject(body.controllers[i]));
-                }
-            }
+            singlefin.getBody().view = this.unbundleView(body.view);
+            singlefin.getBody().controllers = this.unbundleJavascriptObjects(body.controllers);
+            singlefin.getBody().styles = this.unbundleFiles(body.styles);
+            singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
             singlefin.getBody().events = body.events;
             this.addHandlers(singlefin.body, singlefin);
             this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
@@ -232,12 +223,10 @@ var SinglefinModule;
             this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false, singlefin.body);
         }
         processResources(resources, singlefin) {
-            //singlefin.resources = resources;
             singlefin.resources = {};
             for (var languageKey in resources) {
                 singlefin.resources[languageKey] = {};
                 for (var resourceKey in resources[languageKey]) {
-                    //singlefin.instances.push(resources[languageKey][resourceKey]);
                     singlefin.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(resources[languageKey][resourceKey]);
                 }
             }
@@ -274,7 +263,6 @@ var SinglefinModule;
                 }
                 var pagePath = containerName + "/" + pageName;
                 if (page.widget) {
-                    //TODO: probabilmente si deve clonare l'oggetto
                     page.isWidget = true;
                     page.view = widgets[page.widget].view;
                     page.controllers = widgets[page.widget].controllers;
@@ -283,6 +271,7 @@ var SinglefinModule;
                     page.group = widgets[page.widget].group;
                     page.unwind = widgets[page.widget].unwind;
                     page.styles = widgets[page.widget].styles;
+                    page.scripts = widgets[page.widget].scripts;
                     page.appRootPath = pagePath;
                 }
                 var replaceChildren = this.processChildrenPage(pagePath, page.replace);
@@ -292,7 +281,8 @@ var SinglefinModule;
                 page.view = this.unbundleView(page.view);
                 page.controllers = this.unbundleJavascriptObjects(page.controllers);
                 page.styles = this.unbundleFiles(page.styles);
-                singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.appRootPath);
+                page.scripts = this.unbundleFiles(page.scripts);
+                singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.appRootPath);
                 this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget, page.appRootPath);
@@ -347,9 +337,26 @@ var SinglefinModule;
         unbundleJavascriptObject(javascriptObject) {
             var controllerContent = this.decodeBase64(javascriptObject);
             var define = (_obj) => {
+                if (typeof _obj === "function") {
+                    return _obj();
+                }
                 return _obj;
             };
             var obj = eval(controllerContent);
+            //TODO: impostare come nell'esempio qui sotto
+            /*var exports: any;
+            eval(`
+                class Test {
+                    hello() {
+                        console.log("hello!");
+                    }
+                }
+
+                exports = Test;
+            `);
+            console.log(exports);
+            var c = new exports();
+            c.hello();*/
             return obj;
         }
         decodeBase64(data) {
@@ -358,160 +365,6 @@ var SinglefinModule;
     }
     SinglefinModule.ConfigLoader = ConfigLoader;
 })(SinglefinModule || (SinglefinModule = {}));
-/*declare var $: any;
-
-module SinglefinModule {
-    export class ConfigLoader {
-        load(config: any, singlefin: Singlefin) {
-            var resources = config.resources;
-            var models = config.models;
-            var pages = config.pages;
-            
-            if(!pages) {
-                throw "pages cannot be null or undefined";
-            }
-
-            this.processResources(resources, singlefin);
-
-            if(models) {
-                singlefin.models = models;
-
-                for (var modelKey in models) {
-                    singlefin.instances.push(models[modelKey]);
-                }
-            }
-    
-            var bodyName = Object.keys(pages)[0];
-
-            singlefin.addBody(bodyName);
-
-            var body = pages[bodyName];
-
-            if(body.view) {
-                singlefin.getBody().htmlElement = null;
-                singlefin.getBody().view = "text!" + body.view;
-
-                singlefin.instances.push(singlefin.getBody().view);
-            }
-
-            if(body.controllers && Array.isArray(body.controllers)) {
-                singlefin.getBody().controllers = body.controllers;
-                
-                for(var i=0; i<body.controllers.length; i++) {
-                    singlefin.instances.push(body.controllers[i]);
-                }
-            }
-
-            singlefin.getBody().events = body.events;
-
-            this.addHandlers(singlefin.body, singlefin);
-            
-            this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
-            this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
-            this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
-            this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false, singlefin.body);
-        }
-
-        processResources(resources: any, singlefin: Singlefin) {
-            singlefin.resources = resources;
-
-            for (var languageKey in resources) {
-                for (var resourceKey in resources[languageKey]) {
-                    singlefin.instances.push(resources[languageKey][resourceKey]);
-                }
-            }
-        }
-
-        addHandlers(pagePath: string, singlefin: Singlefin) {
-            var _page: any = singlefin.pages[pagePath];
-
-            if(_page.events) {
-                for(var h=0; h<_page.events.length; h++) {
-                    if(!singlefin.handlers[_page.events[h]]) {
-                        singlefin.handlers[_page.events[h]] = [];
-                    }
-
-                    singlefin.handlers[_page.events[h]].push(pagePath);
-                }
-                
-            }
-        }
-        
-        processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {
-            if(!action) {
-                return;
-            }
-
-            if(!containerName) {
-                throw "container missed";
-            }
-
-            if(pages == null) {
-                return;
-            }
-
-            for(var i=0; i<pages.length; i++) {
-                var pageName = Object.keys(pages[i])[0];
-                var page = pages[i][pageName];
-                page.isWidget = isWidget;
-                page.appRootPath = appRootPath;
-
-                var disabled: boolean = false;
-
-                if(page.parameters) {
-                    disabled = page.parameters.disabled;
-                }
-
-                var pagePath = containerName + "/" + pageName;
-
-                if(page.widget) {
-                    //TODO: probabilmente si deve clonare l'oggetto
-                    page.isWidget = true;
-                    page.view = widgets[page.widget].view;
-                    page.controllers = widgets[page.widget].controllers;
-                    page.replace = widgets[page.widget].replace;
-                    page.append = widgets[page.widget].append;
-                    page.group = widgets[page.widget].group;
-                    page.unwind = widgets[page.widget].unwind;
-                    page.styles = widgets[page.widget].styles;
-                    page.appRootPath = pagePath;
-                }
-
-                var replaceChildren = this.processChildrenPage(pagePath, page.replace);
-                var appendChildren = this.processChildrenPage(pagePath, page.append);
-                var groupChildren = this.processChildrenPage(pagePath, page.group);
-                var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
-
-                singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.appRootPath);
-
-                this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
-                this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
-                this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget, page.appRootPath);
-                this.processPages("unwind", pagePath, page.unwind, widgets, singlefin, page.isWidget, page.appRootPath);
-
-                this.addHandlers(pagePath, singlefin);
-            }
-        }
-        
-        processChildrenPage(parentPagePath: string, childrenPage: any[]) {
-            var children: any[] = [];
-            
-            if(!childrenPage) {
-                return children;
-            }
-
-            for(var i=0; i<childrenPage.length; i++) {
-                var childPageName = Object.keys(childrenPage[i])[0];
-                
-                var childPagePath = parentPagePath + "/" + childPageName;
-
-                children.push(childPagePath);
-            }
-
-            return children;
-        }
-    }
-}*/ 
 var SinglefinModule;
 (function (SinglefinModule) {
     let DataProxy = /** @class */ (() => {
@@ -767,7 +620,7 @@ var SinglefinModule;
 var SinglefinModule;
 (function (SinglefinModule) {
     class Page {
-        constructor(app, name, disabled, action, container, path, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles) {
+        constructor(app, name, disabled, action, container, path, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts) {
             this._disabled = false;
             this._groupIndex = 0;
             this._groupNextStepEnabled = true;
@@ -790,6 +643,7 @@ var SinglefinModule;
                 this._parameters = parameters;
             this._isWidget = isWidget;
             this._styles = styles;
+            this._scripts = scripts;
         }
         get app() {
             return this._app;
@@ -893,6 +747,12 @@ var SinglefinModule;
         set styles(value) {
             this._styles = value;
         }
+        get scripts() {
+            return this._scripts;
+        }
+        set scripts(value) {
+            this._scripts = value;
+        }
         get htmlElement() {
             return this._htmlElement;
         }
@@ -929,7 +789,7 @@ var SinglefinModule;
                             this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters);
                             this.bind(singlefin, this.htmlElement);
                             this.drawItems(singlefin, this, viewParameters).then(() => {
-                                this.addHtmlElement(htmlContainerElement, this);
+                                this.addHtmlElement(htmlContainerElement, this, singlefin);
                                 this.showPage(singlefin, this, viewParameters).then(() => {
                                     resolve(this.htmlElement);
                                 }, () => {
@@ -1109,10 +969,11 @@ var SinglefinModule;
             }
             return new Promise((resolve, reject) => {
                 this.loadController(singlefin, body, parameters).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                    var bodyHtmlElement = $("#" + body.name);
+                    body.htmlElement = $("#" + body.name);
+                    body.appendStyles();
+                    body.appendScripts();
                     var view = this.renderView(singlefin, body, viewParameters);
-                    bodyHtmlElement.append(view);
-                    body.htmlElement = bodyHtmlElement;
+                    body.htmlElement.append(view);
                     resolve(body.htmlElement);
                 }), (ex) => {
                     if (ex) {
@@ -1176,7 +1037,7 @@ var SinglefinModule;
                         parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
                         this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters);
                         parentPage.bind(singlefin, htmlContainerElement);
-                        this.addHtmlElement(htmlContainerElement, parentPage);
+                        this.addHtmlElement(htmlContainerElement, parentPage, singlefin);
                         resolve(parentPage.htmlElement);
                     }), (ex) => {
                         if (ex) {
@@ -1220,7 +1081,7 @@ var SinglefinModule;
                             childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
                             this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters);
                             childPage.bind(singlefin, childPage.htmlElement);
-                            this.addHtmlElement(parent.htmlElement, childPage);
+                            this.addHtmlElement(parent.htmlElement, childPage, singlefin);
                             yield this.drawItems(singlefin, childPage, viewParameters).then(() => __awaiter(this, void 0, void 0, function* () {
                                 yield this.showPage(singlefin, childPage, viewParameters).then(() => {
                                 }, () => {
@@ -1258,7 +1119,7 @@ var SinglefinModule;
                         this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters);
                         surrogate.bind(singlefin, surrogate.htmlElement);
                         yield this.drawItems(singlefin, surrogate, viewParameters).then(() => __awaiter(this, void 0, void 0, function* () {
-                            this.addHtmlElement(parent.htmlElement, surrogate);
+                            this.addHtmlElement(parent.htmlElement, surrogate, singlefin);
                             parent.bind(singlefin, parent.htmlElement);
                         }), (ex) => {
                             if (ex) {
@@ -1450,9 +1311,10 @@ var SinglefinModule;
                 resolve(result);
             }));
         }
-        addHtmlElement(container, page) {
+        addHtmlElement(container, page, singlefin) {
             var element = container;
-            //page.appendStyles();
+            page.appendStyles();
+            page.appendScripts();
             var pageName = page.name.split('#')[0];
             var pageTag = container.find("page[" + pageName + "]");
             if (pageTag.length > 0) {
@@ -1469,49 +1331,40 @@ var SinglefinModule;
             }
             if (page.action == "replace") {
                 element.html(page.htmlElement);
+                var containerPage = singlefin.pages[page.container];
+                containerPage.appendStyles();
+                containerPage.appendScripts();
             }
             else if (page.action == "append") {
                 element.append(page.htmlElement);
             }
             else if (page.action == "group") {
                 element.html(page.htmlElement);
+                var containerPage = singlefin.pages[page.container];
+                containerPage.appendStyles();
+                containerPage.appendScripts();
             }
             else if (page.action == "unwind") {
                 element.append(page.htmlElement);
             }
-            page.appendStyles();
         }
-        /*removeStyles() {
-            var styles = $('head').find("[page]");
-
-            styles.each((i: number, item: any) => {
-                var style = $(item);
-
-                if(!this._path.startsWith(style.attr("page"))) {
-                    style.remove();
-                }
-            });
-        }*/
         appendStyles() {
-            /*if(!this._styles) {
-                return;
-            }
-            
-            for(var i=0; i<this._styles.length; i++) {
-                var style = $('head').find("[page='" + this._path + "']");
-
-                if(style.length == 0) {
-                    $('head').append(`<link page="` + this._path + `" rel="stylesheet" href="./` + this._styles[i] + `.css" type="text/css" />`);
-                }
-            }*/
             if (!this._styles) {
                 return;
             }
             for (var i = 0; i < this._styles.length; i++) {
-                var style = $('head').find("[page='" + this._path + "']");
-                if (style.length == 0) {
-                    this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
-                }
+                this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
+            }
+        }
+        appendScripts() {
+            if (!this._scripts) {
+                return;
+            }
+            for (var i = 0; i < this._scripts.length; i++) {
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                script.text = this._scripts[i];
+                this.htmlElement.append(script);
             }
         }
         addEventsHandlers(singlefin, app, page, element, parameters) {
@@ -2124,10 +1977,10 @@ var SinglefinModule;
         }
         addBody(name) {
             var app = new SinglefinModule.App(this);
-            var body = new SinglefinModule.Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, []);
+            var body = new SinglefinModule.Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], []);
             this._pages[this._body] = body;
         }
-        addPage(pageName, disabled, action, pagePath, container, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, appRootPath) {
+        addPage(pageName, disabled, action, pagePath, container, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts, appRootPath) {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var pathContainer = container.replace(bodyRegexp, "");
             var app = new SinglefinModule.App(this);
@@ -2139,7 +1992,7 @@ var SinglefinModule;
             if (pathContainer == this.body) {
                 relativePath = pageName;
             }
-            this._pages[pagePath] = new SinglefinModule.Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
+            this._pages[pagePath] = new SinglefinModule.Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts);
             return this._pages[pagePath];
         }
         /*addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
@@ -2181,7 +2034,7 @@ var SinglefinModule;
             var unwindChildren = this.createSurrogates(path, page.unwind);
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
-            this._pages[path] = new SinglefinModule.Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles);
+            this._pages[path] = new SinglefinModule.Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts);
             return this._pages[path];
         }
         createSurrogates(path, pagesPath) {

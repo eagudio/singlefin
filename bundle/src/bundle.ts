@@ -8,15 +8,7 @@ module SinglefinBundleModule {
         private _paths: any = {};
         
 
-        make(schema: any) {
-            //TODO:
-            //  scorro tutto lo schema
-            //  per ogni controller
-            //      lo indicizzo, cioè tramite un contatore sostituisco il path con l'index corrente e aggiorno un nuovo schema che salverò nel file
-            //      carico il contenuto del file
-            //      lo salvo in un file
-            //  per ogni view la stessa cosa del controller
-            //  per ogni stile la stessa cosa del controller
+        make(schema: any, targetPath: string) {
             this._paths = schema.paths;
 
             this._schema.homepage = schema.homepage;
@@ -26,7 +18,7 @@ module SinglefinBundleModule {
             this.bundleWidgets(schema.widgets);
             this.bundlePages(schema.pages);
             
-            this.save('../bundles/bundle.json');
+            this.save(targetPath);
         }
         
         bundleResources(resources: any) {
@@ -40,7 +32,7 @@ module SinglefinBundleModule {
                 this._schema.resources[languageKey] = {};
 
 				for (var resourceKey in resources[languageKey]) {
-                    var fileBundle = this.bundleFile(resources[languageKey][resourceKey] + ".js");
+                    var fileBundle = this.bundleFile(resources[languageKey][resourceKey]);
 
                     this._schema.resources[languageKey][resourceKey] = fileBundle;
 				}
@@ -57,7 +49,7 @@ module SinglefinBundleModule {
 			for (var model in models) {
                 this._schema.models[model] = {};
 
-                var fileBundle = this.bundleFile(models[model] + ".js");
+                var fileBundle = this.bundleFile(models[model]);
 
                 this._schema.models[model] = fileBundle;
 			}
@@ -113,6 +105,10 @@ module SinglefinBundleModule {
                 page.styles = this.bundleStyles(_page.styles);
             }
 
+            if(_page.scripts) {
+                page.scripts = this.bundleScripts(_page.scripts);
+            }
+
             if(_page.append) {
                 page.append = this.bundlePageMethod(_page.append);
             }
@@ -140,7 +136,7 @@ module SinglefinBundleModule {
             var controllers: string[] = [];
 
             for(var i=0; i<_controllers.length; i++) {
-                var controller = this.bundleFile(_controllers[i] + ".js");
+                var controller = this.bundleFile(_controllers[i]);
                 
                 controllers.push(controller);
             }
@@ -152,12 +148,24 @@ module SinglefinBundleModule {
             var styles: string[] = [];
 
             for(var i=0; i<_styles.length; i++) {
-                var style = this.bundleFile(_styles[i] + ".css");
+                var style = this.bundleFile(_styles[i]);
                 
                 styles.push(style);
             }
 
             return styles;
+        }
+
+        bundleScripts(_scripts: string[]): string[] {
+            var scripts: string[] = [];
+
+            for(var i=0; i<_scripts.length; i++) {
+                var script = this.bundleFile(_scripts[i]);
+                
+                scripts.push(script);
+            }
+
+            return scripts;
         }
 
         bundlePageMethod(_method: any[]): any[] {

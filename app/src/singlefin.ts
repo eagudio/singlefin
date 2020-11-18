@@ -79,7 +79,7 @@ module SinglefinModule {
             return this._modelProxy.proxy;
         }
 
-        getBody() {
+        getBody(): Page {
             return this._pages[this._body];
         }
 
@@ -422,12 +422,12 @@ module SinglefinModule {
         addBody(name: string) {
             var app: App = new App(this);
 
-            var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, []);
+            var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], []);
 
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {            
+        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], appRootPath: string): Page {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
@@ -445,7 +445,7 @@ module SinglefinModule {
                 relativePath = pageName;
             }
 
-            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
+            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts);
 
             return this._pages[pagePath];
         }
@@ -492,7 +492,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles);
+            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts);
 
             return this._pages[path];
         }

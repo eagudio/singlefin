@@ -18,6 +18,7 @@ module SinglefinModule {
 		private _parameters: any;
 		private _isWidget: boolean;
 		private _styles: string[];
+		private _scripts: string[];
 		private _htmlElement: any;
 
         private _groupIndex: number = 0;
@@ -27,7 +28,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[]) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[]) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -45,6 +46,7 @@ module SinglefinModule {
 			this._parameters = parameters
 			this._isWidget = isWidget;
 			this._styles = styles;
+			this._scripts = scripts;
         }
 
 		public get app(): App {
@@ -181,6 +183,14 @@ module SinglefinModule {
 
         public set styles(value: string[]) {
             this._styles = value;
+		}
+		
+		public get scripts(): string[] {
+            return this._scripts;
+        }
+
+        public set scripts(value: string[]) {
+            this._scripts = value;
         }
 
         public get htmlElement(): any {
@@ -230,7 +240,7 @@ module SinglefinModule {
 							this.bind(singlefin, this.htmlElement);
 							
 							this.drawItems(singlefin, this, viewParameters).then(() => {
-								this.addHtmlElement(htmlContainerElement, this);
+								this.addHtmlElement(htmlContainerElement, this, singlefin);
 
 								this.showPage(singlefin, this, viewParameters).then(() => {
 									resolve(this.htmlElement);
@@ -448,7 +458,7 @@ module SinglefinModule {
 		}
         
 		drawBody(singlefin: Singlefin, parameters: any) {
-			var body = singlefin.getBody();
+			var body: Page = singlefin.getBody();
 			
 			if(body.htmlElement) {
 				return Promise.resolve(body.htmlElement);
@@ -456,13 +466,14 @@ module SinglefinModule {
 
 			return new Promise((resolve, reject) => {
 				this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
-					var bodyHtmlElement = $("#" + body.name);
+					body.htmlElement = $("#" + body.name);
+					
+					body.appendStyles();
+					body.appendScripts();
 
 					var view = this.renderView(singlefin, body, viewParameters);
 
-					bodyHtmlElement.append(view);
-					
-					body.htmlElement = bodyHtmlElement;
+					body.htmlElement.append(view);
 	
 					resolve(body.htmlElement);
 				}, (ex: any) => {
@@ -545,7 +556,7 @@ module SinglefinModule {
 						this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters);
 						parentPage.bind(singlefin, htmlContainerElement);
 						
-						this.addHtmlElement(htmlContainerElement, parentPage);
+						this.addHtmlElement(htmlContainerElement, parentPage, singlefin);
 
 						resolve(parentPage.htmlElement);
 					}, (ex) => {
@@ -600,7 +611,7 @@ module SinglefinModule {
 							this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters);
 							childPage.bind(singlefin, childPage.htmlElement);
 
-							this.addHtmlElement(parent.htmlElement, childPage);
+							this.addHtmlElement(parent.htmlElement, childPage, singlefin);
 
 							await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
 								await this.showPage(singlefin, childPage, viewParameters).then(() => {
@@ -651,7 +662,7 @@ module SinglefinModule {
 						surrogate.bind(singlefin, surrogate.htmlElement);
 
 						await this.drawItems(singlefin, surrogate, viewParameters).then(async () => {
-							this.addHtmlElement(parent.htmlElement, surrogate);
+							this.addHtmlElement(parent.htmlElement, surrogate, singlefin);
 							
 							parent.bind(singlefin, parent.htmlElement);
 						}, (ex) => {
@@ -900,10 +911,11 @@ module SinglefinModule {
 			});
         }
         
-		addHtmlElement(container: any, page: Page) {
+		addHtmlElement(container: any, page: Page, singlefin: Singlefin) {
 			var element = container;
 
-			//page.appendStyles();
+			page.appendStyles();
+			page.appendScripts();
 			
 			var pageName = page.name.split('#')[0];
 			var pageTag = container.find("page[" + pageName +"]");
@@ -927,54 +939,48 @@ module SinglefinModule {
 			
 			if(page.action == "replace") {
 				element.html(page.htmlElement);
+
+				var containerPage: Page = singlefin.pages[page.container];
+
+				containerPage.appendStyles();
+				containerPage.appendScripts();
 			}
 			else if(page.action == "append") {
 				element.append(page.htmlElement);
 			}
 			else if(page.action == "group") {
 				element.html(page.htmlElement);
+
+				var containerPage: Page = singlefin.pages[page.container];
+
+				containerPage.appendStyles();
+				containerPage.appendScripts();
 			}
 			else if(page.action == "unwind") {
 				element.append(page.htmlElement);
 			}
-
-			page.appendStyles();
 		}
-		
-		/*removeStyles() {
-			var styles = $('head').find("[page]");
-
-			styles.each((i: number, item: any) => {
-				var style = $(item);
-
-				if(!this._path.startsWith(style.attr("page"))) {
-					style.remove();
-				}
-			});
-		}*/
 
 		appendStyles() {
-			/*if(!this._styles) {
-				return;
-			}
-			
-			for(var i=0; i<this._styles.length; i++) {
-				var style = $('head').find("[page='" + this._path + "']");
-
-				if(style.length == 0) {
-					$('head').append(`<link page="` + this._path + `" rel="stylesheet" href="./` + this._styles[i] + `.css" type="text/css" />`);
-				}
-			}*/
 			if(!this._styles) {
 				return;
 			}
 			
 			for(var i=0; i<this._styles.length; i++) {
-				var style = $('head').find("[page='" + this._path + "']");
+				this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
+			}
+		}
 
-				if(style.length == 0) {
-					this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
-				}
+		appendScripts() {
+			if(!this._scripts) {
+				return;
+			}
+			
+			for(var i=0; i<this._scripts.length; i++) {
+				var script = document.createElement("script");
+				script.type = "text/javascript";
+				script.text = this._scripts[i];
+				this.htmlElement.append(script);
 			}
 		}
         
