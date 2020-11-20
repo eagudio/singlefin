@@ -2,6 +2,10 @@ declare var $: any;
 
 module SinglefinModule {
     export class ConfigLoader {
+		private _bodyName: string = "";
+		private _modulesCode: string = "";
+
+
         load(config: any, singlefin: Singlefin) {
 			var resources = config.resources;
 			var models = config.models;
@@ -11,26 +15,40 @@ module SinglefinModule {
 				throw "pages cannot be null or undefined";
 			}
 
+			this._bodyName = Object.keys(pages)[0];
+
 			this.processResources(resources, singlefin);
 
 			if(models) {
+				var module = this.getModule(this._bodyName);
+				module.models = {};
+
 				for (var modelKey in models) {
-					singlefin.models[modelKey] = this.unbundleJavascriptObject(models[modelKey]);
+					module.models[modelKey] = {};
+
+					var path = "['" + this._bodyName + "'].models['" + modelKey + "']";
+
+					module.models[modelKey] = this.unbundleJavascriptObject(path, "object", models[modelKey]);
 				}
+
+				singlefin.models = module.models;
 			}
-	
-			var bodyName = Object.keys(pages)[0];
 
-			singlefin.addBody(bodyName);
+			singlefin.addBody(this._bodyName);
 
-			var body = pages[bodyName];
+			var body = pages[this._bodyName];
 
 			if(body.view) {
 				singlefin.getBody().htmlElement = null;
 			}
 
 			singlefin.getBody().view = this.unbundleView(body.view);
-			singlefin.getBody().controllers = this.unbundleJavascriptObjects(body.controllers);
+
+			var module = this.getModule(this._bodyName);
+			module.controllers = [];
+			module.controllers = this.unbundleJavascriptObjects("['" + this._bodyName + "'].controllers", "array", body.controllers);
+			singlefin.getBody().controllers = module.controllers;
+
 			singlefin.getBody().styles = this.unbundleFiles(body.styles);
 			singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
 
@@ -42,18 +60,27 @@ module SinglefinModule {
 			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
 			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
 			this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false, singlefin.body);
+
+			return this.loadModules();
 		}
 
 		processResources(resources: any, singlefin: Singlefin) {
 			singlefin.resources = {};
 
+			var module = this.getModule(this._bodyName);
+			module.resources = {};
+
 			for (var languageKey in resources) {
-				singlefin.resources[languageKey] = {};
+				module.resources[languageKey] = {};
+				var path = "['" + this._bodyName + "'].resources['" + languageKey + "']";
 
 				for (var resourceKey in resources[languageKey]) {
-					singlefin.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(resources[languageKey][resourceKey]);
+					path += "['" + resourceKey + "']";
+					module.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(path, "object", resources[languageKey][resourceKey]); //serve il path...
 				}
 			}
+
+			singlefin.resources = module.resources;
 		}
 
         addHandlers(pagePath: string, singlefin: Singlefin) {
@@ -117,7 +144,11 @@ module SinglefinModule {
 				var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
 
 				page.view = this.unbundleView(page.view);
-				page.controllers = this.unbundleJavascriptObjects(page.controllers);
+
+				var module = this.getModule(pagePath);
+				module.controllers = this.unbundleJavascriptObjects("['" + pagePath + "'].controllers", "array", page.controllers);
+				page.controllers = module.controllers;
+
 				page.styles = this.unbundleFiles(page.styles);
 				page.scripts = this.unbundleFiles(page.scripts);
 
@@ -172,7 +203,13 @@ module SinglefinModule {
 			return files;
 		}
 
-		unbundleJavascriptObjects(_objects: string[]): any {
+		unbundleJson(json: string): string {
+			var jsonString = this.decodeBase64(json);
+
+			return JSON.parse(jsonString);
+		}
+
+		unbundleJavascriptObjects(path: string, moduleType: string, _objects: string[]): any {
 			if(!_objects) {
 				return;
 			}
@@ -180,21 +217,24 @@ module SinglefinModule {
 			var objects: any[] = [];
 			
 			for(var i=0; i<_objects.length; i++) {
-				objects.push(this.unbundleJavascriptObject(_objects[i]));
+				var object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
+
+				if(object) {
+					objects.push(object);
+				}
 			};
 
 			return objects;
 		}
 
-		unbundleJson(json: string): string {
-			var jsonString = this.decodeBase64(json);
-
-			return JSON.parse(jsonString);
-		}
-
-		unbundleJavascriptObject(javascriptObject: string): string {
+		unbundleJavascriptObject(path: string, moduleType: string, javascriptObject: string): any {
 			var controllerContent = this.decodeBase64(javascriptObject);
 			
+			if(controllerContent.startsWith("class")) {
+				return this.addModuleCode(path, moduleType, controllerContent);
+			}
+
+			//TODO: workaround: tutti i moduli (controller, model, ecc.) devono essere convertiti in classi e il define va eliminato, così come l'eval!
 			var define = (_obj: any) => {
 				if(typeof _obj === "function") {
 					return _obj();
@@ -204,27 +244,48 @@ module SinglefinModule {
 			};
 
 			var obj = eval(controllerContent);
-
-			//TODO: impostare come nell'esempio qui sotto
-			/*var exports: any;
-			eval(`
-				class Test {
-					hello() {
-						console.log("hello!");
-					}
-				}
-
-				exports = Test;
-			`);
-			console.log(exports);
-			var c = new exports();
-			c.hello();*/
 			
 			return obj;
 		}
 
 		decodeBase64(data: string) {
 			return decodeURIComponent(escape(atob(data)));
+		}
+
+		getModule(path: string) {
+			if(!Singlefin.moduleMap[path]) {
+				Singlefin.moduleMap[path] = {};
+			}
+
+			return Singlefin.moduleMap[path];
+		}
+
+		addModuleCode(path: string, moduleType: string, code: string) {
+			if(moduleType == "array") {
+				this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
+			}
+			else {
+				this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
+			}
+
+			return null;
+		}
+
+		loadModules() {
+			return new Promise((resolve, reject) => {
+				var script = document.createElement("script");
+				script.type = "text/javascript";
+
+				this._modulesCode += `\nSinglefin.loadModuleCallbacks["` + this._bodyName + `"]();`;
+
+				script.text = this._modulesCode;
+
+				Singlefin.loadModuleCallbacks[this._bodyName] = (() => {
+					resolve();
+				});
+	
+				$('head').append(script);
+			});
 		}
     }
 }

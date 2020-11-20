@@ -192,6 +192,10 @@ var SinglefinModule;
 var SinglefinModule;
 (function (SinglefinModule) {
     class ConfigLoader {
+        constructor() {
+            this._bodyName = "";
+            this._modulesCode = "";
+        }
         load(config, singlefin) {
             var resources = config.resources;
             var models = config.models;
@@ -199,20 +203,28 @@ var SinglefinModule;
             if (!pages) {
                 throw "pages cannot be null or undefined";
             }
+            this._bodyName = Object.keys(pages)[0];
             this.processResources(resources, singlefin);
             if (models) {
+                var module = this.getModule(this._bodyName);
+                module.models = {};
                 for (var modelKey in models) {
-                    singlefin.models[modelKey] = this.unbundleJavascriptObject(models[modelKey]);
+                    module.models[modelKey] = {};
+                    var path = "['" + this._bodyName + "'].models['" + modelKey + "']";
+                    module.models[modelKey] = this.unbundleJavascriptObject(path, "object", models[modelKey]);
                 }
+                singlefin.models = module.models;
             }
-            var bodyName = Object.keys(pages)[0];
-            singlefin.addBody(bodyName);
-            var body = pages[bodyName];
+            singlefin.addBody(this._bodyName);
+            var body = pages[this._bodyName];
             if (body.view) {
                 singlefin.getBody().htmlElement = null;
             }
             singlefin.getBody().view = this.unbundleView(body.view);
-            singlefin.getBody().controllers = this.unbundleJavascriptObjects(body.controllers);
+            var module = this.getModule(this._bodyName);
+            module.controllers = [];
+            module.controllers = this.unbundleJavascriptObjects("['" + this._bodyName + "'].controllers", "array", body.controllers);
+            singlefin.getBody().controllers = module.controllers;
             singlefin.getBody().styles = this.unbundleFiles(body.styles);
             singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
             singlefin.getBody().events = body.events;
@@ -221,15 +233,21 @@ var SinglefinModule;
             this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
             this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
             this.processPages("unwind", singlefin.body, body.unwind, config.widgets, singlefin, false, singlefin.body);
+            return this.loadModules();
         }
         processResources(resources, singlefin) {
             singlefin.resources = {};
+            var module = this.getModule(this._bodyName);
+            module.resources = {};
             for (var languageKey in resources) {
-                singlefin.resources[languageKey] = {};
+                module.resources[languageKey] = {};
+                var path = "['" + this._bodyName + "'].resources['" + languageKey + "']";
                 for (var resourceKey in resources[languageKey]) {
-                    singlefin.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(resources[languageKey][resourceKey]);
+                    path += "['" + resourceKey + "']";
+                    module.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(path, "object", resources[languageKey][resourceKey]); //serve il path...
                 }
             }
+            singlefin.resources = module.resources;
         }
         addHandlers(pagePath, singlefin) {
             var _page = singlefin.pages[pagePath];
@@ -279,7 +297,9 @@ var SinglefinModule;
                 var groupChildren = this.processChildrenPage(pagePath, page.group);
                 var unwindChildren = this.processChildrenPage(pagePath, page.unwind);
                 page.view = this.unbundleView(page.view);
-                page.controllers = this.unbundleJavascriptObjects(page.controllers);
+                var module = this.getModule(pagePath);
+                module.controllers = this.unbundleJavascriptObjects("['" + pagePath + "'].controllers", "array", page.controllers);
+                page.controllers = module.controllers;
                 page.styles = this.unbundleFiles(page.styles);
                 page.scripts = this.unbundleFiles(page.scripts);
                 singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.appRootPath);
@@ -319,23 +339,30 @@ var SinglefinModule;
             ;
             return files;
         }
-        unbundleJavascriptObjects(_objects) {
+        unbundleJson(json) {
+            var jsonString = this.decodeBase64(json);
+            return JSON.parse(jsonString);
+        }
+        unbundleJavascriptObjects(path, moduleType, _objects) {
             if (!_objects) {
                 return;
             }
             var objects = [];
             for (var i = 0; i < _objects.length; i++) {
-                objects.push(this.unbundleJavascriptObject(_objects[i]));
+                var object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
+                if (object) {
+                    objects.push(object);
+                }
             }
             ;
             return objects;
         }
-        unbundleJson(json) {
-            var jsonString = this.decodeBase64(json);
-            return JSON.parse(jsonString);
-        }
-        unbundleJavascriptObject(javascriptObject) {
+        unbundleJavascriptObject(path, moduleType, javascriptObject) {
             var controllerContent = this.decodeBase64(javascriptObject);
+            if (controllerContent.startsWith("class")) {
+                return this.addModuleCode(path, moduleType, controllerContent);
+            }
+            //TODO: workaround: tutti i moduli (controller, model, ecc.) devono essere convertiti in classi e il define va eliminato, così come l'eval!
             var define = (_obj) => {
                 if (typeof _obj === "function") {
                     return _obj();
@@ -343,24 +370,37 @@ var SinglefinModule;
                 return _obj;
             };
             var obj = eval(controllerContent);
-            //TODO: impostare come nell'esempio qui sotto
-            /*var exports: any;
-            eval(`
-                class Test {
-                    hello() {
-                        console.log("hello!");
-                    }
-                }
-
-                exports = Test;
-            `);
-            console.log(exports);
-            var c = new exports();
-            c.hello();*/
             return obj;
         }
         decodeBase64(data) {
             return decodeURIComponent(escape(atob(data)));
+        }
+        getModule(path) {
+            if (!SinglefinModule.Singlefin.moduleMap[path]) {
+                SinglefinModule.Singlefin.moduleMap[path] = {};
+            }
+            return SinglefinModule.Singlefin.moduleMap[path];
+        }
+        addModuleCode(path, moduleType, code) {
+            if (moduleType == "array") {
+                this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
+            }
+            else {
+                this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
+            }
+            return null;
+        }
+        loadModules() {
+            return new Promise((resolve, reject) => {
+                var script = document.createElement("script");
+                script.type = "text/javascript";
+                this._modulesCode += `\nSinglefin.loadModuleCallbacks["` + this._bodyName + `"]();`;
+                script.text = this._modulesCode;
+                SinglefinModule.Singlefin.loadModuleCallbacks[this._bodyName] = (() => {
+                    resolve();
+                });
+                $('head').append(script);
+            });
         }
     }
     SinglefinModule.ConfigLoader = ConfigLoader;
@@ -1681,448 +1721,362 @@ var SinglefinModule;
  */
 var SinglefinModule;
 (function (SinglefinModule) {
-    class Singlefin {
-        constructor(config) {
-            this._home = "__body";
-            this._body = "__body";
-            this._instances = [];
-            this._pages = {};
-            this._models = {};
-            this._handlers = {};
-            this._defaultLanguage = "it-IT";
-            this._resources = {
-                "it-IT": {}
-            };
-            this._model = {};
-            this.init(config);
-        }
-        get instances() {
-            return this._instances;
-        }
-        set resources(_resources) {
-            this._resources = _resources;
-        }
-        get resources() {
-            return this._resources;
-        }
-        get defaultResources() {
-            return this._resources[this._defaultLanguage];
-        }
-        get body() {
-            return this._body;
-        }
-        get pages() {
-            return this._pages;
-        }
-        set models(_models) {
-            this._models = _models;
-        }
-        get models() {
-            return this._models;
-        }
-        get handlers() {
-            return this._handlers;
-        }
-        get modelProxy() {
-            return this._modelProxy;
-        }
-        get model() {
-            return this._modelProxy.proxy;
-        }
-        getBody() {
-            return this._pages[this._body];
-        }
-        init(config) {
-            try {
-                this._modelProxy = new SinglefinModule.DataProxy(this._model);
-                var params = this.getUrlParams(window.location.href);
-                var configLoader = new SinglefinModule.ConfigLoader();
-                configLoader.load(config, this);
-                /*this.loadInstances(config.paths).then(() => {
-                    var _homepage = config.homepage;
-                
-                    if(params) {
-                        if(params.page) {
-                            this._home = params.page;
-        
-                            _homepage = this._home;
-                        }
-                    }
-                    
-                    return this.open(_homepage);
-                }, () => {
-
-                });*/
-                var _homepage = config.homepage;
-                if (params) {
-                    if (params.page) {
-                        this._home = params.page;
-                        _homepage = this._home;
-                    }
-                }
-                return this.open(_homepage);
-            }
-            catch (ex) {
-                console.error("an error occurred during init singlefin: " + ex);
-            }
-        }
-        open(pageName, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                if (_pageName == this.body) {
-                    return resolve(this._pages[_pageName]);
-                }
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occurred during open page '" + pageName + "': page not found");
-                    return resolve();
-                }
-                page.draw(this, parameters).then(() => {
-                    resolve(page);
-                }, (error) => {
-                    console.error("an error occurred during open page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        refresh(pageName, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                if (_pageName == this.body) {
-                    return resolve(this._pages[_pageName]);
-                }
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occurred during refresh page '" + pageName + "': page not found");
-                    return resolve();
-                }
-                page.redraw(this, parameters).then(() => {
-                    resolve(page);
-                }, (error) => {
-                    console.error("an error occurred during refresh page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        nextGroupStep(pageName, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                if (_pageName == this.body) {
-                    return resolve(this._pages[_pageName]);
-                }
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
-                    return resolve();
-                }
-                page.nextStep(this, parameters).then(() => {
-                    resolve(page);
-                }, (error) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        previousGroupStep(pageName, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                if (_pageName == this.body) {
-                    return resolve(this._pages[_pageName]);
-                }
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
-                    return resolve();
-                }
-                page.previousStep(this, parameters).then(() => {
-                    resolve(page);
-                }, (error) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        openGroupStep(pageName, index, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                if (_pageName == this.body) {
-                    return resolve(this._pages[_pageName]);
-                }
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
-                    return resolve();
-                }
-                page.openGroupByIndex(this, index, parameters).then(() => {
-                    resolve(page);
-                }, (error) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        getGroupCount(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during get group count of page '" + pageName + "': page not found");
-            }
-            return page.group.length;
-        }
-        getGroupIndex(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during get group index of page '" + pageName + "': page not found");
-            }
-            return page.groupIndex;
-        }
-        isFirstGroupStep(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during check first group step of page '" + pageName + "': page not found");
-            }
-            return page.groupIndex == 0;
-        }
-        isLastGroupStep(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during check last group step of page '" + pageName + "': page not found");
-            }
-            return page.groupIndex == page.group.length - 1;
-        }
-        setNextGroupStepEnabled(pageName, enabled) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during set next group step enabled of page '" + pageName + "': page not found");
-            }
-            page.setNextGroupStepEnabled(this, enabled);
-        }
-        isNextGroupStepEnabled(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during check next group step enabled of page '" + pageName + "': page not found");
-            }
-            return page.isNextGroupStepEnabled(this);
-        }
-        setPreviousGroupStepEnabled(pageName, enabled) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during set previous group step enabled of page '" + pageName + "': page not found");
-            }
-            page.setPreviousGroupStepEnabled(this, enabled);
-        }
-        isPreviousGroupStepEnabled(pageName) {
-            var _pageName = this._body + "/" + pageName;
-            var page = this.pages[_pageName];
-            if (!page) {
-                console.error("an error occurred during check previous group step enabled of page '" + pageName + "': page not found");
-            }
-            return page.isPreviousGroupStepEnabled(this);
-        }
-        close(pageName, parameters) {
-            return new Promise((resolve) => {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
-                if (!page) {
-                    console.error("an error occured during close page: page '" + pageName + "' not found");
-                    return resolve();
-                }
-                page.close(this, parameters).then(() => {
-                    resolve();
-                }, (error) => {
-                    console.error("an error occurred during close page '" + pageName + "'");
-                    resolve();
-                });
-            });
-        }
-        trigger(event, data) {
-            var paths = [];
-            if (this._handlers[event]) {
-                paths = this._handlers[event];
-            }
-            for (var h = 0; h < paths.length; h++) {
-                var handlerPage = this.pages[paths[h]];
-                var eventObject = {
-                    browser: {
-                        event: "event",
-                        handler: event,
-                        data: data,
-                        path: paths[h],
-                        page: handlerPage
-                    }
+    let Singlefin = /** @class */ (() => {
+        class Singlefin {
+            constructor(config) {
+                this._home = "__body";
+                this._body = "__body";
+                this._instances = [];
+                this._pages = {};
+                this._models = {};
+                this._handlers = {};
+                this._defaultLanguage = "it-IT";
+                this._resources = {
+                    "it-IT": {}
                 };
-                if (handlerPage.controller && handlerPage.controller[event]) {
-                    handlerPage.controller[event](eventObject);
+                this._model = {};
+                this.init(config);
+            }
+            get instances() {
+                return this._instances;
+            }
+            set resources(_resources) {
+                this._resources = _resources;
+            }
+            get resources() {
+                return this._resources;
+            }
+            get defaultResources() {
+                return this._resources[this._defaultLanguage];
+            }
+            get body() {
+                return this._body;
+            }
+            get pages() {
+                return this._pages;
+            }
+            set models(_models) {
+                this._models = _models;
+            }
+            get models() {
+                return this._models;
+            }
+            get handlers() {
+                return this._handlers;
+            }
+            get modelProxy() {
+                return this._modelProxy;
+            }
+            get model() {
+                return this._modelProxy.proxy;
+            }
+            getBody() {
+                return this._pages[this._body];
+            }
+            init(config) {
+                try {
+                    this._modelProxy = new SinglefinModule.DataProxy(this._model);
+                    var params = this.getUrlParams(window.location.href);
+                    var configLoader = new SinglefinModule.ConfigLoader();
+                    configLoader.load(config, this).then(() => {
+                        var _homepage = config.homepage;
+                        if (params) {
+                            if (params.page) {
+                                this._home = params.page;
+                                _homepage = this._home;
+                            }
+                        }
+                        return this.open(_homepage);
+                    }, () => {
+                        console.log("an error occurred during init singlefin: config loading error");
+                    });
+                }
+                catch (ex) {
+                    console.error("an error occurred during init singlefin: " + ex);
                 }
             }
-        }
-        static getURLPath() {
-            var path = window.location.href;
-            var paths = path.split("/");
-            if (paths.length > 2) {
-                var basePath = "/";
-                for (var i = 3; i < paths.length; i++) {
-                    var qualifyPaths = paths[i].split("?");
-                    basePath += qualifyPaths[0];
-                }
-                return basePath;
-            }
-            return "/";
-        }
-        addBody(name) {
-            var app = new SinglefinModule.App(this);
-            var body = new SinglefinModule.Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], []);
-            this._pages[this._body] = body;
-        }
-        addPage(pageName, disabled, action, pagePath, container, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts, appRootPath) {
-            var bodyRegexp = new RegExp("^(" + this.body + "/)");
-            var pathContainer = container.replace(bodyRegexp, "");
-            var app = new SinglefinModule.App(this);
-            if (isWidget) {
-                var rootPath = appRootPath.replace(bodyRegexp, "");
-                app.rootPath = rootPath + "/";
-            }
-            var relativePath = pathContainer + "/" + pageName;
-            if (pathContainer == this.body) {
-                relativePath = pageName;
-            }
-            this._pages[pagePath] = new SinglefinModule.Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts);
-            return this._pages[pagePath];
-        }
-        /*addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
-            if(view) {
-                this._instances.push("text!" + view);
-            }
-
-            if(controllers) {
-                for(var i=0; i<controllers.length; i++) {
-                    this._instances.push(controllers[i]);
-                };
-            }
-            
-            var bodyRegexp = new RegExp("^(" + this.body + "/)");
-            var pathContainer = container.replace(bodyRegexp, "");
-
-            var app: App = new App(this);
-
-            if(isWidget) {
-                var rootPath = appRootPath.replace(bodyRegexp, "");
-
-                app.rootPath = rootPath + "/";
-            }
-
-            var relativePath = pathContainer + "/" + pageName;
-
-            if(pathContainer == this.body) {
-                relativePath = pageName;
-            }
-
-            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
-
-            return this._pages[pagePath];
-        }*/
-        addSurrogate(name, path, containerPath, page) {
-            var replaceChildren = this.createSurrogates(path, page.replace);
-            var appendChildren = this.createSurrogates(path, page.append);
-            var groupChildren = this.createSurrogates(path, page.group);
-            var unwindChildren = this.createSurrogates(path, page.unwind);
-            var bodyRegexp = new RegExp("^(" + this.body + "/)");
-            var relativePath = path.replace(bodyRegexp, "");
-            this._pages[path] = new SinglefinModule.Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts);
-            return this._pages[path];
-        }
-        createSurrogates(path, pagesPath) {
-            var surrogates = [];
-            for (var i = 0; i < pagesPath.length; i++) {
-                var page = this.pages[pagesPath[i]];
-                var pagePath = path + "/" + page.name;
-                surrogates.push(pagePath);
-                this.addSurrogate(page.name, pagePath, path, page);
-            }
-            return surrogates;
-        }
-        loadInstances(pathsMap) {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var loader = new SinglefinModule.Loader();
-                loader.load(this._instances, pathsMap).then(() => {
-                    try {
-                        /*for(var i=0; i<this._styles.length; i++) {
-                            $('head').append(`<link rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
-                        }*/
-                        for (var languageKey in this._resources) {
-                            for (var resourceKey in this._resources[languageKey]) {
-                                this._resources[languageKey][resourceKey] = loader.getInstance(this._resources[languageKey][resourceKey], pathsMap);
-                            }
-                        }
-                        for (var key in this._models) {
-                            this._models[key] = loader.getInstance(this._models[key], pathsMap);
-                        }
-                        for (var key in this._pages) {
-                            if (this._pages[key].view) {
-                                this._pages[key].view = loader.getInstance(this._pages[key].view, pathsMap);
-                            }
-                            var controllers = [];
-                            if (this._pages[key].controllers && Array.isArray(this._pages[key].controllers)) {
-                                controllers = this._pages[key].controllers.map((controller) => {
-                                    return loader.getInstance(controller, pathsMap);
-                                });
-                            }
-                            this._pages[key].controllers = controllers;
-                            var styles = [];
-                            if (this._pages[key].styles && Array.isArray(this._pages[key].styles)) {
-                                styles = this._pages[key].styles.map((style) => {
-                                    //TODO: gli stili non vengono caricati con require, quindi i path sono differenti (require deve avere un 'aggiustamento' perchè considera il path dalla cartella in cui risiede lo script require.js)
-                                    //      si dovrebbe quindi eliminare l'utilizzo di require e pensare ad un sistema per creare un bundle con view e controller
-                                    return loader.normalizePath(style, pathsMap);
-                                });
-                            }
-                            this._pages[key].styles = styles;
-                        }
+            open(pageName, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    if (_pageName == this.body) {
+                        return resolve(this._pages[_pageName]);
+                    }
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occurred during open page '" + pageName + "': page not found");
+                        return resolve();
+                    }
+                    page.draw(this, parameters).then(() => {
+                        resolve(page);
+                    }, (error) => {
+                        console.error("an error occurred during open page '" + pageName + "'");
                         resolve();
-                    }
-                    catch (ex) {
-                        console.error("load instances error: " + ex);
-                        reject("load instances error: " + ex);
-                    }
-                }, (error) => {
-                    console.error("load instances error");
-                    reject("load instances error");
+                    });
                 });
-            }));
-        }
-        getUrlParams(url) {
-            var queryString = url.split("?");
-            var query = "";
-            if (queryString.length < 2) {
-                return null;
             }
-            query = queryString[1];
-            var vars = query.split("&");
-            var queryObject = {};
-            for (var i = 0; i < vars.length; i++) {
-                var pair = vars[i].split("=");
-                var key = decodeURIComponent(pair[0]);
-                var value = decodeURIComponent(pair[1]);
-                if (typeof queryObject[key] === "undefined") {
-                    queryObject[key] = decodeURIComponent(value);
+            refresh(pageName, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    if (_pageName == this.body) {
+                        return resolve(this._pages[_pageName]);
+                    }
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occurred during refresh page '" + pageName + "': page not found");
+                        return resolve();
+                    }
+                    page.redraw(this, parameters).then(() => {
+                        resolve(page);
+                    }, (error) => {
+                        console.error("an error occurred during refresh page '" + pageName + "'");
+                        resolve();
+                    });
+                });
+            }
+            nextGroupStep(pageName, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    if (_pageName == this.body) {
+                        return resolve(this._pages[_pageName]);
+                    }
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        return resolve();
+                    }
+                    page.nextStep(this, parameters).then(() => {
+                        resolve(page);
+                    }, (error) => {
+                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        resolve();
+                    });
+                });
+            }
+            previousGroupStep(pageName, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    if (_pageName == this.body) {
+                        return resolve(this._pages[_pageName]);
+                    }
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        return resolve();
+                    }
+                    page.previousStep(this, parameters).then(() => {
+                        resolve(page);
+                    }, (error) => {
+                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        resolve();
+                    });
+                });
+            }
+            openGroupStep(pageName, index, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    if (_pageName == this.body) {
+                        return resolve(this._pages[_pageName]);
+                    }
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        return resolve();
+                    }
+                    page.openGroupByIndex(this, index, parameters).then(() => {
+                        resolve(page);
+                    }, (error) => {
+                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        resolve();
+                    });
+                });
+            }
+            getGroupCount(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during get group count of page '" + pageName + "': page not found");
                 }
-                else if (typeof queryObject[key] === "string") {
-                    var arr = [queryObject[key], decodeURIComponent(value)];
-                    queryObject[key] = arr;
+                return page.group.length;
+            }
+            getGroupIndex(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during get group index of page '" + pageName + "': page not found");
                 }
-                else {
-                    queryObject[key].push(decodeURIComponent(value));
+                return page.groupIndex;
+            }
+            isFirstGroupStep(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during check first group step of page '" + pageName + "': page not found");
+                }
+                return page.groupIndex == 0;
+            }
+            isLastGroupStep(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during check last group step of page '" + pageName + "': page not found");
+                }
+                return page.groupIndex == page.group.length - 1;
+            }
+            setNextGroupStepEnabled(pageName, enabled) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during set next group step enabled of page '" + pageName + "': page not found");
+                }
+                page.setNextGroupStepEnabled(this, enabled);
+            }
+            isNextGroupStepEnabled(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during check next group step enabled of page '" + pageName + "': page not found");
+                }
+                return page.isNextGroupStepEnabled(this);
+            }
+            setPreviousGroupStepEnabled(pageName, enabled) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during set previous group step enabled of page '" + pageName + "': page not found");
+                }
+                page.setPreviousGroupStepEnabled(this, enabled);
+            }
+            isPreviousGroupStepEnabled(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during check previous group step enabled of page '" + pageName + "': page not found");
+                }
+                return page.isPreviousGroupStepEnabled(this);
+            }
+            close(pageName, parameters) {
+                return new Promise((resolve) => {
+                    var _pageName = this._body + "/" + pageName;
+                    var page = this.pages[_pageName];
+                    if (!page) {
+                        console.error("an error occured during close page: page '" + pageName + "' not found");
+                        return resolve();
+                    }
+                    page.close(this, parameters).then(() => {
+                        resolve();
+                    }, (error) => {
+                        console.error("an error occurred during close page '" + pageName + "'");
+                        resolve();
+                    });
+                });
+            }
+            trigger(event, data) {
+                var paths = [];
+                if (this._handlers[event]) {
+                    paths = this._handlers[event];
+                }
+                for (var h = 0; h < paths.length; h++) {
+                    var handlerPage = this.pages[paths[h]];
+                    var eventObject = {
+                        browser: {
+                            event: "event",
+                            handler: event,
+                            data: data,
+                            path: paths[h],
+                            page: handlerPage
+                        }
+                    };
+                    if (handlerPage.controller && handlerPage.controller[event]) {
+                        handlerPage.controller[event](eventObject);
+                    }
                 }
             }
-            return queryObject;
+            static getURLPath() {
+                var path = window.location.href;
+                var paths = path.split("/");
+                if (paths.length > 2) {
+                    var basePath = "/";
+                    for (var i = 3; i < paths.length; i++) {
+                        var qualifyPaths = paths[i].split("?");
+                        basePath += qualifyPaths[0];
+                    }
+                    return basePath;
+                }
+                return "/";
+            }
+            addBody(name) {
+                var app = new SinglefinModule.App(this);
+                this._body = name;
+                this._home = name;
+                var body = new SinglefinModule.Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], []);
+                this._pages[this._body] = body;
+            }
+            addPage(pageName, disabled, action, pagePath, container, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts, appRootPath) {
+                var bodyRegexp = new RegExp("^(" + this.body + "/)");
+                var pathContainer = container.replace(bodyRegexp, "");
+                var app = new SinglefinModule.App(this);
+                if (isWidget) {
+                    var rootPath = appRootPath.replace(bodyRegexp, "");
+                    app.rootPath = rootPath + "/";
+                }
+                var relativePath = pathContainer + "/" + pageName;
+                if (pathContainer == this.body) {
+                    relativePath = pageName;
+                }
+                this._pages[pagePath] = new SinglefinModule.Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles, scripts);
+                return this._pages[pagePath];
+            }
+            addSurrogate(name, path, containerPath, page) {
+                var replaceChildren = this.createSurrogates(path, page.replace);
+                var appendChildren = this.createSurrogates(path, page.append);
+                var groupChildren = this.createSurrogates(path, page.group);
+                var unwindChildren = this.createSurrogates(path, page.unwind);
+                var bodyRegexp = new RegExp("^(" + this.body + "/)");
+                var relativePath = path.replace(bodyRegexp, "");
+                this._pages[path] = new SinglefinModule.Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts);
+                return this._pages[path];
+            }
+            createSurrogates(path, pagesPath) {
+                var surrogates = [];
+                for (var i = 0; i < pagesPath.length; i++) {
+                    var page = this.pages[pagesPath[i]];
+                    var pagePath = path + "/" + page.name;
+                    surrogates.push(pagePath);
+                    this.addSurrogate(page.name, pagePath, path, page);
+                }
+                return surrogates;
+            }
+            getUrlParams(url) {
+                var queryString = url.split("?");
+                var query = "";
+                if (queryString.length < 2) {
+                    return null;
+                }
+                query = queryString[1];
+                var vars = query.split("&");
+                var queryObject = {};
+                for (var i = 0; i < vars.length; i++) {
+                    var pair = vars[i].split("=");
+                    var key = decodeURIComponent(pair[0]);
+                    var value = decodeURIComponent(pair[1]);
+                    if (typeof queryObject[key] === "undefined") {
+                        queryObject[key] = decodeURIComponent(value);
+                    }
+                    else if (typeof queryObject[key] === "string") {
+                        var arr = [queryObject[key], decodeURIComponent(value)];
+                        queryObject[key] = arr;
+                    }
+                    else {
+                        queryObject[key].push(decodeURIComponent(value));
+                    }
+                }
+                return queryObject;
+            }
         }
-    }
+        Singlefin.moduleMap = {};
+        Singlefin.loadModuleCallbacks = {};
+        return Singlefin;
+    })();
     SinglefinModule.Singlefin = Singlefin;
 })(SinglefinModule || (SinglefinModule = {}));
 window.Singlefin = window.Singlefin || SinglefinModule.Singlefin;

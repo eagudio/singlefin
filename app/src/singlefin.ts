@@ -30,6 +30,9 @@ module SinglefinModule {
         private _model: any = {};
         private _modelProxy: any;
 
+        public static moduleMap: any = {};
+        public static loadModuleCallbacks: any = {};
+
 
         constructor(config: any) {
             this.init(config);
@@ -91,11 +94,9 @@ module SinglefinModule {
 
                 var configLoader = new ConfigLoader();
 
-                configLoader.load(config, this);
-
-                /*this.loadInstances(config.paths).then(() => {
+                configLoader.load(config, this).then(() => {
                     var _homepage = config.homepage;
-                
+
                     if(params) {
                         if(params.page) {
                             this._home = params.page;
@@ -106,20 +107,8 @@ module SinglefinModule {
                     
                     return this.open(_homepage);
                 }, () => {
-
-                });*/
-
-                var _homepage = config.homepage;
-                
-                if(params) {
-                    if(params.page) {
-                        this._home = params.page;
-    
-                        _homepage = this._home;
-                    }
-                }
-                
-                return this.open(_homepage);
+                    console.log("an error occurred during init singlefin: config loading error");
+                });
             }
             catch(ex) {
                 console.error("an error occurred during init singlefin: " + ex);
@@ -422,6 +411,9 @@ module SinglefinModule {
         addBody(name: string) {
             var app: App = new App(this);
 
+            this._body = name;
+            this._home = name;
+
             var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], []);
 
             this._pages[this._body] = body;
@@ -449,39 +441,6 @@ module SinglefinModule {
 
             return this._pages[pagePath];
         }
-
-        /*addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], appRootPath: string): Page {
-			if(view) {
-				this._instances.push("text!" + view);
-			}
-
-			if(controllers) {
-				for(var i=0; i<controllers.length; i++) {
-					this._instances.push(controllers[i]);
-				};
-			}
-            
-            var bodyRegexp = new RegExp("^(" + this.body + "/)");
-			var pathContainer = container.replace(bodyRegexp, "");
-
-            var app: App = new App(this);
-
-            if(isWidget) {
-                var rootPath = appRootPath.replace(bodyRegexp, "");
-
-                app.rootPath = rootPath + "/";
-            }
-
-            var relativePath = pathContainer + "/" + pageName;
-
-            if(pathContainer == this.body) {
-                relativePath = pageName;
-            }
-
-            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view ? "text!" + view : undefined, controllers, replace, append, group, unwind, key, events, parameters, isWidget, styles);
-
-            return this._pages[pagePath];
-        }*/
 
         addSurrogate(name: string, path: string, containerPath: string, page: Page) {
             var replaceChildren = this.createSurrogates(path, page.replace);
@@ -511,70 +470,7 @@ module SinglefinModule {
 
 			return surrogates;
         }
-        
-        private loadInstances(pathsMap: any) {
-			return new Promise(async (resolve, reject) => {
-                var loader = new Loader();
 
-                loader.load(this._instances, pathsMap).then(() => {
-                    try {
-                        /*for(var i=0; i<this._styles.length; i++) {
-                            $('head').append(`<link rel="stylesheet" href="` + this._styles[i] + `.css" type="text/css" />`);
-                        }*/
-
-                        for (var languageKey in this._resources) {
-                            for (var resourceKey in this._resources[languageKey]) {
-                                this._resources[languageKey][resourceKey] = loader.getInstance(this._resources[languageKey][resourceKey], pathsMap);
-                            }
-                        }
-
-                        for (var key in this._models) {
-                            this._models[key] = loader.getInstance(this._models[key], pathsMap);
-                        }
-
-                        for (var key in this._pages) {
-                            if(this._pages[key].view) {
-                                this._pages[key].view = loader.getInstance(this._pages[key].view, pathsMap);
-                            }
-
-                            var controllers: any[] = [];
-
-                            if(this._pages[key].controllers && Array.isArray(this._pages[key].controllers)) {
-                                controllers = this._pages[key].controllers.map((controller: string) => {
-                                    return loader.getInstance(controller, pathsMap);
-                                });
-                            }
-
-                            this._pages[key].controllers = controllers;
-
-                            var styles: string[] = [];
-
-                            if(this._pages[key].styles && Array.isArray(this._pages[key].styles)) {
-                                styles = this._pages[key].styles.map((style: string) => {
-                                    //TODO: gli stili non vengono caricati con require, quindi i path sono differenti (require deve avere un 'aggiustamento' perchè considera il path dalla cartella in cui risiede lo script require.js)
-                                    //      si dovrebbe quindi eliminare l'utilizzo di require e pensare ad un sistema per creare un bundle con view e controller
-                                    return loader.normalizePath(style, pathsMap);
-                                });
-                            }
-
-                            this._pages[key].styles = styles;
-                        }
-
-                        resolve();
-                    }
-                    catch(ex) {
-                        console.error("load instances error: " + ex);
-                        
-                        reject("load instances error: " + ex);
-                    }
-                }, (error) => {
-                    console.error("load instances error");
-
-                    reject("load instances error");
-                });
-			});
-        }
-        
         getUrlParams(url: string) {
 			var queryString = url.split("?");
 
@@ -607,7 +503,7 @@ module SinglefinModule {
 			}
 
 			return queryObject;
-		}
+        }
     }
 }
 
