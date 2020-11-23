@@ -870,6 +870,7 @@ module SinglefinModule {
 						result = ` + match[1] + `;
 					})()`;
 					
+					//TODO: eliminare eval e inserire il codice nella pagina
 					eval(code);
 
 					str = str.replace(match[0], result);

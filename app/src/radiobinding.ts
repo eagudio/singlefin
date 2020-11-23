@@ -14,7 +14,7 @@ module SinglefinModule {
             var value = element.val();
 
             if(checked) {
-                data[key] = value;
+                ProxyDataObject.setValue(key, data, value);
             }
 
             element.on("click", {
@@ -26,7 +26,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
 
-                _data[_key] = value;
+                ProxyDataObject.setValue(_key, _data, value);
             });
         }
 
@@ -41,7 +41,7 @@ module SinglefinModule {
 
             var checked = element.is(":checked");
 
-            data[key] = checked;
+            ProxyDataObject.setValue(key, data, checked);
 
             element.on("click", {
                 data: data
@@ -56,7 +56,7 @@ module SinglefinModule {
                     var isAttributeValue = radioElement.attr("is");
                     
                     if(isAttributeValue) {
-                        _data[isAttributeValue] = _checked;
+                        ProxyDataObject.setValue(isAttributeValue, _data, _checked);
                     }
                 }
             });

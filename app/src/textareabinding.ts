@@ -19,7 +19,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
             
-                _data[_key] = value;
+                ProxyDataObject.setValue(_key, _data, value);
             });
         }
 
@@ -39,6 +39,15 @@ module SinglefinModule {
                 return;
             }
 
+            var result: any = ProxyDataObject.getValue(dataProxy.data, exp);
+
+            if(key == "value") {
+                element.val(result);
+            }
+            else {
+                element.attr(key, result);
+            }
+
             var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 key: key,
@@ -46,8 +55,7 @@ module SinglefinModule {
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    var proxyDataObject = new ProxyDataObject();
-                    var result: any = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var result: any = ProxyDataObject.getValue(parameters.dataProxy.data, exp);
 
                     if(parameters.key == "value") {
                         parameters.element.val(result);

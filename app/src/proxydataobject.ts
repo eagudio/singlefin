@@ -1,25 +1,25 @@
 module SinglefinModule {
     export class ProxyDataObject {
-        [key: string]: any
+        static getValue(data: any, exp: string) {
+            var vars = exp.split(".");
+            var value = data;
 
-        
-        build(data: any, exp: string) {
-            var vars = "";
-            
-            for(var key in data) {
-                this[key] = data[key];
-                vars = vars + "var " + key + " = this." + key + ";"
+            for(var i=0; i<vars.length; i++) {
+                value = value[vars[i]];
             }
 
-            var result;
+            return value;
+        }
 
-            var code = vars + `
-                result = ` + exp + `;
-            `;
-            
-            eval(code);
+        static setValue(exp: string, data: any, value: any) {
+            var vars = exp.split(".");
+            var _data = data;
 
-            return result;
+            for(var i=0; i<vars.length-1; i++) {
+                _data = _data[vars[i]];
+            }
+
+            _data[vars[vars.length-1]] = value;
         }
     }
 }

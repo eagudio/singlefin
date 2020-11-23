@@ -35,5 +35,9 @@ module SinglefinModule {
         close(pageName: string, parameters?: any) {
             return this._singlefin.close(this._rootPath + pageName, parameters);
         }
+
+        openGroupStep(pageName: string, index: number, parameters: any) {
+            return this._singlefin.openGroupStep(this._rootPath + pageName, index, parameters);
+        }
     }
 }

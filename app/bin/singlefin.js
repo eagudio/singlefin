@@ -36,6 +36,9 @@ var SinglefinModule;
         close(pageName, parameters) {
             return this._singlefin.close(this._rootPath + pageName, parameters);
         }
+        openGroupStep(pageName, index, parameters) {
+            return this._singlefin.openGroupStep(this._rootPath + pageName, index, parameters);
+        }
     }
     SinglefinModule.App = App;
 })(SinglefinModule || (SinglefinModule = {}));
@@ -128,6 +131,7 @@ var SinglefinModule;
                             this.elementBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
                             this.inputBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
                             this.textareaBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.selectBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
                         }
                     }
                 });
@@ -153,7 +157,7 @@ var SinglefinModule;
             var checked = element.is(":checked");
             var value = element.val();
             if (checked) {
-                data[key] = value;
+                SinglefinModule.ProxyDataObject.setValue(key, data, value);
             }
             element.on("click", {
                 data: data,
@@ -163,7 +167,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
         }
         is(container, element, data, key) {
@@ -174,7 +178,7 @@ var SinglefinModule;
                 return;
             }
             var checked = element.is(":checked");
-            data[key] = checked;
+            SinglefinModule.ProxyDataObject.setValue(key, data, checked);
             element.on("click", {
                 data: data,
                 key: key
@@ -183,7 +187,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var checked = inputElement.is(":checked");
-                _data[_key] = checked;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, checked);
             });
         }
     }
@@ -490,7 +494,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.attr("value");
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
         }
         is(container, element, data, key) {
@@ -505,8 +509,7 @@ var SinglefinModule;
                 dataProxy: dataProxy
             }, (parameters) => {
                 try {
-                    var proxyDataObject = new SinglefinModule.ProxyDataObject();
-                    var classes = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var classes = SinglefinModule.ProxyDataObject.getValue(parameters.dataProxy.data, exp);
                     for (var key in classes) {
                         if (classes[key] == true) {
                             parameters.element.addClass(key);
@@ -539,8 +542,7 @@ var SinglefinModule;
                 dataProxy: dataProxy
             }, (parameters) => {
                 try {
-                    var proxyDataObject = new SinglefinModule.ProxyDataObject();
-                    var result = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var result = SinglefinModule.ProxyDataObject.getValue(parameters.dataProxy.data, exp);
                     parameters.element.attr(parameters.key, result);
                 }
                 catch (ex) {
@@ -570,7 +572,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
         }
         is(container, element, data, key) {
@@ -585,6 +587,13 @@ var SinglefinModule;
             if (!exp) {
                 return;
             }
+            var result = SinglefinModule.ProxyDataObject.getValue(dataProxy.data, exp);
+            if (key == "value") {
+                element.val(result);
+            }
+            else {
+                element.attr(key, result);
+            }
             var dataProxyHandler = new SinglefinModule.DataProxyHandler({
                 element: element,
                 key: key,
@@ -592,8 +601,7 @@ var SinglefinModule;
                 dataProxy: dataProxy
             }, (parameters) => {
                 try {
-                    var proxyDataObject = new SinglefinModule.ProxyDataObject();
-                    var result = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var result = SinglefinModule.ProxyDataObject.getValue(parameters.dataProxy.data, exp);
                     if (parameters.key == "value") {
                         parameters.element.val(result);
                     }
@@ -1321,6 +1329,7 @@ var SinglefinModule;
 						
 						result = ` + match[1] + `;
 					})()`;
+                    //TODO: eliminare eval e inserire il codice nella pagina
                     eval(code);
                     str = str.replace(match[0], result);
                     match = markupRegex.exec(str);
@@ -1607,18 +1616,21 @@ var SinglefinModule;
 var SinglefinModule;
 (function (SinglefinModule) {
     class ProxyDataObject {
-        build(data, exp) {
-            var vars = "";
-            for (var key in data) {
-                this[key] = data[key];
-                vars = vars + "var " + key + " = this." + key + ";";
+        static getValue(data, exp) {
+            var vars = exp.split(".");
+            var value = data;
+            for (var i = 0; i < vars.length; i++) {
+                value = value[vars[i]];
             }
-            var result;
-            var code = vars + `
-                result = ` + exp + `;
-            `;
-            eval(code);
-            return result;
+            return value;
+        }
+        static setValue(exp, data, value) {
+            var vars = exp.split(".");
+            var _data = data;
+            for (var i = 0; i < vars.length - 1; i++) {
+                _data = _data[vars[i]];
+            }
+            _data[vars[vars.length - 1]] = value;
         }
     }
     SinglefinModule.ProxyDataObject = ProxyDataObject;
@@ -1636,7 +1648,7 @@ var SinglefinModule;
             var checked = element.is(":checked");
             var value = element.val();
             if (checked) {
-                data[key] = value;
+                SinglefinModule.ProxyDataObject.setValue(key, data, value);
             }
             element.on("click", {
                 data: data,
@@ -1646,7 +1658,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
         }
         is(container, element, data, key) {
@@ -1657,7 +1669,7 @@ var SinglefinModule;
                 return;
             }
             var checked = element.is(":checked");
-            data[key] = checked;
+            SinglefinModule.ProxyDataObject.setValue(key, data, checked);
             element.on("click", {
                 data: data
             }, (event) => {
@@ -1669,7 +1681,7 @@ var SinglefinModule;
                     var _checked = radioElement.is(":checked");
                     var isAttributeValue = radioElement.attr("is");
                     if (isAttributeValue) {
-                        _data[isAttributeValue] = _checked;
+                        SinglefinModule.ProxyDataObject.setValue(isAttributeValue, _data, _checked);
                     }
                 }
             });
@@ -1687,7 +1699,7 @@ var SinglefinModule;
             if (!key) {
                 return;
             }
-            data[key] = element.val();
+            //ProxyDataObject.setValue(key, data, element.val());
             element.on("change", {
                 data: data,
                 key: key
@@ -1696,8 +1708,46 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
+        }
+        outAttribute(dataProxyHandlers, page, container, element, dataProxy, key, exp) {
+            if (!element.is('select')) {
+                return;
+            }
+            if (!key) {
+                return;
+            }
+            if (!exp) {
+                return;
+            }
+            var result = SinglefinModule.ProxyDataObject.getValue(dataProxy.data, exp);
+            if (key == "value") {
+                element.val(result);
+            }
+            else {
+                element.attr(key, result);
+            }
+            var dataProxyHandler = new SinglefinModule.DataProxyHandler({
+                element: element,
+                key: key,
+                exp: exp,
+                dataProxy: dataProxy
+            }, (parameters) => {
+                try {
+                    var result = SinglefinModule.ProxyDataObject.getValue(parameters.dataProxy.data, exp);
+                    if (parameters.key == "value") {
+                        parameters.element.val(result);
+                    }
+                    else {
+                        parameters.element.attr(parameters.key, result);
+                    }
+                }
+                catch (ex) {
+                    console.error("element attribute binding error: " + ex);
+                }
+            });
+            dataProxyHandlers.push(dataProxyHandler);
         }
         is(container, element, data, key) {
         }
@@ -2098,7 +2148,7 @@ var SinglefinModule;
                 var _key = event.data.key;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
-                _data[_key] = value;
+                SinglefinModule.ProxyDataObject.setValue(_key, _data, value);
             });
         }
         is(container, element, data, key) {
@@ -2113,6 +2163,13 @@ var SinglefinModule;
             if (!exp) {
                 return;
             }
+            var result = SinglefinModule.ProxyDataObject.getValue(dataProxy.data, exp);
+            if (key == "value") {
+                element.val(result);
+            }
+            else {
+                element.attr(key, result);
+            }
             var dataProxyHandler = new SinglefinModule.DataProxyHandler({
                 element: element,
                 key: key,
@@ -2120,8 +2177,7 @@ var SinglefinModule;
                 dataProxy: dataProxy
             }, (parameters) => {
                 try {
-                    var proxyDataObject = new SinglefinModule.ProxyDataObject();
-                    var result = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var result = SinglefinModule.ProxyDataObject.getValue(parameters.dataProxy.data, exp);
                     if (parameters.key == "value") {
                         parameters.element.val(result);
                     }

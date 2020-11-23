@@ -19,7 +19,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.attr("value");
             
-                _data[_key] = value;
+                ProxyDataObject.setValue(_key, _data, value);
             });
         }
 
@@ -37,9 +37,7 @@ module SinglefinModule {
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    var proxyDataObject = new ProxyDataObject();
-                    
-                    var classes: any = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var classes: any = ProxyDataObject.getValue(parameters.dataProxy.data, exp);
 
                     for(var key in classes) {
                         if(classes[key] == true) {
@@ -78,8 +76,7 @@ module SinglefinModule {
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    var proxyDataObject = new ProxyDataObject();
-                    var result: any = proxyDataObject.build(parameters.dataProxy.data, exp);
+                    var result: any = ProxyDataObject.getValue(parameters.dataProxy.data, exp);
 
                     parameters.element.attr(parameters.key, result);
                 }
