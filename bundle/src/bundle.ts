@@ -216,7 +216,11 @@ module SinglefinBundleModule {
         save(filePath: string) {
             var schema = JSON.stringify(this._schema);
             
-            fs.writeFileSync(filePath, schema);
+            var appName = Object.keys(this._schema.pages)[0];
+
+            var script = `var singlefin_` + appName + ` = new Singlefin(` + schema + `);`;
+
+            fs.writeFileSync(filePath, script);
         }
         
         normalizePath(path: string, pathsMap: any): string {
