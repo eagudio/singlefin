@@ -34,8 +34,8 @@ module SinglefinModule {
         public static loadModuleCallbacks: any = {};
 
 
-        constructor(config: any) {
-            this.init(config);
+        constructor(config: any, homepage?: string) {
+            this.init(config, homepage);
         }
 
         get instances() {
@@ -86,7 +86,7 @@ module SinglefinModule {
             return this._pages[this._body];
         }
 
-        init(config: any) {
+        init(config: any, homepage?: string) {
             try {
                 this._modelProxy = new DataProxy(this._model);
 
@@ -103,6 +103,10 @@ module SinglefinModule {
         
                             _homepage = this._home;
                         }
+                    }
+
+                    if(homepage) {
+                        _homepage = homepage;
                     }
                     
                     return this.open(_homepage);

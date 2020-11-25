@@ -218,7 +218,7 @@ module SinglefinBundleModule {
             
             var appName = Object.keys(this._schema.pages)[0];
 
-            var script = `var singlefin_` + appName + ` = new Singlefin(` + schema + `);`;
+            var script = `var homepage=document.currentScript.getAttribute('homepage');var singlefin_` + appName + ` = new Singlefin(` + schema + `,homepage);`;
 
             fs.writeFileSync(filePath, script);
         }

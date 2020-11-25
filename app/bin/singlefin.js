@@ -1773,7 +1773,7 @@ var SinglefinModule;
 (function (SinglefinModule) {
     let Singlefin = /** @class */ (() => {
         class Singlefin {
-            constructor(config) {
+            constructor(config, homepage) {
                 this._home = "__body";
                 this._body = "__body";
                 this._instances = [];
@@ -1785,7 +1785,7 @@ var SinglefinModule;
                     "it-IT": {}
                 };
                 this._model = {};
-                this.init(config);
+                this.init(config, homepage);
             }
             get instances() {
                 return this._instances;
@@ -1823,7 +1823,7 @@ var SinglefinModule;
             getBody() {
                 return this._pages[this._body];
             }
-            init(config) {
+            init(config, homepage) {
                 try {
                     this._modelProxy = new SinglefinModule.DataProxy(this._model);
                     var params = this.getUrlParams(window.location.href);
@@ -1835,6 +1835,9 @@ var SinglefinModule;
                                 this._home = params.page;
                                 _homepage = this._home;
                             }
+                        }
+                        if (homepage) {
+                            _homepage = homepage;
                         }
                         return this.open(_homepage);
                     }, () => {
