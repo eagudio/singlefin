@@ -1,0 +1,22 @@
+{
+  "name": "singlefin",
+  "version": "1.0.0",
+  "description": "Singlefin is a JavaScript-based open-source front-end web framework.",
+  "main": "./bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eagudio/singlefin.git"
+  },
+  "author": "Edoardo Agudio <edoardoagudio@gmail.com> (https://www.aentity.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eagudio/singlefin/issues"
+  },
+  "homepage": "https://github.com/eagudio/singlefin#readme",
+  "bin": {
+    "singlefin-deploy": "./bin/cli.js"
+  }
+}
