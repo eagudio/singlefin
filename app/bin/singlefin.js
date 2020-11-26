@@ -1830,14 +1830,14 @@ var SinglefinModule;
                     var configLoader = new SinglefinModule.ConfigLoader();
                     configLoader.load(config, this).then(() => {
                         var _homepage = config.homepage;
+                        if (homepage) {
+                            _homepage = homepage;
+                        }
                         if (params) {
                             if (params.page) {
                                 this._home = params.page;
                                 _homepage = this._home;
                             }
-                        }
-                        if (homepage) {
-                            _homepage = homepage;
                         }
                         return this.open(_homepage);
                     }, () => {
