@@ -125,6 +125,7 @@ export module SinglefinDeployment {
 
             page.events = _page.events;
             page.parameters = _page.parameters;
+            page.models = _page.models;
 
             if(_page.view) {
                 page.view = this.bundleView(_page.view);

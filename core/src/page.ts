@@ -19,6 +19,7 @@ module SinglefinModule {
 		private _isWidget: boolean;
 		private _styles: string[];
 		private _scripts: string[];
+		private _models: any;
 		private _htmlElement: any;
 
         private _groupIndex: number = 0;
@@ -28,7 +29,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[]) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -47,6 +48,7 @@ module SinglefinModule {
 			this._isWidget = isWidget;
 			this._styles = styles;
 			this._scripts = scripts;
+			this._models = models;
         }
 
 		public get app(): App {
@@ -191,7 +193,15 @@ module SinglefinModule {
 
         public set scripts(value: string[]) {
             this._scripts = value;
+		}
+		
+		public get models(): any {
+            return this._models;
         }
+
+        public set models(value: any) {
+            this._models = value;
+		}
 
         public get htmlElement(): any {
             return this._htmlElement;

@@ -22,14 +22,21 @@ module SinglefinModule {
             
             dataProxy.addHandlers(page, this._dataProxyHandlers);
  
-            this.in(element, dataProxy);
+            this.in(page, element, dataProxy);
             this.is(element, dataProxy);
             this.outClass(page, element, dataProxy);
             this.outAttribute(page, element, dataProxy);
         }
 
-        in(element: any, dataProxy: DataProxy) {
+        in(page: Page, element: any, dataProxy: DataProxy) {
             var key = element.attr("model-value");
+            var models = page.models;
+
+            if(models) {
+                if(models[key]) {
+                    key = models[key].binding;
+                }
+            }
 
             this.elementBinding.in(element, element, dataProxy.proxy, key);
             this.inputBinding.in(element, element, dataProxy.proxy, key);
@@ -44,6 +51,12 @@ module SinglefinModule {
                 var child = $(children[i]);
 
                 var key = child.attr("model-value");
+
+                if(models) {
+                    if(models[key]) {
+                        key = models[key].binding;
+                    }
+                }
 
                 this.elementBinding.in(element, child, dataProxy.proxy, key);
                 this.inputBinding.in(element, child, dataProxy.proxy, key);
@@ -100,6 +113,8 @@ module SinglefinModule {
             if(!element) {
 				return;
             }
+
+            var models = page.models;
             
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
@@ -107,11 +122,18 @@ module SinglefinModule {
 						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
                             var onAttribute = attribute.name.split("model-");
                             var elementAttributeName = onAttribute[1];
+                            var value = attribute.value;
+
+                            if(models) {
+                                if(models[value]) {
+                                    value = models[value].binding;
+                                }
+                            }
                             
-                            this.elementBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
-                            this.inputBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
-                            this.textareaBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
-                            this.selectBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, attribute.value);
+                            this.elementBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, value);
+                            this.inputBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, value);
+                            this.textareaBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, value);
+                            this.selectBinding.outAttribute(this._dataProxyHandlers, page, element, element, dataProxy, elementAttributeName, value);
                         }
                     }
                 });
