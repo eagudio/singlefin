@@ -14,7 +14,7 @@ module SinglefinModule {
             DataProxy._proxyHandler = {
                 get(target: any, key: any) {
                     //WORK-AROUND: for Date object...
-                    if(typeof target[key].getMonth === 'function') {
+                    if(target[key] && typeof target[key].getMonth === 'function') {
                         return target[key];
                     }
 
