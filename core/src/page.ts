@@ -924,30 +924,39 @@ module SinglefinModule {
         
 		addHtmlElement(container: any, page: Page, singlefin: Singlefin) {
 			var element = container;
+			var elements = $();
 
 			page.appendStyles();
 			page.appendScripts();
 			
 			var pageName = page.name.split('#')[0];
 			var pageTag = container.find("page[" + pageName +"]");
+
+			var containerPagesAttribute = container.find("[pages]");
+
+			containerPagesAttribute.each((i: number, item: any) => {
+				var pageAttributeValues = $(item).attr("pages");
+				var pages = pageAttributeValues.split(',');
+
+				if(pages.indexOf(pageName) >= 0) {
+					element = elements.add($(item));
+				}
+			});
+
+			var containerPageAttribute = container.find(`[page="` + pageName + `"]`);
+
+			if(containerPageAttribute.length > 0) {
+				element = elements.add(containerPageAttribute);
+			}
 			
 			if(pageTag.length > 0) {
 				pageTag.before(page.htmlElement);
 
-				return;
-			}
-
-			var containerPageAttribute = container.find("[page]")
-
-			if(containerPageAttribute.length > 0) {
-				var pageAttributeValues = containerPageAttribute.attr("page");
-				var pages = pageAttributeValues.split(',');
-				
-				if(pages.indexOf(pageName) >= 0) {
-					element = containerPageAttribute;
+				if(elements.length == 0) {
+					return;
 				}
 			}
-			
+
 			if(page.action == "replace") {
 				element.html(page.htmlElement);
 
