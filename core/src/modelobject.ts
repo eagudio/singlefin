@@ -1,5 +1,5 @@
 module SinglefinModule {
-    export class ProxyDataObject {
+    export class ModelObject {
         static getValue(data: any, exp: string) {
             var vars = exp.split(".");
             var value = data;

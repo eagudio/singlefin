@@ -153,7 +153,7 @@ module SinglefinModule {
 				page.styles = this.unbundleFiles(page.styles);
 				page.scripts = this.unbundleFiles(page.scripts);
 
-				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.key, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
+				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.list, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
 
 				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
 				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);

@@ -14,7 +14,7 @@ module SinglefinModule {
             var value = element.val();
 
             if(checked) {
-                ProxyDataObject.setValue(key, data, value);
+                ModelObject.setValue(key, data, value);
             }
 
             element.on("click", {
@@ -26,7 +26,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
 
-                ProxyDataObject.setValue(_key, _data, value);
+                ModelObject.setValue(_key, _data, value);
             });
         }
 
@@ -41,7 +41,7 @@ module SinglefinModule {
 
             var checked = element.is(":checked");
 
-            ProxyDataObject.setValue(key, data, checked);
+            ModelObject.setValue(key, data, checked);
 
             element.on("click", {
                 data: data,
@@ -52,7 +52,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var checked = inputElement.is(":checked");
             
-                ProxyDataObject.setValue(_key, _data, checked);
+                ModelObject.setValue(_key, _data, checked);
             });
         }
     }

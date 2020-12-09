@@ -13,7 +13,7 @@ module SinglefinModule {
         private _append: any[];
         private _group: any[];
         private _unwind: any[];
-        private _key: string;
+        private _list: string;
         private _events: string[];
 		private _parameters: any;
 		private _isWidget: boolean;
@@ -29,7 +29,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], key: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -42,7 +42,7 @@ module SinglefinModule {
             this._append = append,
             this._group = group,
             this._unwind = unwind,
-            this._key = key,
+            this._list = list,
             this._events = events,
 			this._parameters = parameters
 			this._isWidget = isWidget;
@@ -147,12 +147,12 @@ module SinglefinModule {
             this._unwind = value;
         }
 
-        public get key(): string {
-            return this._key;
+        public get list(): string {
+            return this._list;
         }
         
-        public set key(value: string) {
-            this._key = value;
+        public set list(value: string) {
+            this._list = value;
         }
 
         public get events(): string[] {
@@ -652,9 +652,15 @@ module SinglefinModule {
 			});
         }
         
-		unwindItems(singlefin: Singlefin, parent: any, pageName: string, page: any, parameters: any, controllerParameters: any) {
+		unwindItems(singlefin: Singlefin, parent: any, pageName: string, page: Page, parameters: any, controllerParameters: any) {
 			return new Promise(async (resolve, reject) => {
-                if(!Array.isArray(parameters)) {
+				var list = parameters;
+
+				if(page.list) {
+					list = ModelObject.getValue(singlefin.model, page.list);
+				}
+
+                if(!Array.isArray(list)) {
                     console.error("unwind error page '" + pageName + "': controller must return an array");
                     
                     return reject("unwind error page '" + pageName + "': controller must return an array");
@@ -662,10 +668,10 @@ module SinglefinModule {
 
 				//TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
 
-				for(var i=0; i<parameters.length; i++) {
+				for(var i=0; i<list.length; i++) {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 
-					await this.resolveUnwindItem(singlefin, surrogate, parameters[i], controllerParameters).then(async (viewParameters: any) => {
+					await this.resolveUnwindItem(singlefin, surrogate, list[i], controllerParameters).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
 						this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters);
