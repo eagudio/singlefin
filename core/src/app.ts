@@ -20,10 +20,6 @@ module SinglefinModule {
             return this._singlefin.models;
         }
 
-        get model() {
-            return this._singlefin.model;
-        }
-
         open(pageName: string, parameters?: any) {
             return this._singlefin.open(this._rootPath + pageName, parameters);
         }
@@ -36,8 +32,12 @@ module SinglefinModule {
             return this._singlefin.close(this._rootPath + pageName, parameters);
         }
 
-        openGroupStep(pageName: string, index: number, parameters: any) {
-            return this._singlefin.openGroupStep(this._rootPath + pageName, index, parameters);
+        openGroupPageByIndex(pageName: string, index: number, parameters: any) {
+            return this._singlefin.openGroupPageByIndex(this._rootPath + pageName, index, parameters);
+        }
+
+        openGroupPage(pageName: string, page: string, parameters: any) {
+            return this._singlefin.openGroupPage(this._rootPath + pageName, page, parameters);
         }
     }
 }

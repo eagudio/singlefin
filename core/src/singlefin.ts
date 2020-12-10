@@ -27,7 +27,7 @@ module SinglefinModule {
             "it-IT": {}
         };
 
-        private _model: any = {};
+        //private _model: any = {};
         private _modelProxy: any;
 
         public static moduleMap: any = {};
@@ -66,8 +66,11 @@ module SinglefinModule {
             this._models = _models;
         }
 
-        get models() {
+        /*get models() {
             return this._models;
+        }*/
+        get models(): any {
+            return this._modelProxy.proxy;
         }
 
         get handlers() {
@@ -78,9 +81,9 @@ module SinglefinModule {
             return this._modelProxy;
         }
 
-        public get model(): any {
+        /*public get model(): any {
             return this._modelProxy.proxy;
-        }
+        }*/
 
         getBody(): Page {
             return this._pages[this._body];
@@ -88,13 +91,15 @@ module SinglefinModule {
 
         init(config: any, homepage?: string) {
             try {
-                this._modelProxy = new DataProxy(this._model);
+                //this._modelProxy = new DataProxy(this._model);
 
                 var params = this.getUrlParams(window.location.href);
 
                 var configLoader = new ConfigLoader();
 
                 configLoader.load(config, this).then(() => {
+                    this._modelProxy = new DataProxy(this._models);
+
                     var _homepage = config.homepage;
 
                     if(homepage) {
@@ -223,7 +228,7 @@ module SinglefinModule {
             });
         }
 
-        openGroupStep(pageName: string, index: number, parameters: any) {
+        openGroupPageByIndex(pageName: string, index: number, parameters: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -239,7 +244,35 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.openGroupByIndex(this, index, parameters).then(() => {
+                page.openGroupPageByIndex(this, index, parameters).then(() => {
+                    resolve(page);
+                }, (error: any) => {
+                    console.error("an error occurred during next step of page '" + pageName + "'");
+    
+                    resolve();
+                });
+            });
+        }
+
+        openGroupPage(pageName: string, pageTarget: string, parameters: any) {
+            return new Promise((resolve) => {
+                var _pageName = this._body + "/" + pageName;
+
+                if(_pageName == this.body) {
+					return resolve(this._pages[_pageName]);
+				}
+				
+				var page: Page = this.pages[_pageName];
+	
+				if(!page) {
+                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    
+                    return resolve();
+                }
+                
+                var target: string = this.body + "/" + page.path + "/" + pageTarget;
+
+                page.openGroupPage(this, target, parameters).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");

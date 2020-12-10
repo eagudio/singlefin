@@ -361,6 +361,16 @@ module SinglefinModule {
 			});
 		}
 		
+		getCurrentGroupPage(singlefin: Singlefin) {
+            if(!this.group) {
+				return null;
+			}
+			
+			var pagePath = this.group[this.groupIndex];
+
+            return singlefin.pages[pagePath];
+        }
+
 		nextStep(singlefin: Singlefin, parameters: any) {
 			var currentPage = this.getCurrentGroupPage(singlefin);
 			
@@ -413,7 +423,7 @@ module SinglefinModule {
 			});
 		}
 
-		openGroupByIndex(singlefin: Singlefin, index: number, parameters: any) {
+		openGroupPageByIndex(singlefin: Singlefin, index: number, parameters: any) {
 			this.groupIndex = index;
 			
 			if(this.groupIndex < 0) {
@@ -423,6 +433,20 @@ module SinglefinModule {
 			if(this.groupIndex >= this.group.length) {
 				this.groupIndex = this.group.length - 1;
 			}
+
+			return this.redraw(singlefin, parameters);
+		}
+
+		openGroupPage(singlefin: Singlefin, pageName: string, parameters: any) {
+			var groupIndex = this.group.indexOf(pageName);
+
+			if(groupIndex == -1) {
+				console.error("group page " + pageName + " not found");
+					
+				Promise.reject("group page " + pageName + " not found");
+			}
+
+			this.groupIndex = groupIndex;
 
 			return this.redraw(singlefin, parameters);
 		}
@@ -657,7 +681,7 @@ module SinglefinModule {
 				var list = parameters;
 
 				if(page.list) {
-					list = ModelObject.getValue(singlefin.model, page.list);
+					list = ModelObject.getValue(singlefin.models, page.list);
 				}
 
                 if(!Array.isArray(list)) {
@@ -700,16 +724,6 @@ module SinglefinModule {
 				resolve();
 			});
 		}
-
-		getCurrentGroupPage(singlefin: Singlefin) {
-            if(!this) {
-				return null;
-			}
-			
-			var pagePath = this.group[this.groupIndex];
-
-            return singlefin.pages[pagePath];
-        }
         
 		loadController(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
@@ -767,12 +781,23 @@ module SinglefinModule {
 				return $();
 			}
 
+			var group: any = null;
+
+			var currentGroupPage = page.getCurrentGroupPage(singlefin);
+
+			if(currentGroupPage) {
+				group = {
+					page: currentGroupPage.name,
+					index: page.groupIndex
+				};
+			}
+			
 			var html: string = this.resolveMarkup(page.view, {
 				data: data,
 				parameters: page.parameters,
 				resources: singlefin.defaultResources,
 				models: singlefin.models,
-				model: singlefin.model
+				group: group
 			});
 
 			var htmlElement = $(html);
@@ -882,6 +907,7 @@ module SinglefinModule {
 						var resources = context.resources;
 						var models = context.models;
 						var model = context.model;
+						var group = context.group;
 						
 						result = ` + match[1] + `;
 					})()`;
