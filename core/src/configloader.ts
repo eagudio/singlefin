@@ -84,7 +84,7 @@ module SinglefinModule {
 		}
 
         addHandlers(pagePath: string, singlefin: Singlefin) {
-			var _page: any = singlefin.pages[pagePath];
+			/*var _page: any = singlefin.pages[pagePath];
 
 			if(_page.events) {
 				for(var h=0; h<_page.events.length; h++) {
@@ -95,7 +95,7 @@ module SinglefinModule {
 					singlefin.handlers[_page.events[h]].push(pagePath);
 				}
 				
-			}
+			}*/
         }
         
         processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {
