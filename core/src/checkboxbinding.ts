@@ -14,7 +14,7 @@ module SinglefinModule {
             var value = element.val();
 
             if(checked) {
-                ModelObject.setValue(key, data, value);
+                Runtime.setProperty(key, data, value);
             }
 
             element.on("click", {
@@ -26,7 +26,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
 
-                ModelObject.setValue(_key, _data, value);
+                Runtime.setProperty(_key, _data, value);
             });
         }
 
@@ -41,7 +41,7 @@ module SinglefinModule {
 
             var checked = element.is(":checked");
 
-            ModelObject.setValue(key, data, checked);
+            Runtime.setProperty(key, data, checked);
 
             element.on("click", {
                 data: data,
@@ -52,7 +52,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var checked = inputElement.is(":checked");
             
-                ModelObject.setValue(_key, _data, checked);
+                Runtime.setProperty(_key, _data, checked);
             });
         }
     }

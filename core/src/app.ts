@@ -32,11 +32,11 @@ module SinglefinModule {
             return this._singlefin.close(this._rootPath + pageName, parameters);
         }
 
-        openGroupPageByIndex(pageName: string, index: number, parameters: any) {
+        openGroupPageByIndex(pageName: string, index: number, parameters?: any) {
             return this._singlefin.openGroupPageByIndex(this._rootPath + pageName, index, parameters);
         }
 
-        openGroupPage(pageName: string, page: string, parameters: any) {
+        openGroupPage(pageName: string, page: string, parameters?: any) {
             return this._singlefin.openGroupPage(this._rootPath + pageName, page, parameters);
         }
     }

@@ -19,7 +19,7 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
             
-                ModelObject.setValue(_key, _data, value);
+                Runtime.setProperty(_key, _data, value);
             });
         }
 
@@ -39,7 +39,7 @@ module SinglefinModule {
                 return;
             }
 
-            var result: any = ModelObject.getValue(dataProxy.data, exp);
+            var result: any = Runtime.getProperty(dataProxy.data, exp);
 
             if(key == "value") {
                 element.val(result);
@@ -55,7 +55,7 @@ module SinglefinModule {
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    var result: any = ModelObject.getValue(parameters.dataProxy.data, exp);
+                    var result: any = Runtime.getProperty(parameters.dataProxy.data, exp);
 
                     if(parameters.key == "value") {
                         parameters.element.val(result);

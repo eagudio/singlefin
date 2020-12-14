@@ -1,6 +1,16 @@
 module SinglefinModule {
-    export class ModelObject {
-        static getValue(data: any, exp: string) {
+    export class Runtime {
+        static getInstance(data: any, exp: string) {
+            var vars = exp.split(".");
+
+            if(vars.length > 0) {
+                return data[vars[0]];
+            }
+
+            return data
+        }
+
+        static getProperty(data: any, exp: string) {
             var vars = exp.split(".");
             var value = data;
 
@@ -11,7 +21,7 @@ module SinglefinModule {
             return value;
         }
 
-        static setValue(exp: string, data: any, value: any) {
+        static setProperty(exp: string, data: any, value: any) {
             var vars = exp.split(".");
             var _data = data;
 
