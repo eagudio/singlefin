@@ -237,38 +237,23 @@ module SinglefinModule {
 
         draw(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
-				/*if(this.action == "replace") {
-					this.removeStyles();
-				}*/
-
 				this.drawBody(singlefin, parameters).then(() => {
 					this.drawContainer(singlefin, this, this.container, parameters).then((htmlContainerElement: any) => {
-						this.handlePromiseEvent(singlefin, "open", this, parameters).then(() => {
-							this.loadController(singlefin, this, parameters).then((viewParameters: any) => {
-								this.htmlElement = this.renderView(singlefin, this, viewParameters);
-		
-								this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters);
-								this.bind(singlefin, this.htmlElement);
-								
-								this.drawItems(singlefin, this, viewParameters).then(() => {
-									this.addHtmlElement(htmlContainerElement, this, singlefin);
+						this.handleEvent(singlefin, "open", this, parameters).then((viewParameters: any) => {
+							this.htmlElement = this.renderView(singlefin, this, viewParameters);
+	
+							this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters);
+							this.bind(singlefin, this.htmlElement);
+							
+							this.drawItems(singlefin, this, viewParameters).then(() => {
+								this.addHtmlElement(htmlContainerElement, this, singlefin);
 
-									this.showPage(singlefin, this, viewParameters).then(() => {
-										resolve(this.htmlElement);
-									}, () => {
-										console.error("draw error");
+								this.handleEvent(singlefin, "show", this, viewParameters).then(() => {
+									resolve(this.htmlElement);
+								}, () => {
+									console.error("draw error");
 
-										reject("draw error");
-									});
-								}, (ex: any) => {
-									if(ex) {
-										console.error("draw error");
-
-										reject("draw error");
-									}
-									else {
-										resolve($(``));
-									}
+									reject("draw error");
 								});
 							}, (ex: any) => {
 								if(ex) {
@@ -283,7 +268,7 @@ module SinglefinModule {
 						}, (ex: any) => {
 							if(ex) {
 								console.error("draw error");
-	
+
 								reject("draw error");
 							}
 							else {
@@ -327,7 +312,7 @@ module SinglefinModule {
 						this.drawItems(singlefin, this, viewParameters).then(() => {
 							previousPageHtmlElement.replaceWith(this.htmlElement);
 
-							this.showPage(singlefin, this, viewParameters).then(() => {
+							this.handleEvent(singlefin, "show", this, viewParameters).then(() => {
 								resolve(this.htmlElement);
 							}, (ex: any) => {
 								if(ex) {
@@ -510,28 +495,17 @@ module SinglefinModule {
 			}
 
 			return new Promise((resolve, reject) => {
-				this.handlePromiseEvent(singlefin, "open", body, parameters).then(() => {
-					this.loadController(singlefin, body, parameters).then(async (viewParameters: any) => {
-						body.htmlElement = $("#" + body.name);
-						
-						body.appendStyles();
-						body.appendScripts();
+				this.handleEvent(singlefin, "open", body, parameters).then(async (viewParameters: any) => {
+					body.htmlElement = $("#" + body.name);
+					
+					body.appendStyles();
+					body.appendScripts();
+
+					var view = this.renderView(singlefin, body, viewParameters);
+
+					body.htmlElement.append(view);
 	
-						var view = this.renderView(singlefin, body, viewParameters);
-	
-						body.htmlElement.append(view);
-		
-						resolve(body.htmlElement);
-					}, (ex: any) => {
-						if(ex) {
-							console.error("draw body error");
-	
-							reject("draw body error");
-						}
-						else {
-							resolve($(``));
-						}
-					});
+					resolve(body.htmlElement);
 				}, (ex: any) => {
 					if(ex) {
                         console.error("draw body error");
@@ -606,26 +580,15 @@ module SinglefinModule {
 				}
 				
 				this.drawContainer(singlefin, page, parentPage.container, parameters).then((htmlContainerElement) => {
-					this.handlePromiseEvent(singlefin, "open", parentPage, parameters).then(() => {
-						this.loadController(singlefin, parentPage, parameters).then(async (viewParameters: any) => {
-							parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
-	
-							this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters);
-							parentPage.bind(singlefin, htmlContainerElement);
-							
-							this.addHtmlElement(htmlContainerElement, parentPage, singlefin);
-	
-							resolve(parentPage.htmlElement);
-						}, (ex) => {
-							if(ex) {
-								console.error("draw parent error");
-	
-								reject("draw parent error");
-							}
-							else {
-								resolve($(``));
-							}
-						});
+					this.handleEvent(singlefin, "open", parentPage, parameters).then(async (viewParameters: any) => {
+						parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters);
+
+						this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters);
+						parentPage.bind(singlefin, htmlContainerElement);
+						
+						this.addHtmlElement(htmlContainerElement, parentPage, singlefin);
+
+						resolve(parentPage.htmlElement);
 					}, (ex) => {
 						if(ex) {
                             console.error("draw parent error");
@@ -660,50 +623,42 @@ module SinglefinModule {
 						continue;
 					}
 
-					await this.handlePromiseEvent(singlefin, "open", childPage, parameters).then(async () => {
-						await this.loadController(singlefin, childPage, parameters).then(async (viewParameters: any) => {
-							if(childPage.action == "unwind") {
-								await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters, parameters).then(async () => {
-									
-								}, (ex) => {
-									if(ex) {
-										console.error("draw children error");
-	
-										return reject("draw children error");
-									}
+					await this.handleEvent(singlefin, "open", childPage, parameters).then(async (viewParameters: any) => {
+						if(childPage.action == "unwind") {
+							await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters, parameters).then(async () => {
+								
+							}, (ex) => {
+								if(ex) {
+									console.error("draw children error");
+
+									return reject("draw children error");
+								}
+							});
+						}
+						else {
+							childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
+
+							this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters);
+							childPage.bind(singlefin, childPage.htmlElement);
+
+							this.addHtmlElement(parent.htmlElement, childPage, singlefin);
+
+							await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
+								await this.handleEvent(singlefin, "show", childPage, viewParameters).then(() => {
+
+								}, () => {
+									console.error("draw children error");
+
+									reject("draw children error");
 								});
-							}
-							else {
-								childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters);
-	
-								this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters);
-								childPage.bind(singlefin, childPage.htmlElement);
-	
-								this.addHtmlElement(parent.htmlElement, childPage, singlefin);
-	
-								await this.drawItems(singlefin, childPage, viewParameters).then(async () => {
-									await this.showPage(singlefin, childPage, viewParameters).then(() => {
-	
-									}, () => {
-										console.error("draw children error");
-	
-										reject("draw children error");
-									});
-								}, (ex) => {
-									if(ex) {
-										console.error("draw children error");
-	
-										return reject("draw children error");
-									}
-								});
-							}
-						}, (ex) => {
-							if(ex) {
-								console.error("draw children error");
-	
-								return reject("draw children error");
-							}
-						});
+							}, (ex) => {
+								if(ex) {
+									console.error("draw children error");
+
+									return reject("draw children error");
+								}
+							});
+						}
 					}, (ex) => {
 						if(ex) {
                             console.error("draw children error");
@@ -766,7 +721,7 @@ module SinglefinModule {
 			});
 		}
         
-		loadController(singlefin: Singlefin, page: any, parameters: any) {
+		/*loadController(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise(async (resolve, reject) => {
 			
 				if(!page.controllers) {
@@ -791,7 +746,7 @@ module SinglefinModule {
 
 				resolve(result);
 			});
-		}
+		}*/
 
 		addHandleEvent(singlefin: Singlefin, htmlElement: any, eventType: string, event: string, page: any, parameters: any) {
 			if(!page.events) {
@@ -813,33 +768,92 @@ module SinglefinModule {
 			}, (event: any) => {
 				var eventData = event.data;
 
-				eventData.page.handlePromiseEvent(singlefin, eventData.event, eventData.page, eventData.data);
+				eventData.page.handleEvent(singlefin, eventData.event, eventData.page, eventData.data, event);
 			});
 		}
 		
-		handlePromiseEvent(singlefin: Singlefin, event: string, page: any, parameters: any) {
+		handleEvent(singlefin: Singlefin, event: string, page: any, parameters: any, eventObject?: any) {
 			return new Promise(async (resolve, reject) => {
+				var result = parameters;
+
 				if(!page.events) {
-					return resolve();
+					return resolve(result);
 				}
 
 				var events = page.events[event];
 
 				if(!events) {
-					return resolve();
+					return resolve(result);
 				}
                 
 				for(var i=0; i<events.length; i++) {
-					await this.handleModelPromiseEvent(singlefin, events[i], page, parameters);
-					await this.handlePageEvent(singlefin, events[i]);
-					await this.handleGroupEvent(singlefin, events[i]);
+					await this.handleControllerEvent(singlefin, events[i], page, parameters, eventObject).then(async (_result: any) => {
+						result = _result;
+
+						return this.handleModelEvent(singlefin, events[i], page, parameters);
+					}, (ex: any) => {
+						if(ex) {
+							console.error("page '" + page.name + "' handle event error: " + ex);
+						}
+
+						reject(ex);
+					}).then(async () => {
+						return this.handlePageEvent(singlefin, events[i]);
+					}, (ex: any) => {
+						if(ex) {
+							console.error("page '" + page.name + "' handle event error: " + ex);
+						}
+
+						reject(ex);
+					}).then(async () => {
+						return this.handleGroupEvent(singlefin, events[i]);
+					}, (ex: any) => {
+						if(ex) {
+							console.error("page '" + page.name + "' handle event error: " + ex);
+						}
+
+						reject(ex);
+					});
 				}
 
-				resolve();
+				resolve(result);
 			});
 		}
 
-		handleModelPromiseEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any) {
+		handleControllerEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, event?: any) {
+			return new Promise(async (resolve, reject) => {
+				var result = parameters;
+
+				if(!delegate.controller) {
+					return resolve(result);
+				}
+	
+				for(var i=0; i<page.controllers.length; i++) {
+					var controller = page.controllers[i];
+					var controllerMethod = controller[delegate.controller];
+	
+					if(controllerMethod) {
+						var promise = controllerMethod.call(controller, page.app, page, parameters, event);
+
+						if(promise) {
+							await promise.then(async (_result: any) => {
+								result = _result;
+							}, (ex: any) => {
+								if(ex) {
+									console.error("page '" + page.name +  "' handle controller error: " + ex);
+								}
+								
+								reject(ex);
+							});
+						}
+					}
+				}
+	
+				resolve(result);
+			});
+		}
+
+		handleModelEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any) {
 			if(!delegate.model) {
 				return Promise.resolve();
 			}
@@ -850,17 +864,6 @@ module SinglefinModule {
 			return modelMethod.call(model, page.app, singlefin.models, parameters);
 		}
 
-		handleModelEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any) {
-			if(!delegate.model) {
-				return;
-			}
-
-			var model = Runtime.getInstance(singlefin.models, delegate.model);
-			var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
-
-			modelMethod.call(model, page.app, singlefin.models, parameters);
-		}
-
 		handlePageEvent(singlefin: Singlefin, delegate: any) {
 			if(!delegate.page) {
 				return Promise.resolve();
@@ -868,6 +871,9 @@ module SinglefinModule {
 
 			if(delegate.page.open) {
 				return singlefin.open(delegate.page.open, delegate.page.parameters);
+			}
+			else if(delegate.page.close) {
+				return singlefin.close(delegate.page.close, delegate.page.parameters);
 			}
 			
 			return Promise.reject("method '" + delegate.page + "' not supported");
@@ -942,32 +948,6 @@ module SinglefinModule {
 			this._binding = new Binding();
 
 			this._binding.bind(this, htmlElement, singlefin.modelProxy);
-		}
-
-		showPage(singlefin: Singlefin, page: Page, parameters: any) {
-			return new Promise(async (resolve, reject) => {
-				if(!page.controllers) {
-					return resolve(parameters);
-				}
-
-				var result = parameters;
-                
-				for(var i=0; i<page.controllers.length; i++) {
-					if(page.controllers[i].show) {
-						await page.controllers[i].show(singlefin, page, result).then(async (_result: any) => {
-							result = _result;
-						}, (ex: any) => {
-							if(ex) {
-								console.error("show page error: " + ex);
-							}
-							
-							reject(ex);
-						});
-					}
-				}
-
-				resolve(result);
-			});
 		}
 
 		nextController(singlefin: Singlefin, page: any, parameters: any) {

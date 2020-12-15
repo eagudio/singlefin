@@ -39,5 +39,13 @@ module SinglefinModule {
         openGroupPage(pageName: string, page: string, parameters?: any) {
             return this._singlefin.openGroupPage(this._rootPath + pageName, page, parameters);
         }
+
+        setModelValue(property: string, value: any) {
+            Runtime.setProperty(property, this._singlefin.models, value);
+        }
+
+        getModelValue(property: string) {
+            return Runtime.getProperty(this._singlefin.models, property);
+        }
     }
 }
