@@ -11,7 +11,7 @@ module SinglefinModule {
         
 
         //TODO: la memoria potrebbe crescere con l'aumentare dei surrogati, perchè vengono instanziati nuovi handler. Eliminare gli handler quando vengono eliminati i surrogati
-        bind(page: Page, element: any, dataProxy: DataProxy) {
+        bind(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
             if(!element) {
 				return;
             }
@@ -22,49 +22,55 @@ module SinglefinModule {
             
             dataProxy.addHandlers(page, this._dataProxyHandlers);
  
-            this.in(page, element, dataProxy);
+            this.in(page, element, dataProxy, pageData, models);
             this.is(element, dataProxy);
             this.outClass(page, element, dataProxy);
-            this.outAttribute(page, element, dataProxy);
+            this.outAttribute(page, element, dataProxy, models);
         }
 
-        in(page: Page, element: any, dataProxy: DataProxy) {
-            var key = element.attr("model-value");
-            var models = page.models;
-
-            if(models) {
-                if(models[key]) {
-                    key = models[key].binding;
-                }
-            }
-
-            this.elementBinding.in(element, element, dataProxy.proxy, key);
-            this.inputBinding.in(element, element, dataProxy.proxy, key);
-            this.textareaBinding.in(element, element, dataProxy.proxy, key);
-            this.checkboxBinding.in(element, element, dataProxy.proxy, key);
-            this.radioBinding.in(element, element, dataProxy.proxy, key);
-            this.selectBinding.in(element, element, dataProxy.proxy, key);
+        in(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
+            this.bindElements(page, element, dataProxy, pageData, models);
 
             var children = element.find("[model-value]");
 
             for(var i=0; i<children.length; i++) {
                 var child = $(children[i]);
 
-                var key = child.attr("model-value");
-
-                if(models) {
-                    if(models[key]) {
-                        key = models[key].binding;
-                    }
-                }
-
-                this.elementBinding.in(element, child, dataProxy.proxy, key);
-                this.inputBinding.in(element, child, dataProxy.proxy, key);
-                this.textareaBinding.in(element, child, dataProxy.proxy, key);
-                this.checkboxBinding.in(element, child, dataProxy.proxy, key);
-                this.radioBinding.in(element, child, dataProxy.proxy, key);
-                this.selectBinding.in(element, child, dataProxy.proxy, key);
+                this.bindElements(page, child, dataProxy, pageData, models);
             }
+        }
+
+        bindElements(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
+            var originalKey = element.attr("model-value");
+            var key = originalKey;
+            var pageModels = page.models;
+
+            var hasModelValueEvent = element.attr("has-model-value-event");
+
+            if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
+                return;
+            }
+
+            element.attr("has-model-value-event", "");
+
+            if(pageModels) {
+                if(pageModels[originalKey]) {
+                    key = pageModels[originalKey].binding;
+                }
+            }
+
+            if(models) {
+                if(models[originalKey]) {
+                    key = models[originalKey].binding;
+                }
+            }
+
+            this.elementBinding.in(element, element, dataProxy.proxy, key, pageData);
+            this.inputBinding.in(element, element, dataProxy.proxy, key);
+            this.textareaBinding.in(element, element, dataProxy.proxy, key);
+            this.checkboxBinding.in(element, element, dataProxy.proxy, key);
+            this.radioBinding.in(element, element, dataProxy.proxy, key);
+            this.selectBinding.in(element, element, dataProxy.proxy, key);
         }
 
         is(element: any, dataProxy: DataProxy) {
@@ -109,12 +115,12 @@ module SinglefinModule {
             }
         }
 
-        outAttribute(page: Page, element: any, dataProxy: DataProxy) {
+        outAttribute(page: Page, element: any, dataProxy: DataProxy, models: any) {
             if(!element) {
 				return;
             }
 
-            var models = page.models;
+            var pageModels = page.models;
             
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
@@ -122,11 +128,18 @@ module SinglefinModule {
 						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
                             var onAttribute = attribute.name.split("model-");
                             var elementAttributeName = onAttribute[1];
-                            var value = attribute.value;
+                            var originalValue = attribute.value;
+                            var value = originalValue;
 
+                            if(pageModels) {
+                                if(pageModels[originalValue]) {
+                                    value = pageModels[originalValue].binding;
+                                }
+                            }
+                
                             if(models) {
-                                if(models[value]) {
-                                    value = models[value].binding;
+                                if(models[originalValue]) {
+                                    value = models[originalValue].binding;
                                 }
                             }
                             
@@ -142,7 +155,7 @@ module SinglefinModule {
             var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.outAttribute(page, $(item), dataProxy);
+				this.outAttribute(page, $(item), dataProxy, models);
 			});
         }
     }

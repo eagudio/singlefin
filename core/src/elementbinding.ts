@@ -1,7 +1,7 @@
 module SinglefinModule {
     export class ElementBinding {
 
-        in(container: any, element: any, data: any, key: string) {
+        in(container: any, element: any, data: any, key: string, pageData: any) {
             if(element.is('textarea') || element.is('input') || element.is('select')) {
                 return;
             }
@@ -12,14 +12,18 @@ module SinglefinModule {
 
             element.on("click", {
                 data: data,
-                key: key
+                key: key,
+                pageData: pageData
             }, (event: any) => {
                 var _data = event.data.data;
                 var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.attr("value");
+                var _pageData = event.data.pageData;
+                //var inputElement = $(event.currentTarget);
+                //var value = inputElement.attr("value");
             
-                Runtime.setProperty(_key, _data, value);
+                //Runtime.setProperty(_key, _data, value);
+
+                Runtime.setProperty(_key, _data, _pageData);
             });
         }
 

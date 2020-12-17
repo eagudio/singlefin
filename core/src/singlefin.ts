@@ -124,7 +124,7 @@ module SinglefinModule {
             }
         }
 
-        open(pageName: string, parameters?: any) {
+        open(pageName: string, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -140,7 +140,7 @@ module SinglefinModule {
                     return resolve();
                 }
 
-                page.draw(this, parameters).then(() => {
+                page.draw(this, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during open page '" + pageName + "'");
@@ -150,7 +150,7 @@ module SinglefinModule {
             });
         }
         
-        refresh(pageName: string, parameters: any) {
+        refresh(pageName: string, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 
@@ -166,7 +166,7 @@ module SinglefinModule {
                     return resolve();
                 }
 
-                page.redraw(this, parameters).then(() => {
+                page.redraw(this, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -176,7 +176,7 @@ module SinglefinModule {
             });
         }
 
-        nextGroupStep(pageName: string, parameters: any) {
+        nextGroupStep(pageName: string, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -192,7 +192,7 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.nextStep(this, parameters).then(() => {
+                page.nextStep(this, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -202,7 +202,7 @@ module SinglefinModule {
             });
         }
 
-        previousGroupStep(pageName: string, parameters: any) {
+        previousGroupStep(pageName: string, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -218,7 +218,7 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.previousStep(this, parameters).then(() => {
+                page.previousStep(this, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -228,7 +228,7 @@ module SinglefinModule {
             });
         }
 
-        openGroupPageByIndex(pageName: string, index: number, parameters: any) {
+        openGroupPageByIndex(pageName: string, index: number, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -244,7 +244,7 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.openGroupPageByIndex(this, index, parameters).then(() => {
+                page.openGroupPageByIndex(this, index, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -254,7 +254,7 @@ module SinglefinModule {
             });
         }
 
-        openGroupPage(pageName: string, pageTarget: string, parameters: any) {
+        openGroupPage(pageName: string, pageTarget: string, parameters?: any, models?: any) {
             return new Promise((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
@@ -272,7 +272,7 @@ module SinglefinModule {
                 
                 var target: string = this.body + "/" + page.path + "/" + pageTarget;
 
-                page.openGroupPage(this, target, parameters).then(() => {
+                page.openGroupPage(this, target, parameters, models).then(() => {
                     resolve(page);
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");

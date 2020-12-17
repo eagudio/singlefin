@@ -20,24 +20,24 @@ module SinglefinModule {
             return this._singlefin.models;
         }
 
-        open(pageName: string, parameters?: any) {
-            return this._singlefin.open(this._rootPath + pageName, parameters);
+        open(pageName: string, parameters?: any, models?: any) {
+            return this._singlefin.open(this._rootPath + pageName, parameters, models);
         }
 
-        refresh(pageName: string, parameters: any) {
-            return this._singlefin.refresh(this._rootPath + pageName, parameters);
+        refresh(pageName: string, parameters?: any, models?: any) {
+            return this._singlefin.refresh(this._rootPath + pageName, parameters, models);
         }
 
         close(pageName: string, parameters?: any) {
             return this._singlefin.close(this._rootPath + pageName, parameters);
         }
 
-        openGroupPageByIndex(pageName: string, index: number, parameters?: any) {
-            return this._singlefin.openGroupPageByIndex(this._rootPath + pageName, index, parameters);
+        openGroupPageByIndex(pageName: string, index: number, parameters?: any, models?: any) {
+            return this._singlefin.openGroupPageByIndex(this._rootPath + pageName, index, parameters, models);
         }
 
-        openGroupPage(pageName: string, page: string, parameters?: any) {
-            return this._singlefin.openGroupPage(this._rootPath + pageName, page, parameters);
+        openGroupPage(pageName: string, page: string, parameters?: any, models?: any) {
+            return this._singlefin.openGroupPage(this._rootPath + pageName, page, parameters, models);
         }
 
         setModelValue(property: string, value: any) {
