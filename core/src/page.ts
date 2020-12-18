@@ -1263,8 +1263,8 @@ module SinglefinModule {
         
 		close(singlefin: Singlefin, parameters: any) {
 			return new Promise((resolve, reject) => {
-				this.closeItems(singlefin, this, parameters).then(() => {
-					this.closeController(this, parameters).then(() => {
+				this.closeController(this, parameters).then(() => {
+					this.closeItems(singlefin, this, parameters).then(() => {
 						if(this.disabled == true) {
 							this.htmlElement.remove();
 						}
