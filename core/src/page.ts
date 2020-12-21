@@ -312,6 +312,9 @@ module SinglefinModule {
 						this.drawItems(singlefin, this, viewParameters, models).then(() => {
 							previousPageHtmlElement.replaceWith(this.htmlElement);
 
+							this.appendStyles();
+							this.appendScripts();
+
 							this.handleEvent(singlefin, "show", this, viewParameters).then(() => {
 								resolve(this.htmlElement);
 							}, (ex: any) => {
