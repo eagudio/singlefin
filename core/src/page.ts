@@ -507,8 +507,14 @@ module SinglefinModule {
 					var view = this.renderView(singlefin, body, viewParameters);
 
 					body.htmlElement.append(view);
-	
-					resolve(body.htmlElement);
+
+					this.handleEvent(singlefin, "show", body, viewParameters).then(() => {
+						resolve(body.htmlElement);
+					}, () => {
+						console.error("draw body error");
+
+						reject("draw body error");
+					});
 				}, (ex: any) => {
 					if(ex) {
                         console.error("draw body error");
@@ -694,7 +700,7 @@ module SinglefinModule {
 				for(var i=0; i<list.length; i++) {
                     var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 
-					await this.resolveUnwindItem(singlefin, surrogate, list[i], controllerParameters).then(async (viewParameters: any) => {
+					await this.handleEvent(singlefin, "unwind", surrogate, list[i]).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
 
 						this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters);
@@ -723,33 +729,6 @@ module SinglefinModule {
 				resolve();
 			});
 		}
-        
-		/*loadController(singlefin: Singlefin, page: any, parameters: any) {
-			return new Promise(async (resolve, reject) => {
-			
-				if(!page.controllers) {
-					return resolve(parameters);
-				}
-
-				var result = parameters;
-                
-				for(var i=0; i<page.controllers.length; i++) {
-					if(page.controllers[i].load) {
-						await page.controllers[i].load(singlefin, page, result).then(async (_result: any) => {
-							result = _result;
-						}, (ex: any) => {
-							if(ex) {
-								console.error("load controller error: " + ex);
-							}
-							
-							reject(ex);
-						});
-					}
-				}
-
-				resolve(result);
-			});
-		}*/
 
 		addHandleEvent(singlefin: Singlefin, htmlElement: any, eventType: string, event: string, page: any, parameters: any) {
 			if(!page.events) {
@@ -1045,31 +1024,6 @@ module SinglefinModule {
             }
 		}
         
-		resolveUnwindItem(singlefin: Singlefin, page: Page, parameters: any, controllerParameters: any) {
-			return new Promise(async (resolve, reject) => {
-			
-				if(!page.controllers) {
-					return resolve(parameters);
-				}
-
-				var result = parameters;
-				
-				for(var i=0; i<page.controllers.length; i++) {					
-					if(page.controllers[i].unwind) {
-						await page.controllers[i].unwind(singlefin, page, result, controllerParameters).then(async (_result: any) => {
-							result = _result;
-						}, (ex: any) => {
-                            console.error("resolve unwind item error: " + ex);
-
-							reject("resolve unwind item error: " + ex);
-						});
-					}
-				}
-
-				resolve(result);
-			});
-        }
-        
 		addHtmlElement(container: any, page: Page, singlefin: Singlefin) {
 			var element = container;
 			var elements = $();
@@ -1178,28 +1132,7 @@ module SinglefinModule {
 									paths = singlefin.handlers[handler];
 								}
 
-								/** TEST */
 								this.addHandleEvent(singlefin, element, event, handler, page, parameters);
-								/** END TEST */
-
-								for(var z=0; z<page.controllers.length; z++) {
-									var controller = page.controllers[z];
-									var method = controller[handler];
-
-									if(method) {
-										this.addEventHandler(singlefin, app, page, page, page.path, element, event, method, parameters);
-									}
-								}
-
-								for(var p=0; p<paths.length; p++) {
-									var handlerPage: Page = singlefin.pages[paths[p]];
-
-									for(var c=0; c<handlerPage.controllers.length; c++) {
-										if(handlerPage.controllers[c][handler]) {
-											this.addEventHandler(singlefin, app, handlerPage, page, paths[p], element, event, handlerPage.controllers[c][handler], parameters);
-										}
-									}
-								}
 							}
 						}
 
@@ -1230,37 +1163,6 @@ module SinglefinModule {
 
 			children.each((i: number, item: any) => {
 				this.addEventsHandlers(singlefin, app, page, $(item), parameters);
-			});
-        }
-        
-		addEventHandler(singlefin: Singlefin, app: App, handlerPage: Page, page: Page, path: string, htmlElement: any, eventType: any, handler: any, data: any) {
-			htmlElement.on(eventType, {
-				app: singlefin,
-				event: eventType,
-				handler: handler,
-				data: data,
-				path: path,
-				page: page,
-				target: handlerPage,
-				htmlElement: htmlElement
-			}, (event: any) => {
-				var jqueryEventData = event.data;
-				
-				var eventObject = {
-					jQueryEvent: event,
-					htmlElement: jqueryEventData.htmlElement,
-					htmlElementTarget: jqueryEventData.htmlElement,
-					target: jqueryEventData.target,
-					path: jqueryEventData.path,
-					eventType: jqueryEventData.eventType
-				};
-
-				//TODO: workaround: per gli elementi surrogati di unwind non si ha sempre disponibile l'htmlElement perchè in realtà viene passato l'oggetto originale (non il surrogato)
-				eventObject.htmlElementTarget = eventObject.target.htmlElement ? eventObject.target.htmlElement : eventObject.htmlElement;
-
-				event.data = null;
-
-				jqueryEventData.handler(jqueryEventData.target.app, jqueryEventData.page, jqueryEventData.data, eventObject);
 			});
         }
         
