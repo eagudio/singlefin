@@ -1,7 +1,7 @@
 module SinglefinModule {
     export class InputBinding {
 
-        in(container: any, element: any, data: any, key: string) {
+        in(singlefin: Singlefin, page: Page, model: any, container: any, element: any, data: any, key: string) {
             if(!element.is('input')) {
                 return;
             }
@@ -11,15 +11,29 @@ module SinglefinModule {
             }
 
             element.on("change paste keyup", {
+                page: page,
                 data: data,
-                key: key
+                key: key,
+                model: model
             }, (event: any) => {
+                var _page = event.data.page;
                 var _data = event.data.data;
                 var _key = event.data.key;
+                var _model = event.data.model;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
             
                 Runtime.setProperty(_key, _data, value);
+                
+                if(!_model) {
+                    return;
+                }
+
+                if(!_model.on) {
+                    return;
+                }
+                
+                page.handleEvent(singlefin, _model, "on", _page, value, event);
             });
         }
 

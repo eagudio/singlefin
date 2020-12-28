@@ -11,10 +11,12 @@ module SinglefinModule {
         
 
         //TODO: la memoria potrebbe crescere con l'aumentare dei surrogati, perchè vengono instanziati nuovi handler. Eliminare gli handler quando vengono eliminati i surrogati
-        bind(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
+        bind(singlefin: Singlefin, page: Page, element: any, pageData: any, models: any) {
             if(!element) {
 				return;
             }
+
+            var dataProxy: DataProxy = singlefin.modelProxy;
             
             if(!dataProxy) {
 				return;
@@ -22,28 +24,29 @@ module SinglefinModule {
             
             dataProxy.addHandlers(page, this._dataProxyHandlers);
  
-            this.in(page, element, dataProxy, pageData, models);
+            this.in(singlefin, page, element, dataProxy, pageData, models);
             this.is(element, dataProxy);
             this.outClass(page, element, dataProxy);
             this.outAttribute(page, element, dataProxy, models);
         }
 
-        in(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
-            this.bindElements(page, element, dataProxy, pageData, models);
+        in(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
+            this.bindElements(singlefin, page, element, dataProxy, pageData, models);
 
             var children = element.find("[model-value]");
 
             for(var i=0; i<children.length; i++) {
                 var child = $(children[i]);
 
-                this.bindElements(page, child, dataProxy, pageData, models);
+                this.bindElements(singlefin, page, child, dataProxy, pageData, models);
             }
         }
 
-        bindElements(page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
-            var originalKey = element.attr("model-value");
-            var key = originalKey;
+        bindElements(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
+            var modelKey = element.attr("model-value");
+            var key = modelKey;
             var pageModels = page.models;
+            var model = null;
 
             var hasModelValueEvent = element.attr("has-model-value-event");
 
@@ -54,19 +57,21 @@ module SinglefinModule {
             element.attr("has-model-value-event", "");
 
             if(pageModels) {
-                if(pageModels[originalKey]) {
-                    key = pageModels[originalKey].binding;
+                if(pageModels[modelKey]) {
+                    key = pageModels[modelKey].binding;
+                    model = pageModels[modelKey];
                 }
             }
 
             if(models) {
-                if(models[originalKey]) {
-                    key = models[originalKey].binding;
+                if(models[modelKey]) {
+                    key = models[modelKey].binding;
+                    model = models[modelKey];
                 }
             }
 
             this.elementBinding.in(element, element, dataProxy.proxy, key, pageData);
-            this.inputBinding.in(element, element, dataProxy.proxy, key);
+            this.inputBinding.in(singlefin, page, model, element, element, dataProxy.proxy, key);
             this.textareaBinding.in(element, element, dataProxy.proxy, key);
             this.checkboxBinding.in(element, element, dataProxy.proxy, key);
             this.radioBinding.in(element, element, dataProxy.proxy, key);
