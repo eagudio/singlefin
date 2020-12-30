@@ -27,7 +27,6 @@ module SinglefinModule {
             "it-IT": {}
         };
 
-        //private _model: any = {};
         private _modelProxy: any;
 
         public static moduleMap: any = {};
@@ -66,9 +65,6 @@ module SinglefinModule {
             this._models = _models;
         }
 
-        /*get models() {
-            return this._models;
-        }*/
         get models(): any {
             return this._modelProxy.proxy;
         }
@@ -81,18 +77,12 @@ module SinglefinModule {
             return this._modelProxy;
         }
 
-        /*public get model(): any {
-            return this._modelProxy.proxy;
-        }*/
-
         getBody(): Page {
             return this._pages[this._body];
         }
 
         init(config: any, homepage?: string) {
             try {
-                //this._modelProxy = new DataProxy(this._model);
-
                 var params = this.getUrlParams(window.location.href);
 
                 var configLoader = new ConfigLoader();
@@ -116,7 +106,7 @@ module SinglefinModule {
                     
                     return this.open(_homepage);
                 }, () => {
-                    console.log("an error occurred during init singlefin: config loading error");
+                    console.error("an error occurred during init singlefin: config loading error");
                 });
             }
             catch(ex) {

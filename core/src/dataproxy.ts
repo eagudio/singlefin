@@ -1,6 +1,5 @@
 module SinglefinModule {
     export class DataProxy {
-        private static _proxyHandler: any = null;
         private static _dataProxyHandlers: any = {};
 
         private _data: any;
@@ -11,36 +10,8 @@ module SinglefinModule {
             this._data = _data;
             this._proxy = _data;
 
-            DataProxy._proxyHandler = {
-                get(target: any, key: any) {
-                    //WORK-AROUND: for Date object...
-                    if(target[key] && typeof target[key].getMonth === 'function') {
-                        return target[key];
-                    }
-
-                    if (typeof target[key] === 'object' && target[key] !== null) {
-                        return new Proxy(target[key], DataProxy._proxyHandler)
-                    }
-
-                    return target[key];
-                },
-                set: ((target: any, key: any, value: any) => {
-                    target[key] = value;
-
-                    for(var dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
-                        var dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
-
-                        for(var i=0; i<dataProxyHandlers.length; i++) {
-                            dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
-                        }
-                    }
-                    
-                    return true;
-                })
-            };
-
             if(this._data != null && typeof this._data == "object") {
-                this._proxy = new Proxy(this._data, DataProxy._proxyHandler);
+                //this._proxy = new Proxy(this._data, DataProxy.newProxyHandler());
             }
         }
 
@@ -54,6 +25,39 @@ module SinglefinModule {
 
         addHandlers(page: Page, dataProxyHandlers: DataProxyHandler[]) {
             DataProxy._dataProxyHandlers[page.path] = dataProxyHandlers;
+        }
+
+        static newProxyHandler() {
+            //return new BindingHandler(null);
+            /*return {
+                get: (target: any, key: any): any => {
+                    //WORK-AROUND: for Date object...
+                    if(target[key] && typeof target[key].getMonth === 'function') {
+                        return target[key];
+                    }
+
+                    if (typeof target[key] === 'object' && target[key] !== null) {
+                        return new Proxy(target[key], DataProxy.newProxyHandler())
+                    }
+
+                    return target[key];
+                },
+                set: (target: any, key: any, value: any) => {
+                    target[key] = value;
+
+                    for(var dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
+                        var dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
+
+                        for(var i=0; i<dataProxyHandlers.length; i++) {
+                            console.log(key);
+                            console.log(dataProxyHandlers[i].handler);
+                            dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
+                        }
+                    }
+                    
+                    return true;
+                }
+            };*/
         }
     }
 }

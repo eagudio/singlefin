@@ -1,5 +1,136 @@
 module SinglefinModule {
     export class Binding {
+        bind(singlefin: Singlefin, page: Page, element: any, data: any, models: any) {
+            if(!element) {
+				return;
+            }
+
+            var dataProxy: DataProxy = singlefin.modelProxy;
+            
+            if(!dataProxy) {
+				return;
+            }
+            
+            this.watchHtmlElements(singlefin, page, element, models, dataProxy.data);
+            this.updateHtmlElements(singlefin, page, element, models, dataProxy.data);
+        }
+
+        watchHtmlElements(singlefin: Singlefin, page: Page, element: any,  models: any, data: any) {
+            this.watchHtmlElement(singlefin, page, element, models, data);
+
+            var children = element.find("[model-value]");
+
+            for(var i=0; i<children.length; i++) {
+                var child = $(children[i]);
+
+                this.watchHtmlElement(singlefin, page, child, models, data);
+            }
+        }
+
+        watchHtmlElement(singlefin: Singlefin, page: Page, element: any, models: any, data: any) {
+            var modelValue = element.attr("model-value");
+            var valuePath = modelValue;
+            var pageModels = page.models;
+            var model = null;
+
+            var hasModelValueEvent = element.attr("has-model-value-event");
+
+            if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
+                return;
+            }
+
+            element.attr("has-model-value-event", "");
+
+            if(pageModels) {
+                if(pageModels[modelValue]) {
+                    valuePath = pageModels[modelValue].binding;
+                    model = pageModels[modelValue];
+                }
+            }
+
+            if(models) {
+                if(models[modelValue]) {
+                    valuePath = models[modelValue].binding;
+                    model = models[modelValue];
+                }
+            }
+
+            if(element.is('input')) {
+                var inputBinding = new InputBinding(element, "value");
+
+                inputBinding.watch(singlefin, page, model, valuePath, data);
+            }
+        }
+
+        updateHtmlElements(singlefin: Singlefin, page: Page, element: any, models: any, data: any) {
+            if(!element) {
+				return;
+            }
+
+            var pageModels = page.models;
+            
+            element.each((i: number, item: any) => {
+				$.each(item.attributes, (i: number, attribute: any) => {
+					if(attribute.specified) {
+						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
+                            var onAttribute = attribute.name.split("model-");
+                            var elementAttributeName = onAttribute[1];
+                            var originalValuePath = attribute.value;
+                            var valuePath = originalValuePath;
+
+                            if(pageModels) {
+                                if(pageModels[originalValuePath]) {
+                                    valuePath = pageModels[originalValuePath].binding;
+                                }
+                            }
+                
+                            if(models) {
+                                if(models[originalValuePath]) {
+                                    valuePath = models[originalValuePath].binding;
+                                }
+                            }
+                            
+                            if(element.is('input')) {
+                                var inputBinding = new InputBinding(element, elementAttributeName);
+
+                                var bindingHandler = new BindingHandler(inputBinding, valuePath);
+
+                                var value: any = Runtime.getProperty(data, valuePath);
+
+                                inputBinding.update(value);
+
+                                var object = Runtime.getInstance(data, valuePath);
+
+                                var proxy = new Proxy(object, bindingHandler);
+
+                                Runtime.setInstance(valuePath, data, proxy);
+                            }
+                        }
+                    }
+                });
+            });
+
+            var children = element.children();
+
+			children.each((i: number, item: any) => {
+				this.updateHtmlElements(singlefin, page, $(item), models, data);
+			});
+        }
+
+        makeBinding(element: any, attributeName: string) {
+            if(element.is('input')) {
+                return new InputBinding(element, attributeName);
+            }
+        }
+    }
+}
+
+
+
+
+
+/*module SinglefinModule {
+    export class Binding {
         private elementBinding: ElementBinding = new ElementBinding();
         private inputBinding: InputBinding = new InputBinding();
         private textareaBinding: TextareaBinding = new TextareaBinding();
@@ -10,7 +141,6 @@ module SinglefinModule {
         private _dataProxyHandlers: DataProxyHandler[] = [];
         
 
-        //TODO: la memoria potrebbe crescere con l'aumentare dei surrogati, perchè vengono instanziati nuovi handler. Eliminare gli handler quando vengono eliminati i surrogati
         bind(singlefin: Singlefin, page: Page, element: any, pageData: any, models: any) {
             if(!element) {
 				return;
@@ -71,7 +201,7 @@ module SinglefinModule {
             }
 
             this.elementBinding.in(element, element, dataProxy.proxy, key, pageData);
-            this.inputBinding.in(singlefin, page, model, element, element, dataProxy.proxy, key);
+            this.inputBinding.in(singlefin, page, model, element, element, dataProxy, key);
             this.textareaBinding.in(element, element, dataProxy.proxy, key);
             this.checkboxBinding.in(element, element, dataProxy.proxy, key);
             this.radioBinding.in(element, element, dataProxy.proxy, key);
@@ -164,4 +294,4 @@ module SinglefinModule {
 			});
         }
     }
-}
+}*/
