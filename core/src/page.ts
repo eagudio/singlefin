@@ -840,7 +840,7 @@ module SinglefinModule {
 				return Promise.resolve();
 			}
 
-			var model = Runtime.getInstance(singlefin.models, delegate.model);
+			var model = Runtime.getParentInstance(singlefin.models, delegate.model);
 			var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
 
 			return modelMethod.call(model, page.app, singlefin.models, parameters);

@@ -1,7 +1,56 @@
 module SinglefinModule {
     export class ElementBinding {
+        private _htmlElement: any;
+        private _attribute: string;
 
-        in(container: any, element: any, data: any, key: string, pageData: any) {
+        constructor(htmlElement: any, attribute: string) {
+            this._htmlElement = htmlElement;
+            this._attribute = attribute;
+        }
+
+        get htmlElement() {
+            return this._htmlElement;
+        }
+
+        get attribute() {
+            return this._attribute;
+        }
+
+        watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
+            this.htmlElement.on("click", {
+                singlefin: singlefin,
+                page: page,
+                data: data,
+                pageData: pageData,
+                valuePath: valuePath,
+                model: model
+            }, (event: any) => {
+                var _singlefin = event.data.singlefin;
+                var _page = event.data.page;
+                var _valuePath = event.data.valuePath;
+                var _model = event.data.model;
+                var _data = event.data.data;
+                var _pageData = event.data.pageData;
+            
+                Runtime.setProperty(_valuePath, _data, _pageData);
+                
+                if(!_model) {
+                    return;
+                }
+
+                if(!_model.on) {
+                    return;
+                }
+
+                _page.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
+            });
+        }
+
+        update(value: any) {
+            this.htmlElement.attr(this.attribute, value);
+        }
+
+        /*in(container: any, element: any, data: any, key: string, pageData: any) {
             if(element.is('textarea') || element.is('input') || element.is('select')) {
                 return;
             }
@@ -90,6 +139,6 @@ module SinglefinModule {
             });
 
             dataProxyHandlers.push(dataProxyHandler);
-        }
+        }*/
     }
 }

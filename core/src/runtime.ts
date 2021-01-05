@@ -1,6 +1,6 @@
 module SinglefinModule {
     export class Runtime {
-        static getInstance(data: any, exp: string) {
+        static getParentInstance(data: any, exp: string) {
             var vars = exp.split(".");
             var _data = data;
 
@@ -62,6 +62,25 @@ module SinglefinModule {
             _data[vars[vars.length-1]] = value;
         }
 
+        static getParentPath(exp: string) {
+            var vars = exp.split(".");
+            var _path = "";
+
+            if(vars.length === 1) {
+                return vars[0];
+            }
+
+            if(vars.length > 1) {
+                for(var i=0; i<vars.length-2; i++) {
+                    _path += vars[i] + ".";
+                }
+
+                return _path += vars[vars.length-2];
+            }
+
+            return _path
+        }
+
         static hasPropertyName(data: any, exp: string) {
             var vars = exp.split(".");
             var _data = data;
@@ -69,7 +88,6 @@ module SinglefinModule {
             for(var i=0; i<vars.length-1; i++) {
                 _data = _data[vars[i]];
             }
-            console.log(_data);
 
             return _data[vars[vars.length-1]] != undefined;
         }

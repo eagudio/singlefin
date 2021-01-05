@@ -1,15 +1,7 @@
 module SinglefinModule {
-    export class InputBinding {
-        private _htmlElement: any;
-        private _attribute: string;
-
-        constructor(htmlElement: any, attribute: string) {
-            this._htmlElement = htmlElement;
-            this._attribute = attribute;
-        }
-
-        watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any) {
-            this._htmlElement.on("change paste keyup", {
+    export class TextareaBinding extends ElementBinding {
+        watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
+            this.htmlElement.on("change paste keyup", {
                 singlefin: singlefin,
                 page: page,
                 data: data,
@@ -34,38 +26,23 @@ module SinglefinModule {
                 if(!_model.on) {
                     return;
                 }
-                console.log("watch...");
-                console.log(_valuePath);
-                console.log(inputElement);
-                console.log("watch!");
 
                 _page.handleEvent(_singlefin, _model, "on", _page, value, event);
             });
         }
 
         update(value: any) {
-            console.log("update...");
-            console.log(this._htmlElement);
-            console.log("update!");
-
-            if(this._attribute == "value") {
-                this._htmlElement.val(value);
+            if(this.attribute == "value") {
+                this.htmlElement.val(value);
             }
             else {
-                this._htmlElement.attr(this._attribute, value);
+                this.htmlElement.attr(this.attribute, value);
             }
         }
-    }
-}
 
 
-
-
-/*module SinglefinModule {
-    export class InputBinding {
-
-        in(singlefin: Singlefin, page: Page, model: any, container: any, element: any, dataProxy: DataProxy, key: string) {
-            if(!element.is('input')) {
+        /*in(container: any, element: any, data: any, key: string) {
+            if(!element.is('textarea')) {
                 return;
             }
 
@@ -74,29 +51,15 @@ module SinglefinModule {
             }
 
             element.on("change paste keyup", {
-                page: page,
-                dataProxy: dataProxy,
-                key: key,
-                model: model
+                data: data,
+                key: key
             }, (event: any) => {
-                var _page = event.data.page;
-                var _dataProxy: DataProxy = event.data.dataProxy;
+                var _data = event.data.data;
                 var _key = event.data.key;
-                var _model = event.data.model;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
             
-                Runtime.setProperty(_key, _dataProxy.data, value);
-                
-                if(!_model) {
-                    return;
-                }
-
-                if(!_model.on) {
-                    return;
-                }
-
-                page.handleEvent(singlefin, _model, "on", _page, value, event);
+                Runtime.setProperty(_key, _data, value);
             });
         }
 
@@ -104,7 +67,7 @@ module SinglefinModule {
         }
 
         outAttribute(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
-            if(!element.is('input')) {
+            if(!element.is('textarea')) {
                 return;
             }
 
@@ -132,7 +95,6 @@ module SinglefinModule {
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    console.log("out!!");
                     var result: any = Runtime.getProperty(parameters.dataProxy.data, exp);
 
                     if(parameters.key == "value") {
@@ -148,6 +110,6 @@ module SinglefinModule {
             });
 
             dataProxyHandlers.push(dataProxyHandler);
-        }
+        }*/
     }
-}*/
+}

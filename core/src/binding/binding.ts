@@ -1,6 +1,8 @@
 module SinglefinModule {
     export class Binding {
-        bind(singlefin: Singlefin, page: Page, element: any, data: any, models: any) {
+        private _proxyMap: any = {};
+
+        bind(singlefin: Singlefin, page: Page, element: any, pageData: any, models: any) {
             if(!element) {
 				return;
             }
@@ -10,36 +12,38 @@ module SinglefinModule {
             if(!dataProxy) {
 				return;
             }
+
+            ProxyHandlerMap.registerPage(page.path);
             
-            this.watchHtmlElements(singlefin, page, element, models, dataProxy.data);
+            this.watchHtmlElements(singlefin, page, element, models, dataProxy.data, pageData);
             this.updateHtmlElements(singlefin, page, element, models, dataProxy.data);
         }
 
-        watchHtmlElements(singlefin: Singlefin, page: Page, element: any,  models: any, data: any) {
-            this.watchHtmlElement(singlefin, page, element, models, data);
+        watchHtmlElements(singlefin: Singlefin, page: Page, element: any,  models: any, data: any, pageData: any) {
+            this.watchHtmlElement(singlefin, page, element, models, data, pageData);
 
             var children = element.find("[model-value]");
 
             for(var i=0; i<children.length; i++) {
                 var child = $(children[i]);
 
-                this.watchHtmlElement(singlefin, page, child, models, data);
+                this.watchHtmlElement(singlefin, page, child, models, data, pageData);
             }
         }
 
-        watchHtmlElement(singlefin: Singlefin, page: Page, element: any, models: any, data: any) {
+        watchHtmlElement(singlefin: Singlefin, page: Page, element: any, models: any, data: any, pageData: any) {
             var modelValue = element.attr("model-value");
             var valuePath = modelValue;
             var pageModels = page.models;
             var model = null;
 
-            var hasModelValueEvent = element.attr("has-model-value-event");
+            var hasModelValueEvent = element.attr("has-model-watching");
 
             if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
                 return;
             }
 
-            element.attr("has-model-value-event", "");
+            element.attr("has-model-watching", "");
 
             if(pageModels) {
                 if(pageModels[modelValue]) {
@@ -55,10 +59,11 @@ module SinglefinModule {
                 }
             }
 
-            if(element.is('input')) {
-                var inputBinding = new InputBinding(element, "value");
+            if(valuePath) {
+                var elementBinding: ElementBinding = this.makeBinding(element, "value");
 
-                inputBinding.watch(singlefin, page, model, valuePath, data);
+                console.log(data);
+                elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
             }
         }
 
@@ -66,6 +71,14 @@ module SinglefinModule {
             if(!element) {
 				return;
             }
+
+            var hasModelValueEvent = element.attr("has-model-updating");
+
+            if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
+                return;
+            }
+
+            element.attr("has-model-updating", "");
 
             var pageModels = page.models;
             
@@ -89,21 +102,55 @@ module SinglefinModule {
                                     valuePath = models[originalValuePath].binding;
                                 }
                             }
-                            
-                            if(element.is('input')) {
-                                var inputBinding = new InputBinding(element, elementAttributeName);
 
-                                var bindingHandler = new BindingHandler(inputBinding, valuePath);
+                            if(valuePath) {
+                                var proxyPath = Runtime.getParentPath(valuePath);
+                                var object = Runtime.getParentInstance(data, valuePath);
+                                var property = Runtime.getPropertyName(valuePath);
 
-                                var value: any = Runtime.getProperty(data, valuePath);
+                                var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
+                                Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
+                                console.log(data);
 
-                                inputBinding.update(value);
+                                var elementBinding: ElementBinding = this.makeBinding(element, "value");
+                                ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
 
-                                var object = Runtime.getInstance(data, valuePath);
+                                /*var object = Runtime.getParentInstance(data, valuePath);
 
-                                var proxy = new Proxy(object, bindingHandler);
+                                //WORK-AROUND: getMonth for Date object...
+                                if(object && typeof object === 'object' && object !== null && typeof object.getMonth !== 'function') {
+                                    console.log(valuePath);
+                                    console.log(object);
 
-                                Runtime.setInstance(valuePath, data, proxy);
+                                    var elementBinding: ElementBinding = this.makeBinding(element, "value");
+    
+                                    //var bindingHandler = new BindingHandler(elementBinding, valuePath);
+
+                                    var parentPath = Runtime.getParentPath(valuePath);
+
+                                    var parentProxy = this._proxyMap[parentPath];
+                                    
+                                    //var modelProxy = this._proxyMap[valuePath];
+                                    var value: any = Runtime.getProperty(data, valuePath);
+                                    
+                                    if(!parentProxy) {
+                                        parentProxy = {};
+
+                                        parentProxy.data = value;
+
+                                        parentProxy.bindingHandler = new BindingHandler();
+                                        
+                                        parentProxy.proxy = new Proxy(object, parentProxy.bindingHandler);
+
+                                        Runtime.setProperty(parentPath, data, parentProxy.proxy);
+                                    }
+
+                                    var propertyName = Runtime.getPropertyName(valuePath);
+
+                                    parentProxy.bindingHandler.addElement(propertyName, elementBinding);
+    
+                                    elementBinding.update(parentProxy.data);
+                                }*/
                             }
                         }
                     }
@@ -117,10 +164,15 @@ module SinglefinModule {
 			});
         }
 
-        makeBinding(element: any, attributeName: string) {
+        makeBinding(element: any, attributeName: string): ElementBinding {
             if(element.is('input')) {
                 return new InputBinding(element, attributeName);
             }
+            else if(element.is('textarea')) {
+                return new TextareaBinding(element, attributeName);
+            }
+
+            return new ElementBinding(element, attributeName);
         }
     }
 }

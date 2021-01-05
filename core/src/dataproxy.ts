@@ -49,8 +49,6 @@ module SinglefinModule {
                         var dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
 
                         for(var i=0; i<dataProxyHandlers.length; i++) {
-                            console.log(key);
-                            console.log(dataProxyHandlers[i].handler);
                             dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
                         }
                     }
