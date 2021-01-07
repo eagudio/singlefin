@@ -1,7 +1,56 @@
 module SinglefinModule {
-    export class SelectBinding {
+    export class SelectBinding extends ElementBinding {
+        watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
+            this.htmlElement.on("change", {
+                singlefin: singlefin,
+                page: page,
+                data: data,
+                valuePath: valuePath,
+                model: model
+            }, (event: any) => {
+                var _singlefin = event.data.singlefin;
+                var _page = event.data.page;
+                var _valuePath = event.data.valuePath;
+                var _model = event.data.model;
+                var _data = event.data.data;
 
-        in(container: any, element: any, data: any, key: string) {            
+                var inputElement = $(event.currentTarget);
+                var value = inputElement.val();
+            
+                Runtime.setProperty(_valuePath, _data, value);
+                
+                if(!_model) {
+                    return;
+                }
+
+                if(!_model.on) {
+                    return;
+                }
+
+                _page.handleEvent(_singlefin, _model, "on", _page, value, event);
+            });
+
+            this.htmlElement.on("singlefin:show", {
+                elementBinding: this,
+                data: data,
+                valuePath: valuePath
+            }, (event: any) => {
+                var value: any = Runtime.getProperty(event.data.data, event.data.valuePath);
+
+                event.data.elementBinding.update(value);
+            });
+        }
+
+        update(value: any) {
+            if(this.attribute == "value") {
+                this.htmlElement.val(value);
+            }
+            else {
+                this.htmlElement.attr(this.attribute, value);
+            }
+        }
+
+        /*in(container: any, element: any, data: any, key: string) {            
             if(!element.is('select')) {
                 return;
             }
@@ -72,6 +121,6 @@ module SinglefinModule {
         }
 
         is(container: any, element: any, data: any, key: string) {
-        }
+        }*/
     }
 }

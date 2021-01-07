@@ -248,6 +248,8 @@ module SinglefinModule {
 							this.drawItems(singlefin, this, viewParameters, models).then(() => {
 								this.addHtmlElement(htmlContainerElement, this, singlefin);
 
+								this.fireShowHtmlElementEvent();
+
 								this.handleEvent(singlefin, this.events, "show", this, viewParameters).then(() => {
 									resolve(this.htmlElement);
 								}, () => {
@@ -315,6 +317,8 @@ module SinglefinModule {
 							this.appendStyles();
 							this.appendScripts();
 
+							this.fireShowHtmlElementEvent();
+							
 							this.handleEvent(singlefin, this.events, "show", this, viewParameters).then(() => {
 								resolve(this.htmlElement);
 							}, (ex: any) => {
@@ -544,22 +548,22 @@ module SinglefinModule {
 			return Promise.resolve(container.htmlElement);
         }
         
-		drawItems(singlefin: Singlefin, parentPage: any, parameters: any, models: any) {
+		drawItems(singlefin: Singlefin, parent: Page, parameters: any, models: any) {
 			return new Promise(async (resolve, reject) => {
-				this.drawChildren(singlefin, parentPage, parentPage.replace, parameters, models).then(() => {
-					return this.drawChildren(singlefin, parentPage, parentPage.append, parameters, models);
+				this.drawChildren(singlefin, parent, parent.replace, parameters, models).then(() => {
+					return this.drawChildren(singlefin, parent, parent.append, parameters, models);
 				}, () => {
 					console.error("replace items error");
 
 					reject("replace items error");
 				}).then(() => {
-					return this.drawChildren(singlefin, parentPage, parentPage.group, parameters, models);
+					return this.drawChildren(singlefin, parent, parent.group, parameters, models);
 				}, () => {
 					console.error("append items error");
 
 					reject("append items error");
 				}).then(() => {
-					return this.drawChildren(singlefin, parentPage, parentPage.unwind, parameters, models);
+					return this.drawChildren(singlefin, parent, parent.unwind, parameters, models);
 				}, () => {
 					console.error("group items error");
 
@@ -612,7 +616,7 @@ module SinglefinModule {
 			});
         }
         
-		drawChildren(singlefin: Singlefin, parent: any, children: any[], parameters: any, models: any) {
+		drawChildren(singlefin: Singlefin, parent: Page, children: any[], parameters: any, models: any) {
 			return new Promise(async (resolve, reject) => {
 				if(!children) {
 					return resolve();
@@ -708,8 +712,8 @@ module SinglefinModule {
 
 						await this.drawItems(singlefin, surrogate, viewParameters, models).then(async () => {
 							this.addHtmlElement(parent.htmlElement, surrogate, singlefin);
-							
-							parent.bind(singlefin, parent.htmlElement, viewParameters, models);
+
+							//parent.bind(singlefin, parent.htmlElement, viewParameters, models);
 						}, (ex) => {
 							if(ex) {
                                 console.error("unwind error");
@@ -927,7 +931,7 @@ module SinglefinModule {
 		}
 
 		bind(singlefin: Singlefin, htmlElement: any, data: any, models: any) {
-			this._binding = new Binding();
+			//this._binding = new Binding();
 
 			this._binding.bind(singlefin, this, htmlElement, data, models);
 		}
@@ -1081,6 +1085,14 @@ module SinglefinModule {
 			else if(page.action == "unwind") {
 				element.append(page.htmlElement);
 			}
+		}
+
+		fireShowHtmlElementEvent() {
+			if(!this.htmlElement) {
+				return;
+			}
+
+			this.htmlElement.find("select").trigger("singlefin:show");
 		}
 
 		appendStyles() {
