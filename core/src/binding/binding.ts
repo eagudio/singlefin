@@ -13,94 +13,53 @@ module SinglefinModule {
 
             ProxyHandlerMap.registerPage(page.path);
             
-            this.watchPage(singlefin, page, element, models, dataProxy.data, pageData);
-            this.updatePage(singlefin, page, element, models, dataProxy.data);
+            this.bindPageElements(singlefin, page, element, models, dataProxy.data, pageData);
         }
 
-        watchPage(singlefin: Singlefin, page: Page, element: any,  models: any, data: any, pageData: any) {
-            this.watchHtmlElement(singlefin, page, element, models, data, pageData);
-
-            var children = element.find("[model-value]");
-
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
-
-                this.watchHtmlElement(singlefin, page, child, models, data, pageData);
-            }
-        }
-
-        watchHtmlElement(singlefin: Singlefin, page: Page, element: any, models: any, data: any, pageData: any) {
-            var modelValue = element.attr("model-value");
-            var valuePath = modelValue;
-            var pageModels = page.models;
-            var model = null;
-
-            var hasModelValueEvent = element.attr("has-model-watching");
-
-            if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
-                return;
-            }
-
-            element.attr("has-model-watching", "");
-
-            if(pageModels) {
-                if(pageModels[modelValue]) {
-                    valuePath = pageModels[modelValue].binding;
-                    model = pageModels[modelValue];
-                }
-            }
-
-            if(models) {
-                if(models[modelValue]) {
-                    valuePath = models[modelValue].binding;
-                    model = models[modelValue];
-                }
-            }
-
-            if(valuePath) {
-                var elementBinding: ElementBinding = this.makeBinding(element, "value");
-
-                elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
-            }
-        }
-
-        updatePage(singlefin: Singlefin, page: Page, element: any, models: any, data: any) {
+        bindPageElements(singlefin: Singlefin, page: Page, element: any, models: any, data: any, pageData: any) {
             if(!element) {
 				return;
             }
-
-            var hasModelValueEvent = element.attr("has-model-updating");
-
-            if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
-                return;
-            }
-
-            element.attr("has-model-updating", "");
 
             var pageModels = page.models;
             
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
 					if(attribute.specified) {
-						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
-                            var onAttribute = attribute.name.split("model-");
-                            var elementAttributeName = onAttribute[1];
+						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model")) {
+                            var elementAttributeName = null;
+
+                            if(attribute.name.startsWith("model-")) {
+                                var onAttribute = attribute.name.split("model-");
+                                elementAttributeName = onAttribute[1];
+                            }
+                            
                             var originalValuePath = attribute.value;
                             var valuePath = originalValuePath;
+                            var model = null;
+                            var modelProperty = null;
 
                             if(pageModels) {
                                 if(pageModels[originalValuePath]) {
                                     valuePath = pageModels[originalValuePath].binding;
+                                    model = pageModels[originalValuePath];
+                                    modelProperty = pageModels[originalValuePath].property;
                                 }
                             }
                 
                             if(models) {
                                 if(models[originalValuePath]) {
                                     valuePath = models[originalValuePath].binding;
+                                    model = models[originalValuePath];
+                                    modelProperty = models[originalValuePath].property;
                                 }
                             }
 
                             if(valuePath) {
+                                var elementBinding: ElementBinding = this.makeBinding(element, elementAttributeName, modelProperty);
+                
+                                elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
+
                                 var proxyPath = Runtime.getParentPath(valuePath);
                                 var object = Runtime.getParentInstance(data, valuePath);
                                 var property = Runtime.getPropertyName(valuePath);
@@ -108,7 +67,6 @@ module SinglefinModule {
                                 var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
                                 Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
 
-                                var elementBinding: ElementBinding = this.makeBinding(element, "value");
                                 ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
 
                                 var value: any = Runtime.getProperty(data, valuePath);
@@ -122,22 +80,22 @@ module SinglefinModule {
             var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.updatePage(singlefin, page, $(item), models, data);
+				this.bindPageElements(singlefin, page, $(item), models, data, pageData);
 			});
         }
 
-        makeBinding(element: any, attributeName: string): ElementBinding {
+        makeBinding(element: any, attributeName: string, property: string): ElementBinding {
             if(element.is('input')) {
-                return new InputBinding(element, attributeName);
+                return new InputBinding(element, attributeName, property);
             }
             else if(element.is('textarea')) {
-                return new TextareaBinding(element, attributeName);
+                return new TextareaBinding(element, attributeName, property);
             }
             else if(element.is('select')) {
-                return new SelectBinding(element, attributeName);
+                return new SelectBinding(element, attributeName, property);
             }
 
-            return new ElementBinding(element, attributeName);
+            return new ElementBinding(element, attributeName, property);
         }
     }
 }

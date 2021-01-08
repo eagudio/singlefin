@@ -2,10 +2,12 @@ module SinglefinModule {
     export class ElementBinding {
         private _htmlElement: any;
         private _attribute: string;
+        private _property: string;
 
-        constructor(htmlElement: any, attribute: string) {
+        constructor(htmlElement: any, attribute: string, property: string) {
             this._htmlElement = htmlElement;
             this._attribute = attribute;
+            this._property = property;
         }
 
         get htmlElement() {
@@ -17,6 +19,10 @@ module SinglefinModule {
         }
 
         watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
+            if(this.attribute == "content") {
+                return;
+            }
+            
             this.htmlElement.on("click", {
                 singlefin: singlefin,
                 page: page,
@@ -32,10 +38,6 @@ module SinglefinModule {
                 var _data = event.data.data;
                 var _pageData = event.data.pageData;
             
-                console.log("element watch");
-                console.log(_valuePath);
-                console.log(data);
-                console.log(_pageData);
                 Runtime.setProperty(_valuePath, _data, _pageData);
                 
                 if(!_model) {
@@ -51,9 +53,18 @@ module SinglefinModule {
         }
 
         update(value: any) {
-            console.log("element update");
-            console.log(value);
-            this.htmlElement.attr(this.attribute, value);
+            var _value = value;
+
+            if(this._property) {
+                _value = Runtime.getProperty(value, this._property);
+            }
+            
+            if(this.attribute == "value" || this.attribute == "content") {
+                this.htmlElement.html(_value);
+            }
+            else if(this.attribute) {
+                this.htmlElement.attr(this.attribute, _value);
+            }
         }
 
         /*outClass(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, exp: string) {

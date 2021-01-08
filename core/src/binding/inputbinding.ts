@@ -17,10 +17,6 @@ module SinglefinModule {
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
             
-                console.log("input watch");
-                console.log(_valuePath);
-                console.log(data);
-                console.log(value);
                 Runtime.setProperty(_valuePath, _data, value);
                 
                 if(!_model) {
@@ -36,8 +32,6 @@ module SinglefinModule {
         }
 
         update(value: any) {
-            console.log("input update");
-            console.log(value);
             if(this.attribute == "value") {
                 this.htmlElement.val(value);
             }
