@@ -22,6 +22,8 @@ module SinglefinModule {
 		private _models: any;
 		private _htmlElement: any;
 
+		private _index: number = 0;
+
         private _groupIndex: number = 0;
         private _groupNextStepEnabled: boolean = true;
 		private _groupPreviousStepEnabled: boolean = true;
@@ -209,6 +211,14 @@ module SinglefinModule {
 
         public set htmlElement(value: any) {
             this._htmlElement = value;
+		}
+		
+		public get index(): number {
+            return this._index;
+        }
+        
+        public set index(value: number) {
+            this._index = value;
         }
 
         public get groupIndex(): number {
@@ -702,7 +712,9 @@ module SinglefinModule {
 				//TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
 
 				for(var i=0; i<list.length; i++) {
-                    var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
+					var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
+					
+					surrogate.index = i;
 
 					await this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, list[i]).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters);
@@ -925,6 +937,8 @@ module SinglefinModule {
 				group: group
 			});
 
+			//html = this.resolveBracketsMarkup(page.view, singlefin.models);
+
 			var htmlElement = $(html);
 
 			return htmlElement;
@@ -1015,6 +1029,38 @@ module SinglefinModule {
 					eval(code);
 
 					str = str.replace(match[0], result);
+
+					match = markupRegex.exec(str);
+				}
+
+				return str;
+            }
+            catch(ex) {
+                console.error("resolve markup error: " + ex);
+                
+                return markup;
+            }
+		}
+
+		resolveBracketsMarkup(markup: string, models: any): string {
+			try {
+				var markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
+				
+				var str = markup;
+
+				var match = markupRegex.exec(str);
+				
+				while(match) {
+					var valuePath = match[1];				
+
+					var valuePath = valuePath.replace(".$", "[" + this.index + "]");
+
+					console.log(valuePath);
+					console.log(models);
+
+					var value: any = Runtime.getProperty(models, valuePath);
+
+					str = str.replace(match[0], value);
 
 					match = markupRegex.exec(str);
 				}

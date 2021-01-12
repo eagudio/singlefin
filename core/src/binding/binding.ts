@@ -56,6 +56,8 @@ module SinglefinModule {
                             }
 
                             if(valuePath) {
+                                valuePath = valuePath.replace(".$", "[" + page.index + "]");
+
                                 var elementBinding: ElementBinding = this.makeBinding(element, elementAttributeName, modelProperty);
                 
                                 elementBinding.watch(singlefin, page, model, valuePath, data, pageData);

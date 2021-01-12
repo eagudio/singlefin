@@ -30,9 +30,7 @@ module SinglefinModule {
         }
 
         static registerPage(pagePath: string) {
-            if(!ProxyHandlerMap._pageBindings[pagePath]) {
-                ProxyHandlerMap._pageBindings[pagePath] = {};
-            }
+            ProxyHandlerMap._pageBindings[pagePath] = {};
 
             ProxyHandlerMap._pageBindings[pagePath].binding = {};
         }
