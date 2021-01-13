@@ -4,7 +4,7 @@
   "description": "Singlefin is a JavaScript-based open-source front-end web framework.",
   "main": "./bin/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tests": "mocha --require ts-node/register test/**/*.ts"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,13 @@
   "homepage": "https://github.com/eagudio/singlefin#readme",
   "bin": {
     "singlefin-deploy": "./bin/cli.js"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.2.0",
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
   }
 }
