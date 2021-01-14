@@ -66,25 +66,13 @@ module SinglefinModule {
                                 var object = Runtime.getParentInstance(data, valuePath);
                                 var property = Runtime.getPropertyName(valuePath);
 
-                                console.log("data before set property");
-                                console.log(valuePath);
-                                console.log(proxyPath);
-                                console.log(data);
-                                console.log(object);
-                                //var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
-                                //console.log(proxyHandler.proxy);
-                                console.log("--------------------------");
-                                /*Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
-
+                                var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
                                 ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
+                                
+                                Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
 
-                                console.log("data after set property");
-                                console.log(valuePath);
-                                console.log(data);
                                 var value: any = Runtime.getProperty(data, valuePath);
-                                console.log(value);
-                                console.log("+++++++++++++++++++++++++");
-                                elementBinding.update(value);*/
+                                elementBinding.update(value);
                             }
                         }
                     }

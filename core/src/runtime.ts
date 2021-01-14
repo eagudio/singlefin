@@ -1,37 +1,22 @@
 module SinglefinModule {
     export class Runtime {
         static getParentInstance(data: any, exp: string) {
-            var vars = exp.split(".");
+            var vars = exp.split(/[.\[\]]/);
             var _data = data;
 
+            vars = vars.filter((value) => {
+                return value != "";
+            });
+
             if(vars.length == 1) {
-                //return this.getArray(_data, vars[0]);
-                var array = this.getArray(_data, vars[0]);
-              
-                if(!array) {
-                    return _data[vars[0]];
-                }
-              
-                return array;
+                return _data[vars[0]];
             }
 
-            if(vars.length > 1) {
-                for(var i=0; i<vars.length-2; i++) {
-                    _data = _data[vars[i]];
-                }
-
-                var array = this.getArray(_data, vars[vars.length - 2]);
-                
-                if(array) {
-                    return this.getItem(_data, vars[vars.length-2]);
-                }
-            
-                return _data[vars[vars.length-2]];
-
-                //return this.getItem(_data, vars[vars.length-2]);
+            for(var i=0; i < vars.length-1; i++) {
+                _data = _data[vars[i]];
             }
 
-            return data
+            return _data;
         }
 
         /*static setInstance(exp: string, data: any, instance: any) {
@@ -79,56 +64,39 @@ module SinglefinModule {
         }
 
         static getParentPath(exp: string) {
-            var vars = exp.split(".");
+            var vars = exp.split(/[.\[]/);
             var _path = "";
-          
-            if (vars.length === 1) {    
-                var arrayName = this.getArrayName(vars[0]);
-              
-                if(!arrayName) {
-                    return vars[0];
-                }
-              
-                return arrayName;
+            var count = 0;
+
+            if(vars.length == 1) {
+                return vars[0];
             }
-          
-            if (vars.length > 1) {
-                for (var i = 0; i < vars.length - 2; i++) {
-                    _path += vars[i] + ".";
+
+            vars.map((value) => {
+                var newValue = value;
+                var isArrayItem = false;
+
+                if(value.charAt(value.length - 1) === "]") {                    
+                    newValue = "[" + value;
+                    isArrayItem = true;
                 }
-                
-                var arrayName = this.getArrayName(vars[vars.length - 1]);
-                
-                if(arrayName) {
-                    return _path += vars[vars.length - 2] + "." + arrayName;
+
+                if(count < vars.length - 1) {
+                    if(count > 0 && !isArrayItem) {
+                        _path += "." + newValue;
+                    }
+                    else {
+                        _path += newValue;
+                    }
                 }
-            
-                return _path += vars[vars.length - 2];
-            }
-          
-            return _path
+
+                count++;
+              
+                return newValue;
+            });
+
+            return _path;
         }
-
-        /*static getParentPath(exp: string) {
-            //product.items[0].description
-            var vars = exp.split(".");
-            var _path = "";
-
-            //TODO: qui non funziona! getItemName deve ritornare [indice] o il nome variabile
-            if(vars.length === 1) {
-                return this.getItemName(vars[0]);
-            }
-
-            if(vars.length > 1) {
-                for(var i=0; i<vars.length-2; i++) {
-                    _path += vars[i] + ".";
-                }
-
-                return _path += this.getItemName(vars[vars.length-2]);
-            }
-
-            return _path
-        }*/
 
         /*static hasPropertyName(data: any, exp: string) {
             var vars = exp.split(".");
@@ -145,34 +113,6 @@ module SinglefinModule {
             var vars = exp.split(".");
 
             return this.getItemName(vars[vars.length-1]);
-        }
-
-        private static getArrayName(exp: string) {
-            var res = exp.split("[");
-            
-            if(res.length > 1) {
-                return res[0];
-            }
-            
-            return null;
-        }
-
-        private static getArray(data: any, exp: string) {            
-            var res = exp.split("[");
-
-            if(res.length > 1) {
-                return data[res[0]];
-            }
-            
-            return null;
-
-            /*if(res.length === 1) {
-                return data[res[0]];
-            }
-
-            var array = res[0];
-
-            return data[array];*/
         }
 
         private static getItemName(exp: string) {
@@ -218,5 +158,5 @@ module SinglefinModule {
 }
 
 /** UNIT TEST **/
-export default SinglefinModule.Runtime;
+//export default SinglefinModule.Runtime;
 /** **/

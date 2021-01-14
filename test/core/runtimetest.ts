@@ -116,6 +116,70 @@ describe('Runtime', () => {
         expect(result).to.equal(expected);
     });
 
+    it('get parent path with one item', () => {
+        const expected = "item";
+
+        const result = Runtime.getParentPath("item");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with subitem', () => {
+        const expected = "item";
+
+        const result = Runtime.getParentPath("item.subitem");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with subsubitem', () => {
+        const expected = "item.subitem";
+
+        const result = Runtime.getParentPath("item.subitem.subsubitem");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with array', () => {
+        const expected = "array";
+
+        const result = Runtime.getParentPath("array[0]");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with array string', () => {
+        const expected = "array";
+
+        const result = Runtime.getParentPath("array[b]");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with array item and value', () => {
+        const expected = "array[1]";
+
+        const result = Runtime.getParentPath("array[1].value");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with object and array item and value', () => {
+        const expected = "item.array[1]";
+
+        const result = Runtime.getParentPath("item.array[1].value");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get parent path with object and array', () => {
+        const expected = "product.items";
+
+        const result = Runtime.getParentPath("product.items[0]");
+
+        expect(result).to.equal(expected);
+    });
+
     it('get property', () => {
         var obj = {
             item: "test"
@@ -166,6 +230,14 @@ describe('Runtime', () => {
         const expected = obj.array;
 
         const result = Runtime.getProperty(obj, "array");
+
+        expect(result).to.equal(expected);
+    });
+
+    it('get property name with array', () => {
+        const expected = "a";
+
+        const result = Runtime.getPropertyName("array[a]");
 
         expect(result).to.equal(expected);
     });
@@ -320,7 +392,7 @@ describe('Runtime', () => {
         expect(result).to.equal(expected);
     });
 
-    it('get parent instance with object and array item and value', () => {
+    it('set property with object and array item and value', () => {
         var obj = {
             item: {
                 array: [{}, {

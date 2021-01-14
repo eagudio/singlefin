@@ -17,6 +17,9 @@ module SinglefinModule {
                 ProxyHandlerMap._map[proxyPath].proxy = proxy;
                 ProxyHandlerMap._map[proxyPath].handler = handler;
             }
+            else {
+                ProxyHandlerMap._map[proxyPath].proxy = new Proxy(object, ProxyHandlerMap._map[proxyPath].handler);
+            }
 
             return ProxyHandlerMap._map[proxyPath];
         }
@@ -30,7 +33,9 @@ module SinglefinModule {
         }
 
         static registerPage(pagePath: string) {
-            ProxyHandlerMap._pageBindings[pagePath] = {};
+            if(!ProxyHandlerMap._pageBindings[pagePath]) {
+                ProxyHandlerMap._pageBindings[pagePath] = {};
+            }
 
             ProxyHandlerMap._pageBindings[pagePath].binding = {};
         }
