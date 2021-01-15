@@ -13,7 +13,7 @@ module SinglefinModule {
         private _append: any[];
         private _group: any[];
         private _unwind: any[];
-        private _list: string;
+        private _list: any;
         private _events: string[];
 		private _parameters: any;
 		private _isWidget: boolean;
@@ -31,7 +31,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: {}, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -149,11 +149,11 @@ module SinglefinModule {
             this._unwind = value;
         }
 
-        public get list(): string {
+        public get list(): any {
             return this._list;
         }
         
-        public set list(value: string) {
+        public set list(value: any) {
             this._list = value;
         }
 
@@ -699,8 +699,8 @@ module SinglefinModule {
 			return new Promise(async (resolve, reject) => {
 				var list = parameters;
 
-				if(page.list) {
-					list = Runtime.getProperty(singlefin.models, page.list);
+				if(page.list && page.list.from) {
+					list = Runtime.getProperty(singlefin.models, page.list.from);
 				}
 
                 if(!Array.isArray(list)) {
@@ -740,6 +740,31 @@ module SinglefinModule {
 							return reject("unwind error");
 						}
 					});
+				}
+
+				if(page.list && page.list.from) {
+					ProxyHandlerMap.registerPage(page.path);
+
+					var valuePath = page.list.from;
+					var data = singlefin.modelProxy.data;
+
+					var valuePath = valuePath.replace(".$", "[" + page.index + "]");
+
+					var elementBinding: ElementBinding = new ListBinding(page.htmlElement, "list", null, singlefin, page, page.list);
+
+					elementBinding.watch(singlefin, page, null, valuePath, data, parameters);
+
+					var proxyPath = Runtime.getParentPath(valuePath);
+					var object = Runtime.getParentInstance(data, valuePath);
+					var property = Runtime.getPropertyName(valuePath);
+
+					var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
+					ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
+					
+					Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
+
+					var value: any = Runtime.getProperty(data, valuePath);
+					elementBinding.init(value);
 				}
 
 				resolve();
@@ -870,6 +895,9 @@ module SinglefinModule {
 			if(delegate.page.open) {
 				return singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models);
 			}
+			else if(delegate.page.refresh) {
+				return singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models);
+			}
 			else if(delegate.page.close) {
 				return singlefin.close(delegate.page.close, delegate.page.parameters);
 			}
@@ -937,7 +965,7 @@ module SinglefinModule {
 				group: group
 			});
 
-			//html = this.resolveBracketsMarkup(page.view, singlefin.models);
+			html = this.resolveBracketsMarkup(html, singlefin.models);
 
 			var htmlElement = $(html);
 
@@ -1053,10 +1081,8 @@ module SinglefinModule {
 				while(match) {
 					var valuePath = match[1];				
 
-					var valuePath = valuePath.replace(".$", "[" + this.index + "]");
-
-					console.log(valuePath);
-					console.log(models);
+					valuePath = valuePath.replace(".$", "[" + this.index + "]");
+					valuePath = valuePath.trim();
 
 					var value: any = Runtime.getProperty(models, valuePath);
 

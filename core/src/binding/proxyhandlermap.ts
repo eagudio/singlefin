@@ -4,8 +4,8 @@ module SinglefinModule {
         public static _pageBindings: any = {};
         public static _bindMaps: any = {};
 
-        static newProxy(proxyPath: string, object: any) {
-            if(!ProxyHandlerMap.hasProxy(proxyPath)) {
+        static newProxy(proxyPath: string, object: any, force?: boolean) {
+            if(!ProxyHandlerMap.hasProxy(proxyPath) || force == true) {
                 if(!ProxyHandlerMap._bindMaps[proxyPath]) {
                     ProxyHandlerMap._bindMaps[proxyPath] = {};
                 }
@@ -17,11 +17,16 @@ module SinglefinModule {
                 ProxyHandlerMap._map[proxyPath].proxy = proxy;
                 ProxyHandlerMap._map[proxyPath].handler = handler;
             }
-            else {
-                ProxyHandlerMap._map[proxyPath].proxy = new Proxy(object, ProxyHandlerMap._map[proxyPath].handler);
-            }
 
             return ProxyHandlerMap._map[proxyPath];
+        }
+
+        static deleteProxyStartWith(proxyPath: string) {
+            for(var key in ProxyHandlerMap._map) {
+                if(key.startsWith(proxyPath)) {
+                    ProxyHandlerMap._map[key] = null;
+                }
+            }
         }
 
         static hasProxy(proxyPath: string) {

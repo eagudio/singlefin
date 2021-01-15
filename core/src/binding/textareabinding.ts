@@ -1,5 +1,9 @@
 module SinglefinModule {
     export class TextareaBinding extends ElementBinding {
+        init(value: any) {
+            this.update(value);
+        }
+        
         watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
             this.htmlElement.on("change paste keyup", {
                 singlefin: singlefin,

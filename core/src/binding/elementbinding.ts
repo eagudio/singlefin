@@ -4,7 +4,7 @@ module SinglefinModule {
         private _attribute: string;
         private _property: string;
 
-        constructor(htmlElement: any, attribute: string, property: string) {
+        constructor(htmlElement: any, attribute: string, property: any) {
             this._htmlElement = htmlElement;
             this._attribute = attribute;
             this._property = property;
@@ -16,6 +16,10 @@ module SinglefinModule {
 
         get attribute() {
             return this._attribute;
+        }
+
+        init(value: any) {
+            this.update(value);
         }
 
         watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {

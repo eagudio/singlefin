@@ -72,7 +72,7 @@ module SinglefinModule {
                                 Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
 
                                 var value: any = Runtime.getProperty(data, valuePath);
-                                elementBinding.update(value);
+                                elementBinding.init(value);
                             }
                         }
                     }

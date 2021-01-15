@@ -242,7 +242,7 @@ describe('Runtime', () => {
         expect(result).to.equal(expected);
     });
 
-    it('get parent instance with array item', () => {
+    it('get property with array item', () => {
         var obj = {
             array: ["a", "b"]
         };
@@ -254,7 +254,7 @@ describe('Runtime', () => {
         expect(result).to.equal(expected);
     });
 
-    it('get parent instance with array item and value', () => {
+    it('get property with array item and value', () => {
         var obj = {
             array: [{}, {
                 value: "hello"
@@ -268,7 +268,7 @@ describe('Runtime', () => {
         expect(result).to.equal(expected);
     });
 
-    it('get parent instance with object and array item and value', () => {
+    it('get property with object and array item and value', () => {
         var obj = {
             item: {
                 array: [{}, {

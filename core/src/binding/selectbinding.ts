@@ -1,5 +1,9 @@
 module SinglefinModule {
     export class SelectBinding extends ElementBinding {
+        init(value: any) {
+            this.update(value);
+        }
+        
         watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
             this.htmlElement.on("change", {
                 singlefin: singlefin,
