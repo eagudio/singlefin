@@ -10,14 +10,15 @@ class Server {
     private _app: any;
     private _router: any;
     private _options: any;
-    private _middlewares: any;
+    private _routes: any;
+    private _routeHandlers: any[] = [];
 
 
     constructor(bundle: any, app?: any) {
         this._app = app;
 
         this._options = bundle.options;
-        this._middlewares = bundle.middlewares;
+        this._routes = bundle.routes;
 
         if(!this._app) {
             this._app = express().use(body_parser.json());
@@ -35,7 +36,7 @@ class Server {
             this._router.use(express.static(publicOptions));
         }
 
-        this.useMiddlewares();
+        this.initRoutes();
     }
     
     startServer() {
@@ -73,17 +74,13 @@ class Server {
 		}
     }
 
-    useMiddlewares() {
-        for(var i=0; i<this._middlewares.length; i++) {
+    initRoutes() {
+        for(var i=0; i<this._routes.length; i++) {
             try {
-                var Middleware = require(this._middlewares[i].use);
-
-                var middleware = new Middleware();
-
-                this._router.use(middleware.use(this._middlewares[i].options));
+                this._routeHandlers.push(new RouteHandler(this._router, this._routes[i]));
             }
             catch(ex) {
-                console.error("singlefin: an error occurred during use middleware " + this._middlewares[i].use + " :" + ex);
+                console.error("singlefin: an error occurred during handle route " + this._routes[i].use + " :" + ex);
             }
         }
     }
@@ -129,4 +126,4 @@ class Server {
     }
 }
 
-module.exports.server = Server;
+//module.exports.server = Server;
