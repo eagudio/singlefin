@@ -1,0 +1,3 @@
+interface RouteResponse {
+    send(): void;
+}

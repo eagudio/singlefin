@@ -14,7 +14,7 @@ module SinglefinModule {
         private _group: any[];
         private _unwind: any[];
         private _list: any;
-        private _events: string[];
+        private _events: any;
 		private _parameters: any;
 		private _isWidget: boolean;
 		private _styles: string[];
@@ -31,7 +31,7 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: {}, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
+        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: {}, events: any, parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
             this._disabled = disabled;
@@ -157,11 +157,11 @@ module SinglefinModule {
             this._list = value;
         }
 
-        public get events(): string[] {
+        public get events(): any {
             return this._events;
         }
         
-        public set events(value: string[]) {
+        public set events(value: any) {
             this._events = value;
         }
 

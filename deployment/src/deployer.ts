@@ -233,6 +233,123 @@ export module SinglefinDeployment {
             return base64FileContent;
         }
 
+        /*bundleEvents(events: any) {
+            for(var eventKey in events) {
+                var event = events[eventKey];
+
+                for(var i=0; i<event.length; i++) {
+                    event[i] = this.bundleRequest(event[i]);
+                }
+            }
+
+            return events;
+        }
+
+        bundleRequest(eventHandler: any) {
+            if(!eventHandler) {
+                return eventHandler;
+            }
+
+            if(!eventHandler["request"]) {
+                return eventHandler;
+            }
+
+            var route = Object.keys(eventHandler["request"])[0]; //TODO: utile per recuperare il route corrispondente...
+
+            var ajaxRequest = `
+                class Request {
+                    call(singlefin, data, result) {
+                        return new Promise((resolve, reject) => {
+                            var jsonData = {};
+
+                            for(var key in data) {
+                                jsonData[key] = singlefin.runtime.getProperty(singlefin.models, data[key]);
+                            }
+                                        
+                            try {
+                                var stringifyData = JSON.stringify(jsonData);
+                            }
+                            catch(ex) {
+                                reject(ex);
+                            }
+                
+                            $.ajax({
+                                type: "POST", //TODO: reperire da route... 
+                                url: "login", //TODO: reperire da route...
+                                data: stringifyData,
+                                success: (response) => {
+                                    if(response) {
+                                        for(var key in result) {
+                                            if(typeof response[key] !== 'undefined' && result[key]) {
+                                                singlefin.runtime.setProperty(result[key], singlefin.models, response[key]);
+                                            }
+                                        }
+                                    }
+
+                                    resolve();
+                                },
+                                error: (error) => {
+                                    if(result["error"]) {
+                                        singlefin.runtime.setProperty(result["error"], singlefin.models, error.responseText);
+                                    }
+
+                                    reject();
+                                },
+                                contentType: "application/json"
+                            });
+                        });
+                    }    
+                }
+            `;
+
+            var base64AjaxRequest: string = this.encodeBase64(ajaxRequest);
+
+            eventHandler["request"][route].class = base64AjaxRequest;
+
+            return eventHandler;
+        }*/
+
+        bundleServiceRequest(request: any) {
+            var service = request["service"];
+
+            if(!service) {
+                return request;        
+            }
+
+            service = {
+                type: "POST",
+                url: "", //TODO: l'url viene generato in automatico e assegnato anche al servizio server
+                
+            };
+
+            /*
+            var data;
+                        
+            try {
+                data = JSON.stringify({
+                    username: username,
+                    password: password
+                });
+            }
+            catch(ex) {
+                reject(ex);
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "login",
+                data: data,
+                success: (result) => {
+                    resolve();
+                },
+                error: (error) => {
+                    reject(error.responseText);
+                },
+                contentType: "application/json"
+            });
+            */
+        }
+
         encodeBase64(data: string): string {
             return Buffer.from(data).toString('base64');
         }

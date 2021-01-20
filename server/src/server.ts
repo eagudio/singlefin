@@ -76,12 +76,7 @@ class Server {
 
     initRoutes() {
         for(var i=0; i<this._routes.length; i++) {
-            try {
-                this._routeHandlers.push(new RouteHandler(this._router, this._routes[i]));
-            }
-            catch(ex) {
-                console.error("singlefin: an error occurred during handle route " + this._routes[i].use + " :" + ex);
-            }
+            this._routeHandlers.push(new RouteHandler(this._router, this._routes[i]));
         }
     }
 

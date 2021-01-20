@@ -13,25 +13,27 @@ class RouteHandler {
         this._method = this.getHttpMethod(config);
 
         this._routePromise = new RoutePromise(router, config);
+
+        this.use();
     }
 
-    call() {
+    use() {
         if(this._routePromise.hasCallMethod()) {
             if(!this._path) {
                 this._router[this._method]((request: any, response: any) => {
                     this._routePromise.call(request, response).then((result: any) => {
-                        //TODO: invio risposta...
+                        this.sendResponse(response, result);
                     }).catch((result: any) => {
-                        //TODO: invio risposta...
+                        this.sendError(response, result);
                     });
                 });
             }
             else {
-                this._router[this._method](path, (request: any, response: any) => {
+                this._router[this._method](this._path, (request: any, response: any) => {
                     this._routePromise.call(request, response).then((result: any) => {
-                        //TODO: invio risposta...
+                        this.sendResponse(response, result);
                     }).catch((result: any) => {
-                        //TODO: invio risposta...
+                        this.sendError(response, result);
                     });
                 });
             }
@@ -40,9 +42,41 @@ class RouteHandler {
 
     getHttpMethod(config: any) {
         if(!config.method) {
-            return "use";
+            if(!config.pattern) {
+                return "use";
+            }
+
+            if(config.pattern == "file") {
+                return "get";
+            }
         }
 
         return config.method;
+    }
+
+    sendResponse(response: any, result: any) {
+        var routeResponse: RouteResponse = this.getResponse(response, result);
+
+        routeResponse.send();
+    }
+
+    sendError(response: any, result: any) {
+        response.status(400);
+
+        var routeResponse: RouteResponse = this.getResponse(response, result);
+
+        routeResponse.send();
+    }
+
+    getResponse(response: any, result: any): RouteResponse {
+        /*if(!result) {
+            return new RouteEndResponse();
+        }*/
+        
+        if(result.file) {
+            return new RouteFileResponse(response, result);    
+        }
+
+        return new RouteDataResponse(response, result);
     }
 }

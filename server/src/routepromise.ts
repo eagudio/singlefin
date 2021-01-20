@@ -1,5 +1,7 @@
 class RoutePromise {
     private _router: any;
+    private _handler: string;
+    private _pattern: string;
     private _route: any;
     private _options: any;
     private _then: any;
@@ -9,14 +11,13 @@ class RoutePromise {
 
     constructor(router: any, config: any) {
         this._router = router;
+        this._handler = config.handler;
+        this._pattern = config.pattern;
         this._options = config.options;
-
-        var Route = require(config.handler);
-
-        this._route = new Route(this._router);
-
         this._then = config.then;
         this._catch = config.catch;
+
+        this.makeRoute();
 
         this.makeThenRouteMap();
         this.makeCatchRouteMap();
@@ -61,6 +62,35 @@ class RoutePromise {
 
             return Promise.reject(result);
         });
+    }
+
+    makeRoute() {
+        try {
+            if(this._pattern) {
+                this._route = this.makeRouteFromPattern(this._pattern);
+
+                return;
+            }
+
+            if(this._handler) {
+                var Route = require(this._handler);
+
+                this._route = new Route(this._router, this._options);
+
+                return;
+            }
+        }
+        catch(ex) {
+            console.error("singlefin: an error occurred during instance route " + this._handler + " :" + ex);
+        }
+    }
+
+    makeRouteFromPattern(pattern: string) {
+        if(pattern == "file") {
+            return new RouteFile(this._router, this._options);
+        }
+
+        return null;
     }
 
     makeThenRouteMap() {

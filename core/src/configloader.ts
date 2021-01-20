@@ -52,7 +52,7 @@ module SinglefinModule {
 			singlefin.getBody().styles = this.unbundleFiles(body.styles);
 			singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
 
-			singlefin.getBody().events = body.events;
+			singlefin.getBody().events = this.processEvents(body.events);
 
 			this.addHandlers(singlefin.body, singlefin);
 			
@@ -152,6 +152,7 @@ module SinglefinModule {
 
 				page.styles = this.unbundleFiles(page.styles);
 				page.scripts = this.unbundleFiles(page.scripts);
+				page.events = this.processEvents(page.events);
 
 				singlefin.addPage(pageName, disabled, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.list, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
 
@@ -180,6 +181,33 @@ module SinglefinModule {
 			}
 
 			return children;
+		}
+
+		processEvents(events: any) {
+			for(var eventKey in events) {
+                var event = events[eventKey];
+
+                for(var i=0; i<event.length; i++) {
+                    event[i] = this.bundleRequest(event[i]);
+                }
+            }
+		}
+
+		bundleRequest(eventHandler: any) {
+            if(!eventHandler) {
+                return eventHandler;
+            }
+
+            if(!eventHandler["request"]) {
+                return eventHandler;
+			}
+
+			var route = Object.keys(eventHandler["request"])[0];
+			var requestParameters = eventHandler["request"][route];
+
+			eventHandler["request"][route].handler = new Request(requestParameters.data, requestParameters.result, requestParameters.then, requestParameters.catch);
+
+            return eventHandler;
 		}
 
 		unbundleView(view: string): any {
