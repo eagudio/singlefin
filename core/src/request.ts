@@ -12,12 +12,16 @@ module SinglefinModule {
             this._catch = _catch;
         }
         
-        call(models: any, httpMethod: string, route: string, path?: string) {
+        call(models: any, httpMethod: string, route: string, parameters: any, path?: string) {
             return new Promise((resolve, reject: any) => {
                 var jsonData: any = {};
 
                 for(var key in this._data) {
                     jsonData[key] = Runtime.getProperty(models, this._data[key]);
+                }
+
+                if(!this._data) {
+                    jsonData = parameters;
                 }
                             
                 try {
@@ -42,14 +46,14 @@ module SinglefinModule {
                                 }
                             }
 
-                            resolve();
+                            resolve(response);
                         },
                         error: (error: any) => {
                             if(this._result["error"]) {
                                 Runtime.setProperty(this._result["error"], models, error.responseText);
                             }
 
-                            reject();
+                            reject(error.responseText);
                         },
                         contentType: "application/json"
                     });

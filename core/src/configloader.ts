@@ -190,7 +190,9 @@ module SinglefinModule {
                 for(var i=0; i<event.length; i++) {
                     event[i] = this.bundleRequest(event[i]);
                 }
-            }
+			}
+			
+			return events;
 		}
 
 		bundleRequest(eventHandler: any) {
@@ -198,14 +200,14 @@ module SinglefinModule {
                 return eventHandler;
             }
 
-            if(!eventHandler["request"]) {
+            if(!eventHandler.request) {
                 return eventHandler;
 			}
 
-			var route = Object.keys(eventHandler["request"])[0];
-			var requestParameters = eventHandler["request"][route];
+			var route = Object.keys(eventHandler.request)[0];
+			var requestParameters = eventHandler.request[route];
 
-			eventHandler["request"][route].handler = new Request(requestParameters.data, requestParameters.result, requestParameters.then, requestParameters.catch);
+			eventHandler.request[route].handler = new Request(requestParameters.data, requestParameters.result, requestParameters.then, requestParameters.catch);
 
             return eventHandler;
 		}
