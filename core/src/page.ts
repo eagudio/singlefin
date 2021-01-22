@@ -559,7 +559,7 @@ module SinglefinModule {
         }
         
 		drawItems(singlefin: Singlefin, parent: Page, parameters: any, models: any) {
-			return new Promise(async (resolve, reject) => {
+			return new Promise<void>(async (resolve, reject) => {
 				this.drawChildren(singlefin, parent, parent.replace, parameters, models).then(() => {
 					return this.drawChildren(singlefin, parent, parent.append, parameters, models);
 				}, () => {
@@ -627,7 +627,7 @@ module SinglefinModule {
         }
         
 		drawChildren(singlefin: Singlefin, parent: Page, children: any[], parameters: any, models: any) {
-			return new Promise(async (resolve, reject) => {
+			return new Promise<void>(async (resolve, reject) => {
 				if(!children) {
 					return resolve();
 				}
@@ -696,7 +696,7 @@ module SinglefinModule {
         }
         
 		unwindItems(singlefin: Singlefin, parent: Page, pageName: string, page: Page, parameters: any, controllerParameters: any, models: any) {
-			return new Promise(async (resolve, reject) => {
+			return new Promise<void>(async (resolve, reject) => {
 				var list = parameters;
 
 				if(page.list && page.list.from) {
@@ -1298,7 +1298,7 @@ module SinglefinModule {
         }
         
 		close(singlefin: Singlefin, parameters: any) {
-			return new Promise((resolve, reject) => {
+			return new Promise<void>((resolve, reject) => {
 				this.closeController(this, parameters).then(() => {
 					this.closeItems(singlefin, this, parameters).then(() => {
 						if(this.disabled == true) {
@@ -1344,7 +1344,7 @@ module SinglefinModule {
         }
         
 		closeItems(singlefin: Singlefin, page: any, parameters: any) {
-			return new Promise((resolve, reject) => {
+			return new Promise<void>((resolve, reject) => {
 				if(page.group.length > 0) {
 					page.groupIndex = 0;
 				}
@@ -1398,7 +1398,7 @@ module SinglefinModule {
         }
         
 		closeChildren(singlefin: Singlefin, children: any, parameters: any) {
-			return new Promise(async (resolve, reject) => {
+			return new Promise<void>(async (resolve, reject) => {
 				if(!children) {
 					return resolve();
 				}
