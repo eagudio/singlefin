@@ -73,7 +73,7 @@ class RoutePromise {
             }
 
             if(this._handler) {
-                var Route: any = this._handler; //require(this._handler);
+                var Route: any = this._handler;
 
                 this._route = new Route(this._router, this._options);
 
