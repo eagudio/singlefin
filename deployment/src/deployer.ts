@@ -1,5 +1,3 @@
-declare const require: any;
-
 const fs = require('fs');
 const path = require('path');
 declare const __dirname: any;
@@ -83,20 +81,92 @@ export module SinglefinDeployment {
             }
 
             for(var i=0; i<routeSchemas.length; i++) {
-                this.bundleServerRouteHandler(routeSchemas[i]);
+                this.bundleServerRoute(routeSchemas[i]);
             }
 
             this._serverBundle.routes = routeSchemas;
         }
 
-        bundleServerRouteHandler(routeSchema: any) {
-            if(!routeSchema.handler) {
+        bundleServerRoute(routeSchema: any) {
+            this.bundleServerRouteHandler(routeSchema.handler);
+
+            this.bundleServerFilePatternRoute(routeSchema);
+            this.bundleServerQueryPatternRoute(routeSchema);
+
+            this.bundleServerRouteThen(routeSchema.then);
+            this.bundleServerRouteCatch(routeSchema.catch);
+        }
+
+        bundleServerRouteHandler(routeHandler: any) {
+            if(!routeHandler) {
                 return;
             }
 
-            var fullRouteHandlerPath = this.normalizePath(routeSchema.handler, this._paths);
+            var fullRouteHandlerPath = this.normalizePath(routeHandler, this._paths);
 
-            this._handlerMap[routeSchema.handler] = this.readFile(fullRouteHandlerPath, 'utf8');
+            this._handlerMap[routeHandler] = this.readFile(fullRouteHandlerPath, 'utf8');
+        }
+
+        bundleServerFilePatternRoute(routeSchema: any) {
+            if(!routeSchema) {
+                return;
+            }
+
+            if(routeSchema.pattern != "file") {
+                return;
+            }
+
+            if(!routeSchema.options) {
+                return;
+            }
+
+            if(!routeSchema.options.file) {
+                return;
+            }
+
+            var filePath = this.normalizePath(routeSchema.options.file.path, this._paths);
+
+            routeSchema.options.file.path = filePath;
+        }
+
+        bundleServerQueryPatternRoute(routeSchema: any) {
+            if(!routeSchema) {
+                return;
+            }
+
+            if(routeSchema.pattern != "query") {
+                return;
+            }
+
+            if(!routeSchema.options) {
+                return;
+            }
+
+            if(!routeSchema.options.query) {
+                return;
+            }
+
+            var queryPath = this.normalizePath(routeSchema.options.query, this._paths);
+
+            routeSchema.options.query = queryPath;
+        }
+
+        bundleServerRouteThen(thenSchema: any) {
+            if(!thenSchema) {
+                return;
+            }
+
+            for(var key in thenSchema) {
+                this.bundleServerRoute(thenSchema[key]);
+            }
+        }
+
+        bundleServerRouteCatch(catchSchema: any) {
+            if(!catchSchema) {
+                return;
+            }
+
+            this.bundleServerRoute(catchSchema);
         }
 
         bundleApps(apps: any, schemaName: string, targetPath: string) {
@@ -336,12 +406,12 @@ export module SinglefinDeployment {
         }
 
         saveServerBundle(filePath: string, bundle: any) {
-            var bundleContent = JSON.stringify(bundle, null, "\t");
+            var bundleContent = JSON.stringify(bundle);
 
             for(var key in this._handlerMap) {
                 var regex = new RegExp('"' + key + '"', "g");
 
-                bundleContent = bundleContent.replace(regex, this._handlerMap[key] + "\n");
+                bundleContent = bundleContent.replace(regex, this._handlerMap[key]);
             }
 
             var script = `

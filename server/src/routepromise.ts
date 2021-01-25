@@ -73,7 +73,7 @@ class RoutePromise {
             }
 
             if(this._handler) {
-                var Route = require(this._handler);
+                var Route: any = this._handler; //require(this._handler);
 
                 this._route = new Route(this._router, this._options);
 
@@ -88,6 +88,9 @@ class RoutePromise {
     makeRouteFromPattern(pattern: string) {
         if(pattern == "file") {
             return new RouteFile(this._router, this._options);
+        }
+        else if(pattern == "query") {
+            return new RouteQuery(this._router, this._options);
         }
 
         return null;

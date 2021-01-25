@@ -49,6 +49,10 @@ class RouteHandler {
             if(config.pattern == "file") {
                 return "get";
             }
+
+            if(config.pattern == "query") {
+                return "post";
+            }
         }
 
         return config.method;

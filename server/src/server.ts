@@ -10,14 +10,17 @@ class Server {
     private _app: any;
     private _router: any;
     private _options: any;
+    private _sources: any;
     private _routes: any;
     private _routeHandlers: any[] = [];
+    private _sourceHandlers: any = {};
 
 
     constructor(bundle: any, app?: any) {
         this._app = app;
 
         this._options = bundle.options;
+        this._sources = bundle.sources;
         this._routes = bundle.routes;
 
         if(!this._app) {
@@ -72,6 +75,16 @@ class Server {
 			
 			return;
 		}
+    }
+
+    initSources() {
+        for(var key in this._sources) {
+            var Source: any = this._sources[key].handler;
+
+            var source = new Source(this._router, this._sources[key].options);
+
+            this._sourceHandlers[key] = source;
+        }
     }
 
     initRoutes() {
