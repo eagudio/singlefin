@@ -26,7 +26,6 @@ module SinglefinModule {
                             
                 try {
                     var stringifyData: string = JSON.stringify(jsonData);
-                    console.log(stringifyData);
 
                     var servicePath = route;
 

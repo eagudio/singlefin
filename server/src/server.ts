@@ -39,9 +39,7 @@ class Server {
             this._router.use(express.static(publicOptions));
         }
 
-        console.log(__dirname);
-        console.log(path.join(__dirname, "../", "/node_modules/singlefin/bin/"));
-        this._router.use('/sf', express.static(path.join(__dirname, "../", "/node_modules/singlefin/bin/")));
+        this._router.use('/sf', express.static(__dirname));
 
         this.initRoutes();
     }

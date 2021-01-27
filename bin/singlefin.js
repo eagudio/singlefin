@@ -1632,7 +1632,6 @@ var SinglefinModule;
                 }
                 try {
                     var stringifyData = JSON.stringify(jsonData);
-                    console.log(stringifyData);
                     var servicePath = route;
                     if (path) {
                         servicePath = path + "/" + route;
