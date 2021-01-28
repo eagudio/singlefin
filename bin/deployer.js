@@ -11,6 +11,7 @@ var SinglefinDeployment;
             this._bundles = {};
             this._paths = {};
             this._handlerMap = {};
+            this._serverModelMap = {};
         }
         make(schemasFolderPath, targetsFolderPath, targetsServerFolderPath) {
             console.log("build bundles...");
@@ -29,17 +30,19 @@ var SinglefinDeployment;
             var schema = require(schemaPath);
             this._paths = schema.paths;
             if (serverTargetPath) {
-                this.makeServerBundle(schema.server, schemaName, serverTargetPath);
+                this.makeServerBundle(schema, schemaName, serverTargetPath);
             }
-            this.bundleApps(schema.apps, schemaName, targetPath);
+            //this.bundleApps(schema.apps, schemaName, targetPath);
         }
         makeServerBundle(serverSchema, schemaName, targetPath) {
             if (!serverSchema) {
                 return;
             }
-            this._serverBundle.options = serverSchema.options;
-            this.bundleServerPublic(this._serverBundle.options.public);
-            this.bundleServerRoutes(serverSchema.routes);
+            this._serverBundle.port = serverSchema.port;
+            this._serverBundle.ssl = serverSchema.ssl;
+            this._serverBundle.domains = {};
+            this.bundleServerDomains(this._serverBundle.domains, serverSchema.domains);
+            //this.bundleServerRoutes(serverSchema.routes);
             var targetFullPath = path.format({
                 dir: targetPath,
                 name: schemaName + "_server",
@@ -47,6 +50,34 @@ var SinglefinDeployment;
             });
             console.log(targetFullPath);
             this.saveServerBundle(targetFullPath, this._serverBundle);
+        }
+        bundleServerDomains(domains, domainsSchema) {
+            if (!domainsSchema) {
+                return;
+            }
+            for (var key in domainsSchema) {
+                domains[key] = {};
+                this.bundleServerDomain(domains[key], domainsSchema[key]);
+            }
+        }
+        bundleServerDomain(domain, domainSchema) {
+            domain.path = domainSchema.path;
+            domain.options = domainSchema.options;
+            domain.router = domainSchema.router;
+            domain.models = {};
+            this.bundleServerModels(domain.models, domainSchema.models);
+        }
+        bundleServerModels(models, modelsSchema) {
+            if (!modelsSchema) {
+                return;
+            }
+            for (var key in modelsSchema) {
+                models[key] = modelsSchema[key];
+                this.addServerModel(modelsSchema[key]);
+            }
+        }
+        addServerModel(modelPath) {
+            this._serverModelMap[modelPath] = this.readFile(modelPath, 'utf8');
         }
         bundleServerPublic(publicSchema) {
             if (!publicSchema) {
@@ -294,9 +325,9 @@ var SinglefinDeployment;
         }
         saveServerBundle(filePath, bundle) {
             var bundleContent = JSON.stringify(bundle);
-            for (var key in this._handlerMap) {
+            for (var key in this._serverModelMap) {
                 var regex = new RegExp('"' + key + '"', "g");
-                bundleContent = bundleContent.replace(regex, this._handlerMap[key]);
+                bundleContent = bundleContent.replace(regex, this._serverModelMap[key]);
             }
             var script = `
                 class SinglefinServerBundle{

@@ -10,6 +10,7 @@ export module SinglefinDeployment {
         private _bundles: any = {};
         private _paths: any = {};
         private _handlerMap: any = {};
+        private _serverModelMap: any = {};
         
 
         make(schemasFolderPath: string, targetsFolderPath: string, targetsServerFolderPath?: string) {
@@ -37,10 +38,10 @@ export module SinglefinDeployment {
             this._paths = schema.paths;
 
             if(serverTargetPath) {
-                this.makeServerBundle(schema.server, schemaName, serverTargetPath);
+                this.makeServerBundle(schema, schemaName, serverTargetPath);
             }
 
-            this.bundleApps(schema.apps, schemaName, targetPath);
+            //this.bundleApps(schema.apps, schemaName, targetPath);
         }
 
         makeServerBundle(serverSchema: any, schemaName: string, targetPath: string) {
@@ -48,11 +49,14 @@ export module SinglefinDeployment {
                 return;
             }
 
-            this._serverBundle.options = serverSchema.options;
+            this._serverBundle.port = serverSchema.port;
+            this._serverBundle.ssl = serverSchema.ssl;
 
-            this.bundleServerPublic(this._serverBundle.options.public);
+            this._serverBundle.domains = {};
 
-            this.bundleServerRoutes(serverSchema.routes);
+            this.bundleServerDomains(this._serverBundle.domains, serverSchema.domains);
+
+            //this.bundleServerRoutes(serverSchema.routes);
 
             var targetFullPath = path.format({
                 dir: targetPath,
@@ -63,6 +67,43 @@ export module SinglefinDeployment {
             console.log(targetFullPath);
 
             this.saveServerBundle(targetFullPath, this._serverBundle);
+        }
+
+        bundleServerDomains(domains: any, domainsSchema: any) {
+            if(!domainsSchema) {
+                return;
+            }
+
+            for(var key in domainsSchema) {
+                domains[key] = {};
+
+                this.bundleServerDomain(domains[key], domainsSchema[key]);
+            }
+        }
+
+        bundleServerDomain(domain: any, domainSchema: any) {
+            domain.path = domainSchema.path;
+            domain.options = domainSchema.options;
+            domain.router = domainSchema.router;
+            domain.models = {};
+
+            this.bundleServerModels(domain.models, domainSchema.models);
+        }
+
+        bundleServerModels(models: any, modelsSchema: any) {
+            if(!modelsSchema) {
+                return;
+            }
+
+            for(var key in modelsSchema) {
+                models[key] = modelsSchema[key];
+
+                this.addServerModel(modelsSchema[key]);
+            }
+        }
+
+        addServerModel(modelPath: string) {
+            this._serverModelMap[modelPath] = this.readFile(modelPath, 'utf8');
         }
 
         bundleServerPublic(publicSchema: any) {
@@ -408,10 +449,10 @@ export module SinglefinDeployment {
         saveServerBundle(filePath: string, bundle: any) {
             var bundleContent = JSON.stringify(bundle);
 
-            for(var key in this._handlerMap) {
+            for(var key in this._serverModelMap) {
                 var regex = new RegExp('"' + key + '"', "g");
 
-                bundleContent = bundleContent.replace(regex, this._handlerMap[key]);
+                bundleContent = bundleContent.replace(regex, this._serverModelMap[key]);
             }
 
             var script = `

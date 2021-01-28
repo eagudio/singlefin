@@ -3,6 +3,8 @@ class RouteQuery {
 
     
     constructor(router: any, options: any) {
+        var fs = require('fs');
+        
         this._query = fs.readFileSync(options.query, "ascii");
     }
 

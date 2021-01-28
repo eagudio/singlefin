@@ -1,4 +1,94 @@
-const express = require('express');
+class Server {
+    private _schema: any;
+
+    private _port: number;
+    private _sslOptions: any;
+    private _server: any;
+    private _domains: any;
+
+    private _httpsServer: any;
+
+
+    constructor(schema: any, server?: any) {
+        this._schema = schema;
+        this._server = server;
+
+        var express = require('express');
+        var body_parser = require('body-parser');
+
+        if(!this._server) {
+            this._server = express().use(body_parser.json());
+        }
+
+        this._port = this.getPortOptions();
+        this._sslOptions = this.getSSLOptions();
+
+        this.makeDomains(schema.domains);
+    }
+
+    startServer() {
+        try {
+            var fs = require('fs');
+            var https = require('https');
+
+            if(!this._sslOptions) {
+                this._server.listen(this._port, () => {
+                    console.log("singlefin: http web server listening on port " + this._port)
+                });
+            }
+            else {
+                const privateKey = fs.readFileSync(this._sslOptions.privatekey, 'utf8');
+                const certificate = fs.readFileSync(this._sslOptions.certificate, 'utf8');
+                const ca = fs.readFileSync(this._sslOptions.ca, 'utf8');
+    
+                const credentials = {
+                    key: privateKey,
+                    cert: certificate,
+                    ca: ca
+                };
+        
+                this._httpsServer = https.createServer(credentials, this._server);
+    
+                this._httpsServer.listen(this._port, () => {
+                    console.log("singlefin: https web server listening on port " + this._port);
+                });
+            }
+		}
+		catch(ex) {
+			console.error("singlefin: an error occurred during start http server: " + ex);
+			
+			return;
+		}
+    }
+
+    makeDomains(domainsSchema: any) {
+        if(!domainsSchema) {
+            return;
+        }
+
+        for(var name in domainsSchema) {
+            this._domains[name] = new Domain(domainsSchema[name], this._server);
+        }
+    }
+
+    getPortOptions() {
+        if(this._schema.port) {
+            return this._schema.port;
+        }
+
+        return 3000;
+    }
+
+    getSSLOptions() {
+        if(this._schema.ssl) {
+            return this._schema.ssl;
+        }
+
+        return;
+    }
+}
+
+/*const express = require('express');
 const body_parser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
@@ -134,6 +224,6 @@ class Server {
 
         return;
     }
-}
+}*/
 
 //module.exports.server = Server;
