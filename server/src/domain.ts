@@ -4,10 +4,9 @@ class Domain {
 
     private _path: string;
     private _router: any;
-    private _routes: any;
-    private _routerOptions: any;
-    //private _dataStore: DataStore;
-    private _options: any;
+    private _routes: any[] = [];
+    private _models: any = {};
+    private _patterns: any = {};
 
     
     constructor(schema: any, server: any) {
@@ -28,7 +27,7 @@ class Domain {
 
         this.initModels(this._schema.models);
 
-        this.initPatterns(this._schema.models);
+        this.initPatterns(this._schema.patterns);
 
         this.initRoutes(this._schema.routes);
     }
@@ -52,15 +51,45 @@ class Domain {
     }
 
     initRoutes(routesSchema: any) {
+        if(!routesSchema) {
+            return;
+        }
 
+        for(var key in routesSchema) {
+            var route = new Route(this._router, this._patterns, key, routesSchema[key]);
+
+            route.init();
+
+            this._routes.push(route);
+        }
     }
 
     initModels(modelsSchema: any) {
+        if(!modelsSchema) {
+            return;
+        }
 
+        for(var key in modelsSchema) {
+            var Model = modelsSchema[key];
+
+            var model = new Model();
+
+            this._models[key] = model;
+        }
     }
 
-    initPatterns(modelsSchema: any) {
+    initPatterns(patternsSchema: any) {
+        if(!patternsSchema) {
+            return;
+        }
 
+        for(var key in patternsSchema) {
+            var Pattern = patternsSchema[key];
+
+            var pattern = new Pattern();
+
+            this._patterns[key] = pattern;
+        }
     }
 
     getRouterOptions() {

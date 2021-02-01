@@ -8,12 +8,10 @@ export module SinglefinDeployment {
     export class Deployer {
         private _serverBundle: any = {};
         private _bundles: any = {};
-        private _paths: any = {};
-        private _handlerMap: any = {};
-        private _serverModelMap: any = {};
+        private _serverInstanceMap: any = {};
         
 
-        make(schemasFolderPath: string, targetsFolderPath: string, targetsServerFolderPath?: string) {
+        make(schemasFolderPath: string) {
             console.log("build bundles...");
 
             fs.readdirSync(schemasFolderPath).forEach((schemaPath: string) => {
@@ -23,43 +21,28 @@ export module SinglefinDeployment {
                 if(appExtension == ".json") {
                     var schemaFullPath = path.join(schemasFolderPath, schemaPath);
 
-                    this.makeBundle(schemaName, schemaFullPath, targetsFolderPath, targetsServerFolderPath);
+                    this.makeBundle(schemaName, schemaFullPath);
                 }
             });
 
             console.log("all bundles builded!");
         }
 
-        makeBundle(schemaName: string, schemaPath: any, targetPath: string, serverTargetPath?: string) {
+        makeBundle(schemaName: string, schemaPath: any) {
             console.log("read schema '" + schemaPath + "'...");
             
             var schema = require(schemaPath);
 
-            this._paths = schema.paths;
-
-            if(serverTargetPath) {
-                this.makeServerBundle(schema, schemaName, serverTargetPath);
-            }
-
-            //this.bundleApps(schema.apps, schemaName, targetPath);
-        }
-
-        makeServerBundle(serverSchema: any, schemaName: string, targetPath: string) {
-            if(!serverSchema) {
-                return;
-            }
-
-            this._serverBundle.port = serverSchema.port;
-            this._serverBundle.ssl = serverSchema.ssl;
+            this._serverBundle.bundlefolder = schema.bundlefolder;
+            this._serverBundle.port = schema.port;
+            this._serverBundle.ssl = schema.ssl;
 
             this._serverBundle.domains = {};
 
-            this.bundleServerDomains(this._serverBundle.domains, serverSchema.domains);
-
-            //this.bundleServerRoutes(serverSchema.routes);
+            this.bundleServerDomains(this._serverBundle.domains, schema.domains);
 
             var targetFullPath = path.format({
-                dir: targetPath,
+                dir: this._serverBundle.bundlefolder.domains,
                 name: schemaName + "_server",
                 ext: '.js'
             });
@@ -78,6 +61,8 @@ export module SinglefinDeployment {
                 domains[key] = {};
 
                 this.bundleServerDomain(domains[key], domainsSchema[key]);
+
+                this.bundleApps(domainsSchema[key].apps, key);
             }
         }
 
@@ -86,8 +71,12 @@ export module SinglefinDeployment {
             domain.options = domainSchema.options;
             domain.router = domainSchema.router;
             domain.models = {};
+            domain.patterns = {};
+            domain.routes = {};
 
             this.bundleServerModels(domain.models, domainSchema.models);
+            this.bundleServerPatterns(domain.patterns, domainSchema.patterns);
+            this.bundleServerRoutes(domain.routes, domainSchema.routes, domainSchema.patterns);
         }
 
         bundleServerModels(models: any, modelsSchema: any) {
@@ -98,119 +87,52 @@ export module SinglefinDeployment {
             for(var key in modelsSchema) {
                 models[key] = modelsSchema[key];
 
-                this.addServerModel(modelsSchema[key]);
+                this.addServerInstance(modelsSchema[key]);
             }
         }
 
-        addServerModel(modelPath: string) {
-            this._serverModelMap[modelPath] = this.readFile(modelPath, 'utf8');
-        }
-
-        bundleServerPublic(publicSchema: any) {
-            if(!publicSchema) {
+        bundleServerPatterns(patterns: any, patternsSchema: any) {
+            if(!patternsSchema) {
                 return;
             }
 
-            if(publicSchema.path) {
-                publicSchema.path = this.normalizePath(publicSchema.path, this._paths);
-            }
-        }
+            for(var key in patternsSchema) {
+                patterns[key] = patternsSchema[key];
 
-        bundleServerRoutes(routeSchemas: any[]) {
-            if(!routeSchemas) {
-                return;
-            }
-
-            for(var i=0; i<routeSchemas.length; i++) {
-                this.bundleServerRoute(routeSchemas[i]);
-            }
-
-            this._serverBundle.routes = routeSchemas;
-        }
-
-        bundleServerRoute(routeSchema: any) {
-            this.bundleServerRouteHandler(routeSchema.handler);
-
-            this.bundleServerFilePatternRoute(routeSchema);
-            this.bundleServerQueryPatternRoute(routeSchema);
-
-            this.bundleServerRouteThen(routeSchema.then);
-            this.bundleServerRouteCatch(routeSchema.catch);
-        }
-
-        bundleServerRouteHandler(routeHandler: any) {
-            if(!routeHandler) {
-                return;
-            }
-
-            var fullRouteHandlerPath = this.normalizePath(routeHandler, this._paths);
-
-            this._handlerMap[routeHandler] = this.readFile(fullRouteHandlerPath, 'utf8');
-        }
-
-        bundleServerFilePatternRoute(routeSchema: any) {
-            if(!routeSchema) {
-                return;
-            }
-
-            if(routeSchema.pattern != "file") {
-                return;
-            }
-
-            if(!routeSchema.options) {
-                return;
-            }
-
-            if(!routeSchema.options.file) {
-                return;
-            }
-
-            var filePath = this.normalizePath(routeSchema.options.file.path, this._paths);
-
-            routeSchema.options.file.path = filePath;
-        }
-
-        bundleServerQueryPatternRoute(routeSchema: any) {
-            if(!routeSchema) {
-                return;
-            }
-
-            if(routeSchema.pattern != "query") {
-                return;
-            }
-
-            if(!routeSchema.options) {
-                return;
-            }
-
-            if(!routeSchema.options.query) {
-                return;
-            }
-
-            var queryPath = this.normalizePath(routeSchema.options.query, this._paths);
-
-            routeSchema.options.query = queryPath;
-        }
-
-        bundleServerRouteThen(thenSchema: any) {
-            if(!thenSchema) {
-                return;
-            }
-
-            for(var key in thenSchema) {
-                this.bundleServerRoute(thenSchema[key]);
+                this.addServerInstance(patternsSchema[key].handler);
             }
         }
 
-        bundleServerRouteCatch(catchSchema: any) {
-            if(!catchSchema) {
+        bundleServerRoutes(routes: any, routesSchema: any, patternsSchema: any) {
+            if(!routesSchema) {
                 return;
             }
 
-            this.bundleServerRoute(catchSchema);
+            for(var key in routesSchema) {
+                routes[key] = {};
+
+                routes[key].pattern = routesSchema[key].pattern;
+                routes[key].method = routesSchema[key].method;
+                routes[key].models = routesSchema[key].models;
+                routes[key].events = routesSchema[key].events;
+
+                if(routesSchema[key].pattern) {
+                    if(patternsSchema[routesSchema[key].pattern].deployer) {
+                        var Deployer = require(patternsSchema[routesSchema[key].pattern].deployer);
+                    
+                        var pattern = new Deployer();
+    
+                        pattern.deploy(this, routes[key], routesSchema[key]);
+                    }
+                }
+            }
         }
 
-        bundleApps(apps: any, schemaName: string, targetPath: string) {
+        addServerInstance(instancePath: string) {
+            this._serverInstanceMap[instancePath] = this.readFile(instancePath, 'utf8');
+        }
+
+        bundleApps(apps: any, domainName: string) {
             for(var key in apps) {
                 var app = apps[key];
 
@@ -219,8 +141,8 @@ export module SinglefinDeployment {
                 this.bundleApp(app, this._bundles[key]);
 
                 var targetFullPath = path.format({
-                    dir: targetPath,
-                    name: schemaName + "_" + key,
+                    dir: this._serverBundle.bundlefolder.apps,
+                    name: domainName + "_" + key,
                     ext: '.js'
                 });
     
@@ -409,9 +331,7 @@ export module SinglefinDeployment {
         }
 
         bundleFile(filePath: string): string {
-            var filepath = this.normalizePath(filePath, this._paths);
-
-            var fileContent: string = this.readFile(filepath);
+            var fileContent: string = this.readFile(filePath);
             
             var base64FileContent: string = this.encodeBase64(fileContent);
 
@@ -449,10 +369,10 @@ export module SinglefinDeployment {
         saveServerBundle(filePath: string, bundle: any) {
             var bundleContent = JSON.stringify(bundle);
 
-            for(var key in this._serverModelMap) {
+            for(var key in this._serverInstanceMap) {
                 var regex = new RegExp('"' + key + '"', "g");
 
-                bundleContent = bundleContent.replace(regex, this._serverModelMap[key]);
+                bundleContent = bundleContent.replace(regex, this._serverInstanceMap[key]);
             }
 
             var script = `
@@ -473,36 +393,6 @@ export module SinglefinDeployment {
             var script = `var homepage=document.currentScript.getAttribute('homepage');var singlefin_` + appName + ` = new Singlefin(` + bundleContent + `,homepage);`;
 
             fs.writeFileSync(filePath, script);
-        }
-        
-        normalizePath(path: string, pathsMap: any): string {
-            if(!pathsMap) {
-                return path;
-            }
-
-            var pathMarkup = this.resolvePath(path);
-
-            if(pathMarkup) {
-                var itemPath = pathsMap[pathMarkup[1]];
-
-                return path.replace(pathMarkup[0], itemPath);
-            }
-
-            return path;
-        }
-
-        normalizePaths(paths: string[], pathsMap: any): string[] {
-            var normalizedPaths: string[] = [];
-            
-            if(!pathsMap) {
-                return paths;
-            }
-
-            for(var i=0; i<paths.length; i++) {
-                normalizedPaths.push(this.normalizePath(paths[i], pathsMap));
-            }
-
-            return normalizedPaths;
         }
         
         resolvePath(path: string) {

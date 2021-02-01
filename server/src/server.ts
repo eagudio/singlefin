@@ -4,7 +4,7 @@ class Server {
     private _port: number;
     private _sslOptions: any;
     private _server: any;
-    private _domains: any;
+    private _domains: any = {};
 
     private _httpsServer: any;
 

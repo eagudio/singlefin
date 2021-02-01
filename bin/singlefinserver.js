@@ -1,6 +1,8 @@
 "use strict";
 class Domain {
     constructor(schema, server) {
+        this._routes = [];
+        this._models = {};
         this._schema = schema;
         this._server = server;
         this._path = this.getPathOptions();
@@ -27,8 +29,24 @@ class Domain {
         this._router.use(express.static(publicDatastoreSchema.path));
     }
     initRoutes(routesSchema) {
+        if (!routesSchema) {
+            return;
+        }
+        for (var key in routesSchema) {
+            var route = new Route(this._router, key, routesSchema[key]);
+            route.init();
+            this._routes.push(route);
+        }
     }
     initModels(modelsSchema) {
+        if (!modelsSchema) {
+            return;
+        }
+        for (var key in modelsSchema) {
+            var Model = modelsSchema[key];
+            var model = new Model();
+            this._models[key] = model;
+        }
     }
     initPatterns(modelsSchema) {
     }
@@ -43,6 +61,21 @@ class Domain {
             return this._schema.path;
         }
         return "/";
+    }
+}
+class Route {
+    constructor(router, route, config) {
+        this._router = router;
+        this._route = route;
+        this._method = config.method;
+    }
+    init() {
+        if (!this._method) {
+            this._method = "get";
+        }
+        this._router[this._method](this._route, (request, response) => {
+            response.send("hello!!!");
+        });
     }
 }
 class RouteDataResponse {
@@ -360,7 +393,7 @@ class Runtime {
 }
 class Server {
     constructor(schema, server) {
-        console.log(schema);
+        this._domains = {};
         this._schema = schema;
         this._server = server;
         var express = require('express');
