@@ -53,12 +53,14 @@ var SinglefinDeployment;
             domain.path = domainSchema.path;
             domain.options = domainSchema.options;
             domain.router = domainSchema.router;
+            domain.static = domainSchema.static;
+            domain.events = domainSchema.events;
             domain.models = {};
-            domain.patterns = {};
+            domain.services = {};
             domain.routes = {};
             this.bundleServerModels(domain.models, domainSchema.models);
-            this.bundleServerPatterns(domain.patterns, domainSchema.patterns);
-            this.bundleServerRoutes(domain.routes, domainSchema.routes, domainSchema.patterns);
+            this.bundleServerServices(domain.services, domainSchema.services);
+            this.bundleServerRoutes(domain.routes, domainSchema.routes, domainSchema.services);
         }
         bundleServerModels(models, modelsSchema) {
             if (!modelsSchema) {
@@ -69,30 +71,33 @@ var SinglefinDeployment;
                 this.addServerInstance(modelsSchema[key]);
             }
         }
-        bundleServerPatterns(patterns, patternsSchema) {
-            if (!patternsSchema) {
+        bundleServerServices(services, servicesSchema) {
+            if (!servicesSchema) {
                 return;
             }
-            for (var key in patternsSchema) {
-                patterns[key] = patternsSchema[key];
-                this.addServerInstance(patternsSchema[key].handler);
+            for (var key in servicesSchema) {
+                services[key] = servicesSchema[key];
+                this.addServerInstance(servicesSchema[key].handler);
             }
         }
-        bundleServerRoutes(routes, routesSchema, patternsSchema) {
+        bundleServerRoutes(routes, routesSchema, servicesSchema) {
             if (!routesSchema) {
                 return;
             }
             for (var key in routesSchema) {
                 routes[key] = {};
-                routes[key].pattern = routesSchema[key].pattern;
+                routes[key].service = routesSchema[key].service;
                 routes[key].method = routesSchema[key].method;
                 routes[key].models = routesSchema[key].models;
                 routes[key].events = routesSchema[key].events;
-                if (routesSchema[key].pattern) {
-                    if (patternsSchema[routesSchema[key].pattern].deployer) {
-                        var Deployer = require(patternsSchema[routesSchema[key].pattern].deployer);
-                        var pattern = new Deployer();
-                        pattern.deploy(this, routes[key], routesSchema[key]);
+                routes[key].from = routesSchema[key].from;
+                if (routesSchema[key].service) {
+                    if (servicesSchema[routesSchema[key].service]) {
+                        if (servicesSchema[routesSchema[key].service].deployer) {
+                            var Deployer = require(servicesSchema[routesSchema[key].service].deployer);
+                            var service = new Deployer();
+                            service.deploy(this, routes[key], routesSchema[key]);
+                        }
                     }
                 }
             }

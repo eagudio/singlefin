@@ -3,10 +3,12 @@ class Domain {
     private _server: any;
 
     private _path: string;
+    private _options: any;
     private _router: any;
     private _routes: any[] = [];
     private _models: any = {};
-    private _patterns: any = {};
+    private _services: any = {};
+    private _events: any = {};
 
     
     constructor(schema: any, server: any) {
@@ -14,6 +16,8 @@ class Domain {
         this._server = server;
         
         this._path = this.getPathOptions();
+
+        this._options = schema.options;
 
         var express = require('express');
 
@@ -23,31 +27,44 @@ class Domain {
 
         server.use(this._path, this._router);
 
-        this.initDatastore(this._schema.datastore);
-
+        this.initStatic(this._schema.static);
         this.initModels(this._schema.models);
-
-        this.initPatterns(this._schema.patterns);
-
+        this.initServices(this._schema.services);
+        this.initEvents(this._schema.events);
         this.initRoutes(this._schema.routes);
+
+        this.onInitialize();
     }
 
-    initDatastore(datastoreSchema: any) {
-        if(!datastoreSchema) {
+    get router() {
+        return this._router;
+    }
+
+    get options() {
+        return this._options;
+    }
+
+    onInitialize() {
+        var routeEvents: RouteEvent[] = this._events["initialize"];
+
+        if(routeEvents) {
+            for(var i=0; i<routeEvents.length; i++) {
+                routeEvents[i].handle(this, null, null, this._models);
+            }
+        }
+    }
+
+    initStatic(staticSchema: any) {
+        if(!staticSchema) {
             return;
         }
 
-        this.initPublicDatastore(datastoreSchema.public);
-    }
+        for(var key in staticSchema) {
+            var express = require('express');
+            var path = require('path');
 
-    initPublicDatastore(publicDatastoreSchema: any) {
-        if(!publicDatastoreSchema) {
-            return;
+            this._router.use(key, express.static(path.join(__dirname, "../../../", staticSchema[key])));
         }
-
-        var express = require('express');
-
-        this._router.use(express.static(publicDatastoreSchema.path));
     }
 
     initRoutes(routesSchema: any) {
@@ -56,9 +73,7 @@ class Domain {
         }
 
         for(var key in routesSchema) {
-            var route = new Route(this._router, this._patterns, key, routesSchema[key]);
-
-            route.init();
+            var route = new Route(this, this._services, this._models, key, routesSchema[key]);
 
             this._routes.push(route);
         }
@@ -78,18 +93,46 @@ class Domain {
         }
     }
 
-    initPatterns(patternsSchema: any) {
-        if(!patternsSchema) {
+    initServices(servicesSchema: any) {
+        if(!servicesSchema) {
             return;
         }
 
-        for(var key in patternsSchema) {
-            var Pattern = patternsSchema[key];
+        for(var key in servicesSchema) {
+            var Service = servicesSchema[key].handler;
 
-            var pattern = new Pattern();
+            var service = new Service(servicesSchema[key]);
 
-            this._patterns[key] = pattern;
+            this._services[key] = service;
         }
+    }
+
+    initEvents(eventsSchema: any) {
+        for(var key in eventsSchema) {
+            this._events[key] = [];
+
+            this._events[key] = this.makeRouteEvents(eventsSchema[key]);
+        }
+    }
+
+    makeRouteEvents(routeEvents: any[]) {
+        var events = [];
+        
+        for(var i=0; i<routeEvents.length; i++) {
+            events.push(this.makeRouteEvent(routeEvents[i]));
+        }
+
+        return events;
+    }
+
+    makeRouteEvent(routeEvent: any) {
+        var eventType = Object.keys(routeEvent)[0];
+
+        if(eventType == "model") {
+            return new ModelEvent(routeEvent[eventType]);
+        }
+
+        return new NullEvent(eventType);
     }
 
     getRouterOptions() {
