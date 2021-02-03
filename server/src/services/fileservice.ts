@@ -1,12 +1,14 @@
-class FileService {
-    onRequest(request: any, response: any, models: any, config: any): Promise<unknown> {
+class FileService implements Service {
+    onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
         return Promise.resolve();
     }
 
-    onResponse(request: any, response: any, models: any, config: any): Promise<unknown> {
+    onResponse(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
         var path = require('path');
 
-        var filePath = path.join(__dirname, "../../../", config.from, models.path);
+        var fileName = modelMap.getValue("path");
+
+        var filePath = path.join(__dirname, "../../../", parameters.from, fileName);
         
         response.sendFile(filePath);
 

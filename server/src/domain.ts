@@ -1,6 +1,5 @@
 class Domain {
     private _schema: any;
-    private _server: any;
 
     private _path: string;
     private _options: any;
@@ -13,7 +12,6 @@ class Domain {
     
     constructor(schema: any, server: any) {
         this._schema = schema;
-        this._server = server;
         
         this._path = this.getPathOptions();
 
@@ -25,15 +23,16 @@ class Domain {
 
         this._router.use('/sf', express.static(__dirname));
 
-        server.use(this._path, this._router);
-
         this.initStatic(this._schema.static);
         this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
+        
+        this.onInitialize();
+
         this.initRoutes(this._schema.routes);
 
-        this.onInitialize();
+        server.use(this._path, this._router);
     }
 
     get router() {
@@ -136,7 +135,7 @@ class Domain {
     }
 
     getRouterOptions() {
-        if(this._schema) {
+        if(this._schema && this._schema.router) {
             return this._schema.router;
         }
 

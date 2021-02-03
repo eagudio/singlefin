@@ -204,10 +204,7 @@ module SinglefinModule {
                 return eventHandler;
 			}
 
-			var route = Object.keys(eventHandler.request)[0];
-			var requestParameters = eventHandler.request[route];
-
-			eventHandler.request[route].handler = new Request(requestParameters.data, requestParameters.result, requestParameters.then, requestParameters.catch);
+			eventHandler.request.handler = new Request(eventHandler.request);
 
             return eventHandler;
 		}
@@ -303,7 +300,7 @@ module SinglefinModule {
 		}
 
 		loadModules() {
-			return new Promise((resolve, reject) => {
+			return new Promise<void>((resolve, reject) => {
 				var script = document.createElement("script");
 				script.type = "text/javascript";
 

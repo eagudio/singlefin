@@ -1,4 +1,4 @@
 interface Service {
-    onRequest(request: any, response: any, models: any, config: any): Promise<unknown>;
-    onResponse(request: any, response: any, models: any, config: any): Promise<unknown>;
+    onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown>;
+    onResponse(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown>;
 }

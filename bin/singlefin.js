@@ -251,9 +251,7 @@ var SinglefinModule;
             if (!eventHandler.request) {
                 return eventHandler;
             }
-            var route = Object.keys(eventHandler.request)[0];
-            var requestParameters = eventHandler.request[route];
-            eventHandler.request[route].handler = new SinglefinModule.Request(requestParameters.data, requestParameters.result, requestParameters.then, requestParameters.catch);
+            eventHandler.request.handler = new SinglefinModule.Request(eventHandler.request);
             return eventHandler;
         }
         unbundleView(view) {
@@ -1182,25 +1180,8 @@ var SinglefinModule;
             if (!delegate.request) {
                 return Promise.resolve();
             }
-            var routeKey = Object.keys(delegate.request)[0];
-            var route = delegate.request[routeKey];
-            var request = route.handler;
-            //TODO: parametri httpMethod e path da recuperare dalle routes...
-            return request.call(singlefin.models, "post", routeKey, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
-                if (!route.then) {
-                    return;
-                }
-                for (var i = 0; i < route.then.length; i++) {
-                    yield this.handleAction(singlefin, route.then[i], page, parameters, _result, pageModels, eventObject);
-                }
-            })).catch((_result) => __awaiter(this, void 0, void 0, function* () {
-                if (!route.catch) {
-                    return;
-                }
-                for (var i = 0; i < route.catch.length; i++) {
-                    yield this.handleAction(singlefin, route.catch[i], page, parameters, _result, pageModels, eventObject);
-                }
-            }));
+            var request = delegate.request.handler;
+            return request.call(singlefin, page, singlefin.models, result, pageModels);
         }
         handleBrowserEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
             if (!delegate.browser) {
@@ -1615,13 +1596,15 @@ var SinglefinModule;
 var SinglefinModule;
 (function (SinglefinModule) {
     class Request {
-        constructor(_data, _result, _then, _catch) {
-            this._data = _data;
-            this._result = _result;
-            this._then = _then;
-            this._catch = _catch;
+        constructor(config) {
+            this._route = config.route;
+            this._httpMethod = config.httpMethod ? config.httpMethod : "post";
+            this._done = config.done;
+            this._error = config.error;
+            this._data = config.data;
+            this._result = config.result;
         }
-        call(models, httpMethod, route, parameters, path) {
+        call(singlefin, page, models, parameters, pageModels) {
             return new Promise((resolve, reject) => {
                 var jsonData = {};
                 for (var key in this._data) {
@@ -1632,13 +1615,9 @@ var SinglefinModule;
                 }
                 try {
                     var stringifyData = JSON.stringify(jsonData);
-                    var servicePath = route;
-                    if (path) {
-                        servicePath = path + "/" + route;
-                    }
                     $.ajax({
-                        type: httpMethod,
-                        url: servicePath,
+                        type: this._httpMethod,
+                        url: this._route,
                         data: stringifyData,
                         success: (response) => {
                             if (response) {
@@ -1648,13 +1627,13 @@ var SinglefinModule;
                                     }
                                 }
                             }
-                            resolve(response);
+                            return page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels);
                         },
                         error: (error) => {
                             if (this._result["error"]) {
                                 SinglefinModule.Runtime.setProperty(this._result["error"], models, error.responseText);
                             }
-                            reject(error.responseText);
+                            return page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels);
                         },
                         contentType: "application/json"
                     });

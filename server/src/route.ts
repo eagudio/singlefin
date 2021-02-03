@@ -3,7 +3,7 @@ class Route {
     private _domain: Domain;
     private _route: string;
     private _method: string;
-    private _modelsMap: any;
+    private _modelMap: ModelMap;
     private _models: any;
     private _service: Service = new DataService();
     private _events: any = {};
@@ -17,7 +17,8 @@ class Route {
         this._config = config;
 
         this._method = config.method;
-        this._modelsMap = config.models;
+
+        this._modelMap = new ModelMap(this._models, config.models);
         
         this.makeService(services, config.service);
         this.makeEvents(config.events);
@@ -31,16 +32,12 @@ class Route {
         }
 
         this._domain.router[this._method](this._route, (request: any, response: any) => {
-            this.onRequest(request, response);
-
-            var models = this.resolveModels();
-
-            this._service.onRequest(request, response, models, this._config).then(() => {
-                this.onResponse(request, response);
-
-                var models = this.resolveModels();
-    
-                return this._service.onResponse(request, response, models, this._config);
+            this.onRequest(request, response).then(() => {
+                return this._service.onRequest(request, response, this._modelMap, this._config);
+            }).then(() => {
+                return this.onResponse(request, response);
+            }).then(() => {
+                return this._service.onResponse(request, response, this._modelMap, this._config);
             }).then(() => {
                 
             }).catch((error: string) => {
@@ -52,23 +49,35 @@ class Route {
     }
 
     onRequest(request: any, response: any) {
-        var routeEvents: RouteEvent[] = this._events["request"];
+        return new Promise<void>(async (resolve, reject) => {
+            var routeEvents: RouteEvent[] = this._events["request"];
 
-        if(routeEvents) {
-            for(var i=0; i<routeEvents.length; i++) {
-                routeEvents[i].handle(this._domain, request, response, this._models);
+            if(routeEvents) {
+                for(var i=0; i<routeEvents.length; i++) {
+                    await routeEvents[i].handle(this._domain, request, response, this._models).catch((error: string) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+
+            resolve();
+        });
     }
 
     onResponse(request: any, response: any) {
-        var routeEvents: RouteEvent[] = this._events["response"];
+        return new Promise<void>(async (resolve, reject) => {
+            var routeEvents: RouteEvent[] = this._events["response"];
 
-        if(routeEvents) {
-            for(var i=0; i<routeEvents.length; i++) {
-                routeEvents[i].handle(this._domain, request, response, this._models);
+            if(routeEvents) {
+                for(var i=0; i<routeEvents.length; i++) {
+                    await routeEvents[i].handle(this._domain, request, response, this._models).catch((error: string) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+
+            resolve();
+        });
     }
 
     makeService(services: any, serviceName: string) {
@@ -111,15 +120,5 @@ class Route {
         }
 
         return new NullEvent(eventType);
-    }
-
-    resolveModels() {
-        var models: any = {};
-
-        for(var key in this._modelsMap) {
-            models[key] = Runtime.getProperty(this._models, this._modelsMap[key])
-        }
-
-        return models;
     }
 }

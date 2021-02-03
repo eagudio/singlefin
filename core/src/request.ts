@@ -1,19 +1,23 @@
 module SinglefinModule {
     export class Request {
+        private _route: string;
+        private _httpMethod: string;
+        private _done: string;
+        private _error: string;
         private _data: any;
         private _result: any;
-        private _then: any;
-        private _catch: any;
 
-        constructor(_data: any, _result: any, _then: any, _catch: any) {
-            this._data = _data;
-            this._result = _result;
-            this._then = _then;
-            this._catch = _catch;
+        constructor(config: any) {//_route: string, _httpMethod: string, _data: any, _result: any) {
+            this._route = config.route;
+            this._httpMethod = config.httpMethod ? config.httpMethod : "post";
+            this._done = config.done;
+            this._error = config.error;
+            this._data = config.data;
+            this._result = config.result;
         }
         
-        call(models: any, httpMethod: string, route: string, parameters: any, path?: string) {
-            return new Promise((resolve, reject: any) => {
+        call(singlefin: Singlefin, page: Page, models: any, parameters: any, pageModels: any) {
+            return new Promise<void>((resolve, reject: any) => {
                 var jsonData: any = {};
 
                 for(var key in this._data) {
@@ -27,15 +31,9 @@ module SinglefinModule {
                 try {
                     var stringifyData: string = JSON.stringify(jsonData);
 
-                    var servicePath = route;
-
-                    if(path) {
-                        servicePath = path + "/" + route;
-                    }
-
                     $.ajax({
-                        type: httpMethod,
-                        url: servicePath,
+                        type: this._httpMethod,
+                        url: this._route,
                         data: stringifyData,
                         success: (response: any) => {
                             if(response) {
@@ -46,14 +44,14 @@ module SinglefinModule {
                                 }
                             }
 
-                            resolve(response);
+                            return page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels);
                         },
                         error: (error: any) => {
                             if(this._result["error"]) {
                                 Runtime.setProperty(this._result["error"], models, error.responseText);
                             }
 
-                            reject(error.responseText);
+                            return page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels);
                         },
                         contentType: "application/json"
                     });

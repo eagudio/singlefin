@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 class Domain {
     constructor(schema, server) {
         this._routes = [];
@@ -6,19 +15,18 @@ class Domain {
         this._services = {};
         this._events = {};
         this._schema = schema;
-        this._server = server;
         this._path = this.getPathOptions();
         this._options = schema.options;
         var express = require('express');
         this._router = express.Router(this.getRouterOptions());
         this._router.use('/sf', express.static(__dirname));
-        server.use(this._path, this._router);
         this.initStatic(this._schema.static);
         this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
-        this.initRoutes(this._schema.routes);
         this.onInitialize();
+        this.initRoutes(this._schema.routes);
+        server.use(this._path, this._router);
     }
     get router() {
         return this._router;
@@ -94,7 +102,7 @@ class Domain {
         return new NullEvent(eventType);
     }
     getRouterOptions() {
-        if (this._schema) {
+        if (this._schema && this._schema.router) {
             return this._schema.router;
         }
         return;
@@ -115,7 +123,7 @@ class Route {
         this._models = models;
         this._config = config;
         this._method = config.method;
-        this._modelsMap = config.models;
+        this._modelMap = new ModelMap(this._models, config.models);
         this.makeService(services, config.service);
         this.makeEvents(config.events);
         this.initRouting();
@@ -125,28 +133,44 @@ class Route {
             this._method = "get";
         }
         this._domain.router[this._method](this._route, (request, response) => {
-            this.onRequest(request, response);
-            this._service.onRequest(request, response, models, this._config);
-            this.onResponse(request, response);
-            var models = this.resolveModels();
-            this._service.onResponse(request, response, models, this._config);
+            this.onRequest(request, response).then(() => {
+                return this._service.onRequest(request, response, this._modelMap, this._config);
+            }).then(() => {
+                return this.onResponse(request, response);
+            }).then(() => {
+                return this._service.onResponse(request, response, this._modelMap, this._config);
+            }).then(() => {
+            }).catch((error) => {
+                response.status(400);
+                response.send(error);
+            });
         });
     }
     onRequest(request, response) {
-        var routeEvents = this._events["request"];
-        if (routeEvents) {
-            for (var i = 0; i < routeEvents.length; i++) {
-                routeEvents[i].handle(this._domain, request, response, this._models);
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            var routeEvents = this._events["request"];
+            if (routeEvents) {
+                for (var i = 0; i < routeEvents.length; i++) {
+                    yield routeEvents[i].handle(this._domain, request, response, this._models).catch((error) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+            resolve();
+        }));
     }
     onResponse(request, response) {
-        var routeEvents = this._events["response"];
-        if (routeEvents) {
-            for (var i = 0; i < routeEvents.length; i++) {
-                routeEvents[i].handle(this._domain, request, response, this._models);
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            var routeEvents = this._events["response"];
+            if (routeEvents) {
+                for (var i = 0; i < routeEvents.length; i++) {
+                    yield routeEvents[i].handle(this._domain, request, response, this._models).catch((error) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+            resolve();
+        }));
     }
     makeService(services, serviceName) {
         if (!serviceName) {
@@ -178,13 +202,6 @@ class Route {
             return new ModelEvent(routeEvent[eventType]);
         }
         return new NullEvent(eventType);
-    }
-    resolveModels() {
-        var models = {};
-        for (var key in this._modelsMap) {
-            models[key] = Runtime.getProperty(this._models, this._modelsMap[key]);
-        }
-        return models;
     }
 }
 class RouteDataResponse {
@@ -724,7 +741,7 @@ class ModelEvent {
     handle(domain, request, response, models) {
         var instance = Runtime.getParentInstance(models, this._event);
         var method = Runtime.getProperty(models, this._event);
-        method.call(instance, domain, request, response, models);
+        return method.call(instance, domain, request, response, models);
     }
 }
 class NullEvent {
@@ -733,23 +750,49 @@ class NullEvent {
     }
     handle(domain, request, response, models) {
         console.error("event not recognized: " + this._eventType);
+        return Promise.reject("event not recognized: " + this._eventType);
     }
 }
 class DataService {
-    onRequest(request, response, models, config) {
+    onRequest(request, response, modelMap, parameters) {
         console.log("data service handle!");
+        return Promise.resolve();
     }
-    onResponse(request, response, models, config) {
+    onResponse(request, response, modelMap, parameters) {
         console.log("data service reply!");
+        return Promise.resolve();
     }
 }
 class FileService {
-    onRequest(request, response, models, config) {
+    onRequest(request, response, modelMap, parameters) {
+        return Promise.resolve();
     }
-    onResponse(request, response, models, config) {
+    onResponse(request, response, modelMap, parameters) {
         var path = require('path');
-        var filePath = path.join(__dirname, "../../../", config.from, models.path);
+        var fileName = modelMap.getValue("path");
+        var filePath = path.join(__dirname, "../../../", parameters.from, fileName);
         response.sendFile(filePath);
+        return Promise.resolve();
+    }
+}
+class ModelMap {
+    constructor(models, map) {
+        this._models = models;
+        this._map = map;
+    }
+    getValue(property) {
+        var valuePath = this._map[property];
+        if (!valuePath) {
+            throw new Error("an error occurred during get value from model map: property '" + property + "' does not exist");
+        }
+        return Runtime.getProperty(this._models, valuePath);
+    }
+    setValue(property, value) {
+        var valuePath = this._map[property];
+        if (!valuePath) {
+            throw new Error("an error occurred during set value from model map: property '" + property + "' does not exist");
+        }
+        Runtime.setProperty(valuePath, this._models, value);
     }
 }
 //# sourceMappingURL=singlefinserver.js.map

@@ -950,28 +950,9 @@ module SinglefinModule {
 				return Promise.resolve();
 			}
 
-			var routeKey = Object.keys(delegate.request)[0];
-			var route = delegate.request[routeKey];
-			var request: Request = route.handler;
+			var request: Request = delegate.request.handler;
 
-			//TODO: parametri httpMethod e path da recuperare dalle routes...
-			return request.call(singlefin.models, "post", routeKey, result).then(async (_result) => {
-				if(!route.then) {
-					return;
-				}
-
-				for(var i=0; i<route.then.length; i++) {
-					await this.handleAction(singlefin, route.then[i], page, parameters, _result, pageModels, eventObject);
-				}
-			}).catch(async (_result) => {
-				if(!route.catch) {
-					return;
-				}
-
-				for(var i=0; i<route.catch.length; i++) {
-					await this.handleAction(singlefin, route.catch[i], page, parameters, _result, pageModels, eventObject);
-				}
-			});
+			return request.call(singlefin, page, singlefin.models, result, pageModels);
 		}
 
 		handleBrowserEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, result: any, pageModels: any, eventObject?: any) {

@@ -6,7 +6,9 @@ class NullEvent implements RouteEvent {
         this._eventType = eventType;
     }
 
-    handle(domain: any, request: any, response: any, models: any): void {
+    handle(domain: any, request: any, response: any, models: any): Promise<void> {
         console.error("event not recognized: " + this._eventType);
+
+        return Promise.reject("event not recognized: " + this._eventType);
     }
 }
