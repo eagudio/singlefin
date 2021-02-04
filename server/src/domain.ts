@@ -10,29 +10,40 @@ class Domain {
     private _events: any = {};
 
     
-    constructor(schema: any, server: any) {
+    constructor(path: string, schema: any) {
         this._schema = schema;
         
-        this._path = this.getPathOptions();
+        this._path = path;
 
         this._options = schema.options;
 
-        var express = require('express');
-
-        this._router = express.Router(this.getRouterOptions());
-
-        this._router.use('/sf', express.static(__dirname));
-
-        this.initStatic(this._schema.static);
         this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
-        
-        this.onInitialize();
+    }
 
-        this.initRoutes(this._schema.routes);
+    create(server: any) {
+        return new Promise<void>((resolve, reject) => {
+            var express = require('express');
 
-        server.use(this._path, this._router);
+            this._router = express.Router(this.getRouterOptions());
+    
+            this._router.use('/sf', express.static(__dirname));
+    
+            this.initStatic(this._schema.static);
+    
+            this.onInitialize().then(() => {
+                this.initRoutes(this._schema.routes);
+    
+                server.use(this._path, this._router);
+
+                resolve();
+            }).catch((error: string) => {
+                console.error("an error occurred during create domain: " + error);
+
+                reject();
+            });
+        });
     }
 
     get router() {
@@ -44,13 +55,19 @@ class Domain {
     }
 
     onInitialize() {
-        var routeEvents: RouteEvent[] = this._events["initialize"];
+        return new Promise<void>(async (resolve, reject) => {
+            var routeEvents: RouteEvent[] = this._events["initialize"];
 
-        if(routeEvents) {
-            for(var i=0; i<routeEvents.length; i++) {
-                routeEvents[i].handle(this, null, null, this._models);
+            if(routeEvents) {
+                for(var i=0; i<routeEvents.length; i++) {
+                    await routeEvents[i].handle(this, null, null, this._models).catch((error: string) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+        
+            resolve();
+        });
     }
 
     initStatic(staticSchema: any) {
@@ -140,13 +157,5 @@ class Domain {
         }
 
         return;
-    }
-
-    getPathOptions() {
-        if(this._schema) {
-            return this._schema.path;
-        }
-
-        return "/";
     }
 }

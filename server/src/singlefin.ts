@@ -1,10 +1,10 @@
 
 class Singlefin {
-    run(bundlePath: string, app?: any) {
+    run(serverConfigPath: string, app?: any) {
         try {
-            var serverBundle = require(bundlePath);
+            var serverConfig = require(serverConfigPath);
         
-            var server = new Server(serverBundle.getBundle(), app);
+            var server = new Server(serverConfig, app);
     
             if(!app) {
                 server.startServer();

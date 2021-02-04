@@ -9,24 +9,33 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 class Domain {
-    constructor(schema, server) {
+    constructor(path, schema) {
         this._routes = [];
         this._models = {};
         this._services = {};
         this._events = {};
         this._schema = schema;
-        this._path = this.getPathOptions();
+        this._path = path;
         this._options = schema.options;
-        var express = require('express');
-        this._router = express.Router(this.getRouterOptions());
-        this._router.use('/sf', express.static(__dirname));
-        this.initStatic(this._schema.static);
         this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
-        this.onInitialize();
-        this.initRoutes(this._schema.routes);
-        server.use(this._path, this._router);
+    }
+    create(server) {
+        return new Promise((resolve, reject) => {
+            var express = require('express');
+            this._router = express.Router(this.getRouterOptions());
+            this._router.use('/sf', express.static(__dirname));
+            this.initStatic(this._schema.static);
+            this.onInitialize().then(() => {
+                this.initRoutes(this._schema.routes);
+                server.use(this._path, this._router);
+                resolve();
+            }).catch((error) => {
+                console.error("an error occurred during create domain: " + error);
+                reject();
+            });
+        });
     }
     get router() {
         return this._router;
@@ -35,12 +44,17 @@ class Domain {
         return this._options;
     }
     onInitialize() {
-        var routeEvents = this._events["initialize"];
-        if (routeEvents) {
-            for (var i = 0; i < routeEvents.length; i++) {
-                routeEvents[i].handle(this, null, null, this._models);
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            var routeEvents = this._events["initialize"];
+            if (routeEvents) {
+                for (var i = 0; i < routeEvents.length; i++) {
+                    yield routeEvents[i].handle(this, null, null, this._models).catch((error) => {
+                        return reject(error);
+                    });
+                }
             }
-        }
+            resolve();
+        }));
     }
     initStatic(staticSchema) {
         if (!staticSchema) {
@@ -106,12 +120,6 @@ class Domain {
             return this._schema.router;
         }
         return;
-    }
-    getPathOptions() {
-        if (this._schema) {
-            return this._schema.path;
-        }
-        return "/";
     }
 }
 class Route {
@@ -532,9 +540,9 @@ class Server {
         this.makeDomains(schema.domains);
     }
     startServer() {
-        try {
-            var fs = require('fs');
-            var https = require('https');
+        var fs = require('fs');
+        var https = require('https');
+        this.startDomains().then(() => {
             if (!this._sslOptions) {
                 this._server.listen(this._port, () => {
                     console.log("singlefin: http web server listening on port " + this._port);
@@ -554,19 +562,29 @@ class Server {
                     console.log("singlefin: https web server listening on port " + this._port);
                 });
             }
-        }
-        catch (ex) {
-            console.error("singlefin: an error occurred during start http server: " + ex);
-            return;
-        }
+        }).catch((error) => {
+            console.error("singlefin: an error occurred during start http server: " + error);
+        });
     }
     makeDomains(domainsSchema) {
         if (!domainsSchema) {
             return;
         }
-        for (var name in domainsSchema) {
-            this._domains[name] = new Domain(domainsSchema[name], this._server);
+        for (var path in domainsSchema) {
+            var domainSchema = require(domainsSchema[path]);
+            this._domains[path] = new Domain(path, domainSchema.getBundle());
         }
+    }
+    startDomains() {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            for (var name in this._domains) {
+                yield this._domains[name].create(this._server).then(() => {
+                }).catch(() => {
+                    return reject();
+                });
+            }
+            resolve();
+        }));
     }
     getPortOptions() {
         if (this._schema.port) {
@@ -720,10 +738,10 @@ class Server {
 }*/
 //module.exports.server = Server;
 class Singlefin {
-    run(bundlePath, app) {
+    run(serverConfigPath, app) {
         try {
-            var serverBundle = require(bundlePath);
-            var server = new Server(serverBundle.getBundle(), app);
+            var serverConfig = require(serverConfigPath);
+            var server = new Server(serverConfig, app);
             if (!app) {
                 server.startServer();
             }

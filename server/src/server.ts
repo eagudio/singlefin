@@ -27,10 +27,10 @@ class Server {
     }
 
     startServer() {
-        try {
-            var fs = require('fs');
-            var https = require('https');
+        var fs = require('fs');
+        var https = require('https');
 
+        this.startDomains().then(() => {
             if(!this._sslOptions) {
                 this._server.listen(this._port, () => {
                     console.log("singlefin: http web server listening on port " + this._port)
@@ -53,12 +53,9 @@ class Server {
                     console.log("singlefin: https web server listening on port " + this._port);
                 });
             }
-		}
-		catch(ex) {
-			console.error("singlefin: an error occurred during start http server: " + ex);
-			
-			return;
-		}
+        }).catch((error) => {
+            console.error("singlefin: an error occurred during start http server: " + error);
+        });
     }
 
     makeDomains(domainsSchema: any) {
@@ -66,9 +63,25 @@ class Server {
             return;
         }
 
-        for(var name in domainsSchema) {
-            this._domains[name] = new Domain(domainsSchema[name], this._server);
+        for(var path in domainsSchema) {
+            var domainSchema = require(domainsSchema[path]);
+
+            this._domains[path] = new Domain(path, domainSchema.getBundle());
         }
+    }
+
+    startDomains() {
+        return new Promise<void>(async (resolve, reject) => {
+            for(var name in this._domains) {
+                await this._domains[name].create(this._server).then(() => {
+                    
+                }).catch(() => {
+                    return reject();
+                });
+            }
+
+            resolve();
+        });
     }
 
     getPortOptions() {

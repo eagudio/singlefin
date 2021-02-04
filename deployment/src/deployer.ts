@@ -6,63 +6,33 @@ declare const Buffer: any;
 
 export module SinglefinDeployment {
     export class Deployer {
-        private _serverBundle: any = {};
-        private _bundles: any = {};
         private _serverInstanceMap: any = {};
         
 
-        make(schemasFolderPath: string) {
+        make(schemasPath: string) {
             console.log("build bundles...");
 
-            fs.readdirSync(schemasFolderPath).forEach((schemaPath: string) => {
-                var schemaName = path.basename(schemaPath, '.json');
-                var appExtension = path.extname(schemaPath);
-                
-                if(appExtension == ".json") {
-                    var schemaFullPath = path.join(schemasFolderPath, schemaPath);
+            var schema = require(schemasPath);
 
-                    this.makeBundle(schemaName, schemaFullPath);
-                }
-            });
+            this.bundleDomains(schema.domains);
+            this.bundleApps(schema.apps);
 
             console.log("all bundles builded!");
         }
 
-        makeBundle(schemaName: string, schemaPath: any) {
-            console.log("read schema '" + schemaPath + "'...");
-            
-            var schema = require(schemaPath);
-
-            this._serverBundle.bundlefolder = schema.bundlefolder;
-            this._serverBundle.port = schema.port;
-            this._serverBundle.ssl = schema.ssl;
-
-            this._serverBundle.domains = {};
-
-            this.bundleServerDomains(this._serverBundle.domains, schema.domains);
-
-            var targetFullPath = path.format({
-                dir: this._serverBundle.bundlefolder.domains,
-                name: schemaName + "_server",
-                ext: '.js'
-            });
-
-            console.log(targetFullPath);
-
-            this.saveServerBundle(targetFullPath, this._serverBundle);
-        }
-
-        bundleServerDomains(domains: any, domainsSchema: any) {
+        bundleDomains(domainsSchema: any) {
             if(!domainsSchema) {
                 return;
             }
 
             for(var key in domainsSchema) {
-                domains[key] = {};
+                var domain = {};
 
-                this.bundleServerDomain(domains[key], domainsSchema[key]);
+                this.bundleServerDomain(domain, domainsSchema[key]);
 
-                this.bundleApps(domainsSchema[key].apps, key);
+                console.log(domainsSchema[key].bundle);
+
+                this.saveServerBundle(domainsSchema[key].bundle, domain);
             }
         }
 
@@ -137,23 +107,15 @@ export module SinglefinDeployment {
             this._serverInstanceMap[instancePath] = this.readFile(instancePath, 'utf8');
         }
 
-        bundleApps(apps: any, domainName: string) {
-            for(var key in apps) {
-                var app = apps[key];
+        bundleApps(appsSchema: any) {
+            for(var key in appsSchema) {
+                var app = {};
 
-                this._bundles[key] = {};
-
-                this.bundleApp(app, this._bundles[key]);
-
-                var targetFullPath = path.format({
-                    dir: this._serverBundle.bundlefolder.apps,
-                    name: domainName + "_" + key,
-                    ext: '.js'
-                });
+                this.bundleApp(appsSchema[key], app);
     
-                console.log(targetFullPath);
+                console.log(appsSchema[key].bundle);
     
-                this.saveBundle(key, targetFullPath, this._bundles[key]);
+                this.saveBundle(key, appsSchema[key].bundle, app);
             }
         }
 
