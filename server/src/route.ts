@@ -3,22 +3,19 @@ class Route {
     private _domain: Domain;
     private _route: string;
     private _method: string;
-    private _modelMap: ModelMap;
-    private _models: any;
+    private _modelClasses: any;
     private _service: Service = new DataService();
     private _events: any = {};
 
 
-    constructor(domain: any, services: any, models: any, route: string, config: any) {
+    constructor(domain: any, services: any, modelClasses: any, route: string, config: any) {
         this._domain = domain;
         this._route = route;
-        this._models = models;
+        this._modelClasses = modelClasses;
 
         this._config = config;
 
         this._method = config.method;
-
-        this._modelMap = new ModelMap(this._models, config.models);
         
         this.makeService(services, config.service);
         this.makeEvents(config.events);
@@ -32,12 +29,15 @@ class Route {
         }
 
         this._domain.router[this._method](this._route, (request: any, response: any) => {
-            this.onRequest(request, response).then(() => {
-                return this._service.onRequest(request, response, this._modelMap, this._config);
+            var models = this.initModels();
+            var modelMap: ModelMap = new ModelMap(models, this._config.models);
+
+            this.onRequest(request, response, models).then(() => {
+                return this._service.onRequest(request, response, modelMap, this._config);
             }).then(() => {
-                return this.onResponse(request, response);
+                return this.onResponse(request, response, models);
             }).then(() => {
-                return this._service.onResponse(request, response, this._modelMap, this._config);
+                return this._service.onResponse(request, response, modelMap, this._config);
             }).then(() => {
                 
             }).catch((error: string) => {
@@ -48,13 +48,13 @@ class Route {
         });
     }
 
-    onRequest(request: any, response: any) {
+    onRequest(request: any, response: any, models: any) {
         return new Promise<void>(async (resolve, reject) => {
             var routeEvents: RouteEvent[] = this._events["request"];
 
             if(routeEvents) {
                 for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, request, response, this._models).catch((error: string) => {
+                    await routeEvents[i].handle(this._domain, request, response, models).catch((error: string) => {
                         return reject(error);
                     });
                 }
@@ -64,13 +64,13 @@ class Route {
         });
     }
 
-    onResponse(request: any, response: any) {
+    onResponse(request: any, response: any, models: any) {
         return new Promise<void>(async (resolve, reject) => {
             var routeEvents: RouteEvent[] = this._events["response"];
 
             if(routeEvents) {
                 for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, request, response, this._models).catch((error: string) => {
+                    await routeEvents[i].handle(this._domain, request, response, models).catch((error: string) => {
                         return reject(error);
                     });
                 }
@@ -78,6 +78,18 @@ class Route {
 
             resolve();
         });
+    }
+
+    initModels() {
+        var models: any = {};
+
+        for(var key in this._modelClasses) {
+            var Model = this._modelClasses[key];
+
+            models[key] = new Model();
+        }
+
+        return models;
     }
 
     makeService(services: any, serviceName: string) {

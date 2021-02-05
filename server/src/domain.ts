@@ -5,7 +5,6 @@ class Domain {
     private _options: any;
     private _router: any;
     private _routes: any[] = [];
-    private _models: any = {};
     private _services: any = {};
     private _events: any = {};
 
@@ -17,7 +16,6 @@ class Domain {
 
         this._options = schema.options;
 
-        this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
     }
@@ -59,8 +57,10 @@ class Domain {
             var routeEvents: RouteEvent[] = this._events["initialize"];
 
             if(routeEvents) {
+                var models = this.initModels();
+
                 for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this, null, null, this._models).catch((error: string) => {
+                    await routeEvents[i].handle(this, null, null, models).catch((error: string) => {
                         return reject(error);
                     });
                 }
@@ -89,24 +89,22 @@ class Domain {
         }
 
         for(var key in routesSchema) {
-            var route = new Route(this, this._services, this._models, key, routesSchema[key]);
+            var route = new Route(this, this._services, this._schema.models, key, routesSchema[key]);
 
             this._routes.push(route);
         }
     }
 
-    initModels(modelsSchema: any) {
-        if(!modelsSchema) {
-            return;
+    initModels() {
+        var models: any = {};
+
+        for(var key in this._schema.models) {
+            var Model = this._schema.models[key];
+
+            models[key] = new Model();
         }
 
-        for(var key in modelsSchema) {
-            var Model = modelsSchema[key];
-
-            var model = new Model();
-
-            this._models[key] = model;
-        }
+        return models;
     }
 
     initServices(servicesSchema: any) {

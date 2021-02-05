@@ -1601,17 +1601,16 @@ var SinglefinModule;
             this._httpMethod = config.httpMethod ? config.httpMethod : "post";
             this._done = config.done;
             this._error = config.error;
-            this._data = config.data;
-            this._result = config.result;
+            this._models = config.models ? config.models : {};
         }
         call(singlefin, page, models, parameters, pageModels) {
             return new Promise((resolve, reject) => {
                 var jsonData = {};
-                for (var key in this._data) {
-                    jsonData[key] = SinglefinModule.Runtime.getProperty(models, this._data[key]);
-                }
-                if (!this._data) {
+                if (!this._models.data) {
                     jsonData = parameters;
+                }
+                else {
+                    jsonData = SinglefinModule.Runtime.getProperty(models, this._models.data);
                 }
                 try {
                     var stringifyData = JSON.stringify(jsonData);
@@ -1620,20 +1619,24 @@ var SinglefinModule;
                         url: this._route,
                         data: stringifyData,
                         success: (response) => {
-                            if (response) {
-                                for (var key in this._result) {
-                                    if (typeof response[key] !== 'undefined' && this._result[key]) {
-                                        SinglefinModule.Runtime.setProperty(this._result[key], models, response[key]);
-                                    }
-                                }
+                            if (typeof response !== 'undefined' && this._models.result) {
+                                SinglefinModule.Runtime.setProperty(this._models.result, models, response);
                             }
-                            return page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels);
+                            page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels).then(() => {
+                                resolve();
+                            }).catch(() => {
+                                reject();
+                            });
                         },
                         error: (error) => {
-                            if (this._result["error"]) {
-                                SinglefinModule.Runtime.setProperty(this._result["error"], models, error.responseText);
+                            if (error && this._models.error) {
+                                SinglefinModule.Runtime.setProperty(this._models.error, models, error.responseText);
                             }
-                            return page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels);
+                            page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels).then(() => {
+                                resolve();
+                            }).catch(() => {
+                                reject();
+                            });
                         },
                         contentType: "application/json"
                     });

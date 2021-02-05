@@ -11,13 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 class Domain {
     constructor(path, schema) {
         this._routes = [];
-        this._models = {};
         this._services = {};
         this._events = {};
         this._schema = schema;
         this._path = path;
         this._options = schema.options;
-        this.initModels(this._schema.models);
         this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
     }
@@ -47,8 +45,9 @@ class Domain {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events["initialize"];
             if (routeEvents) {
+                var models = this.initModels();
                 for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this, null, null, this._models).catch((error) => {
+                    yield routeEvents[i].handle(this, null, null, models).catch((error) => {
                         return reject(error);
                     });
                 }
@@ -71,19 +70,17 @@ class Domain {
             return;
         }
         for (var key in routesSchema) {
-            var route = new Route(this, this._services, this._models, key, routesSchema[key]);
+            var route = new Route(this, this._services, this._schema.models, key, routesSchema[key]);
             this._routes.push(route);
         }
     }
-    initModels(modelsSchema) {
-        if (!modelsSchema) {
-            return;
+    initModels() {
+        var models = {};
+        for (var key in this._schema.models) {
+            var Model = this._schema.models[key];
+            models[key] = new Model();
         }
-        for (var key in modelsSchema) {
-            var Model = modelsSchema[key];
-            var model = new Model();
-            this._models[key] = model;
-        }
+        return models;
     }
     initServices(servicesSchema) {
         if (!servicesSchema) {
@@ -123,15 +120,14 @@ class Domain {
     }
 }
 class Route {
-    constructor(domain, services, models, route, config) {
+    constructor(domain, services, modelClasses, route, config) {
         this._service = new DataService();
         this._events = {};
         this._domain = domain;
         this._route = route;
-        this._models = models;
+        this._modelClasses = modelClasses;
         this._config = config;
         this._method = config.method;
-        this._modelMap = new ModelMap(this._models, config.models);
         this.makeService(services, config.service);
         this.makeEvents(config.events);
         this.initRouting();
@@ -141,12 +137,14 @@ class Route {
             this._method = "get";
         }
         this._domain.router[this._method](this._route, (request, response) => {
-            this.onRequest(request, response).then(() => {
-                return this._service.onRequest(request, response, this._modelMap, this._config);
+            var models = this.initModels();
+            var modelMap = new ModelMap(models, this._config.models);
+            this.onRequest(request, response, models).then(() => {
+                return this._service.onRequest(request, response, modelMap, this._config);
             }).then(() => {
-                return this.onResponse(request, response);
+                return this.onResponse(request, response, models);
             }).then(() => {
-                return this._service.onResponse(request, response, this._modelMap, this._config);
+                return this._service.onResponse(request, response, modelMap, this._config);
             }).then(() => {
             }).catch((error) => {
                 response.status(400);
@@ -154,12 +152,12 @@ class Route {
             });
         });
     }
-    onRequest(request, response) {
+    onRequest(request, response, models) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events["request"];
             if (routeEvents) {
                 for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, request, response, this._models).catch((error) => {
+                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
                         return reject(error);
                     });
                 }
@@ -167,18 +165,26 @@ class Route {
             resolve();
         }));
     }
-    onResponse(request, response) {
+    onResponse(request, response, models) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events["response"];
             if (routeEvents) {
                 for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, request, response, this._models).catch((error) => {
+                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
                         return reject(error);
                     });
                 }
             }
             resolve();
         }));
+    }
+    initModels() {
+        var models = {};
+        for (var key in this._modelClasses) {
+            var Model = this._modelClasses[key];
+            models[key] = new Model();
+        }
+        return models;
     }
     makeService(services, serviceName) {
         if (!serviceName) {
@@ -773,11 +779,11 @@ class NullEvent {
 }
 class DataService {
     onRequest(request, response, modelMap, parameters) {
-        console.log("data service handle!");
         return Promise.resolve();
     }
     onResponse(request, response, modelMap, parameters) {
-        console.log("data service reply!");
+        var data = modelMap.getValue("data");
+        response.send(data);
         return Promise.resolve();
     }
 }
