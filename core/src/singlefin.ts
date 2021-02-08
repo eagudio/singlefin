@@ -115,7 +115,7 @@ module SinglefinModule {
         }
 
         open(pageName: string, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
                 if(_pageName == this.body) {
@@ -131,7 +131,7 @@ module SinglefinModule {
                 }
 
                 page.draw(this, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during open page '" + pageName + "'");
     
@@ -141,7 +141,7 @@ module SinglefinModule {
         }
         
         refresh(pageName: string, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 
                 if(_pageName == this.body) {
@@ -157,7 +157,7 @@ module SinglefinModule {
                 }
 
                 page.redraw(this, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
     
@@ -167,7 +167,7 @@ module SinglefinModule {
         }
 
         nextGroupStep(pageName: string, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
                 if(_pageName == this.body) {
@@ -183,7 +183,7 @@ module SinglefinModule {
 				}
 
                 page.nextStep(this, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
     
@@ -193,7 +193,7 @@ module SinglefinModule {
         }
 
         previousGroupStep(pageName: string, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
                 if(_pageName == this.body) {
@@ -209,7 +209,7 @@ module SinglefinModule {
 				}
 
                 page.previousStep(this, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
     
@@ -219,7 +219,7 @@ module SinglefinModule {
         }
 
         openGroupPageByIndex(pageName: string, index: number, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
                 if(_pageName == this.body) {
@@ -235,7 +235,7 @@ module SinglefinModule {
 				}
 
                 page.openGroupPageByIndex(this, index, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
     
@@ -245,7 +245,7 @@ module SinglefinModule {
         }
 
         openGroupPage(pageName: string, pageTarget: string, parameters?: any, models?: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
 
                 if(_pageName == this.body) {
@@ -263,7 +263,7 @@ module SinglefinModule {
                 var target: string = this.body + "/" + page.path + "/" + pageTarget;
 
                 page.openGroupPage(this, target, parameters, models).then(() => {
-                    resolve(page);
+                    resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
     
@@ -369,7 +369,7 @@ module SinglefinModule {
         }
         
         close(pageName: string, parameters: any) {
-            return new Promise((resolve) => {
+            return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var page: Page = this.pages[_pageName];
     
@@ -441,12 +441,12 @@ module SinglefinModule {
             this._body = name;
             this._home = name;
 
-            var body: Page = new Page(app, name, false, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
+            var body: Page = new Page(app, name, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
 
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, disabled: boolean, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any, appRootPath: string): Page {
+        addPage(pageName: string, hidden: any, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any, appRootPath: string): Page {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
@@ -464,7 +464,7 @@ module SinglefinModule {
                 relativePath = pageName;
             }
 
-            this._pages[pagePath] = new Page(app, pageName, disabled, action, container, relativePath, view, controllers, replace, append, group, unwind, list, events, parameters, isWidget, styles, scripts, models);
+            this._pages[pagePath] = new Page(app, pageName, hidden, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
 
             return this._pages[pagePath];
         }
@@ -472,13 +472,13 @@ module SinglefinModule {
         addSurrogate(name: string, path: string, containerPath: string, page: Page) {
             var replaceChildren = this.createSurrogates(path, page.replace);
             var appendChildren = this.createSurrogates(path, page.append);
+            var commitChildren = this.createSurrogates(path, page.commit);
             var groupChildren = this.createSurrogates(path, page.group);
-            var unwindChildren = this.createSurrogates(path, page.unwind);
 
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(page.app, name, page.disabled, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, groupChildren, unwindChildren, page.list, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
+            this._pages[path] = new Page(page.app, name, page.hidden, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
 
             return this._pages[path];
         }

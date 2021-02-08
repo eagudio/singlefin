@@ -148,8 +148,9 @@ var SinglefinDeployment;
             var page = {};
             page.events = _page.events;
             page.parameters = _page.parameters;
+            page.hidden = _page.hidden;
             page.models = _page.models;
-            page.list = _page.list;
+            page.unwind = _page.unwind;
             if (_page.view) {
                 page.view = this.bundleView(_page.view);
             }
@@ -168,11 +169,11 @@ var SinglefinDeployment;
             if (_page.replace) {
                 page.replace = this.bundlePageMethod(_page.replace);
             }
+            if (_page.commit) {
+                page.commit = this.bundlePageMethod(_page.commit);
+            }
             if (_page.group) {
                 page.group = this.bundlePageMethod(_page.group);
-            }
-            if (_page.unwind) {
-                page.unwind = this.bundlePageMethod(_page.unwind);
             }
             return page;
         }

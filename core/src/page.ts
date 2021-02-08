@@ -3,7 +3,7 @@ module SinglefinModule {
     export class Page {
 		private _app: App;
         private _name: string;
-        private _disabled: boolean = false;
+		private _hidden: string;
         private _action: string;
         private _container: string;
         private _path: string;
@@ -11,9 +11,9 @@ module SinglefinModule {
         private _controllers: any[];
         private _replace: any[];
         private _append: any[];
+		private _commit: any[];
         private _group: any[];
-        private _unwind: any[];
-        private _list: any;
+        private _unwind: any;
         private _events: any;
 		private _parameters: any;
 		private _isWidget: boolean;
@@ -31,10 +31,10 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, disabled: boolean, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], group: any[], unwind: any[], list: {}, events: any, parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
+        constructor(app: App, name: string, hidden: any, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: {}, events: any, parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
-            this._disabled = disabled;
+			this._hidden = hidden;
             this._action = action;
             this._container = container;
             this._path = path;
@@ -42,9 +42,9 @@ module SinglefinModule {
             this._controllers = controllers,
             this._replace = replace,
             this._append = append,
+			this._commit = commit,
             this._group = group,
             this._unwind = unwind,
-            this._list = list,
             this._events = events,
 			this._parameters = parameters
 			this._isWidget = isWidget;
@@ -69,12 +69,12 @@ module SinglefinModule {
             this._name = value;
         }
 
-        public get disabled(): boolean {
-            return this._disabled;
+		public get hidden(): string {
+            return this._hidden;
         }
 
-        public set disabled(value: boolean) {
-            this._disabled = value;
+        public set hidden(value: string) {
+            this._hidden = value;
         }
 
         public get action(): string {
@@ -133,6 +133,14 @@ module SinglefinModule {
             this._append = value;
         }
 
+		public get commit(): any[] {
+            return this._commit;
+        }
+        
+        public set commit(value: any[]) {
+            this._commit = value;
+        }
+
         public get group(): any[] {
             return this._group;
         }
@@ -141,20 +149,12 @@ module SinglefinModule {
             this._group = value;
         }
 
-        public get unwind(): any[] {
+        public get unwind(): any {
             return this._unwind;
         }
         
-        public set unwind(value: any[]) {
+        public set unwind(value: any) {
             this._unwind = value;
-        }
-
-        public get list(): any {
-            return this._list;
-        }
-        
-        public set list(value: any) {
-            this._list = value;
         }
 
         public get events(): any {
@@ -567,23 +567,23 @@ module SinglefinModule {
 
 					reject("replace items error");
 				}).then(() => {
-					return this.drawChildren(singlefin, parent, parent.group, parameters, models);
+					return this.drawChildren(singlefin, parent, parent.commit, parameters, models);
 				}, () => {
 					console.error("append items error");
 
 					reject("append items error");
 				}).then(() => {
-					return this.drawChildren(singlefin, parent, parent.unwind, parameters, models);
+					return this.drawChildren(singlefin, parent, parent.group, parameters, models);
+				}, () => {
+					console.error("commit items error");
+
+					reject("commit items error");
+				}).then(() => {
+					resolve();
 				}, () => {
 					console.error("group items error");
 
 					reject("group items error");
-				}).then(() => {
-					resolve();
-				}, () => {
-					console.error("unwind items error");
-
-					reject("unwind items error");
 				});
 			});
         }
@@ -642,12 +642,8 @@ module SinglefinModule {
 						}
 					}
 
-					if(childPage.disabled == true) {
-						continue;
-					}
-
 					await this.handleEvent(singlefin, childPage.events, "open", childPage, parameters, models).then(async (viewParameters: any) => {
-						if(childPage.action == "unwind") {
+						if(childPage.unwind) {
 							await this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters, parameters, models).then(async () => {
 								
 							}, (ex) => {
@@ -658,7 +654,7 @@ module SinglefinModule {
 								}
 							});
 						}
-						else {
+						else if(childPage.action != "commit") {
 							childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters, models);
 
 							this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters, models);
@@ -697,26 +693,26 @@ module SinglefinModule {
         
 		unwindItems(singlefin: Singlefin, parent: Page, pageName: string, page: Page, parameters: any, controllerParameters: any, models: any) {
 			return new Promise<void>(async (resolve, reject) => {
-				var list = parameters;
+				var unwind = parameters;
 
-				if(page.list && page.list.from) {
-					list = Runtime.getProperty(singlefin.models, page.list.from);
+				if(page.unwind && page.unwind.list) {
+					unwind = Runtime.getProperty(singlefin.models, page.unwind.list);
 				}
 
-                if(!Array.isArray(list)) {
-                    console.error("unwind error page '" + pageName + "': controller must return an array");
+                if(!Array.isArray(unwind)) {
+                    console.error("unwind error page '" + pageName + "': list must to be an array");
                     
-                    return reject("unwind error page '" + pageName + "': controller must return an array");
+                    return reject("unwind error page '" + pageName + "': list must to be an array");
 				}
 
 				//TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
 
-				for(var i=0; i<list.length; i++) {
+				for(var i=0; i<unwind.length; i++) {
 					var surrogate: Page = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 					
 					surrogate.index = i;
 
-					await this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, list[i], models).then(async (viewParameters: any) => {
+					await this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then(async (viewParameters: any) => {
 						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters, models);
 
 						this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters, models);
@@ -742,15 +738,15 @@ module SinglefinModule {
 					});
 				}
 
-				if(page.list && page.list.from) {
+				if(page.unwind && page.unwind.list) {
 					ProxyHandlerMap.registerPage(page.path);
 
-					var valuePath = page.list.from;
+					var valuePath = page.unwind.list;
 					var data = singlefin.modelProxy.data;
 
 					var valuePath = valuePath.replace(".$", "[" + page.index + "]");
 
-					var elementBinding: ElementBinding = new ListBinding(page.htmlElement, "list", null, singlefin, page, page.list);
+					var elementBinding: ElementBinding = new ListBinding(page.htmlElement, "unwind", null, singlefin, page, page.unwind);
 
 					elementBinding.watch(singlefin, page, null, valuePath, data, parameters);
 
@@ -1132,6 +1128,14 @@ module SinglefinModule {
 			var element = container;
 			var elements = $();
 
+			if(page.hidden) {
+				var hidden: boolean = Runtime.getProperty(singlefin.models, page.hidden);
+
+				if(hidden == true) {
+					return;
+				}
+			}
+
 			page.appendStyles();
 			page.appendScripts();
 			
@@ -1174,6 +1178,9 @@ module SinglefinModule {
 			else if(page.action == "append") {
 				element.append(page.htmlElement);
 			}
+			else if(page.action == "commit") {
+				element.append(page.htmlElement);
+			}
 			else if(page.action == "group") {
 				element.html(page.htmlElement);
 
@@ -1181,9 +1188,6 @@ module SinglefinModule {
 
 				containerPage.appendStyles();
 				containerPage.appendScripts();
-			}
-			else if(page.action == "unwind") {
-				element.append(page.htmlElement);
 			}
 		}
 
@@ -1282,7 +1286,7 @@ module SinglefinModule {
 			return new Promise<void>((resolve, reject) => {
 				this.closeController(this, parameters).then(() => {
 					this.closeItems(singlefin, this, parameters).then(() => {
-						if(this.disabled == true) {
+						if(this.action == "commit") {
 							this.htmlElement.remove();
 						}
 
@@ -1334,9 +1338,20 @@ module SinglefinModule {
 					return this.closeChildren(singlefin, page.append, parameters);
 				}, (ex) => {
 					if(ex) {
-						console.error("close itmes error");
+						console.error("close items error");
 
-						reject("close itmes error");
+						reject("close items error");
+					}
+					else {
+						resolve();
+					}
+				}).then(() => {
+					return this.closeChildren(singlefin, page.commit, parameters);
+				}, (ex) => {
+					if(ex) {
+						console.error("close items error");
+
+						reject("close items error");
 					}
 					else {
 						resolve();
@@ -1345,20 +1360,9 @@ module SinglefinModule {
 					return this.closeChildren(singlefin, page.group, parameters);
 				}, (ex) => {
 					if(ex) {
-						console.error("close itmes error");
+						console.error("close items error");
 
-						reject("close itmes error");
-					}
-					else {
-						resolve();
-					}
-				}).then(() => {
-					return this.closeChildren(singlefin, page.unwind, parameters);
-				}, (ex) => {
-					if(ex) {
-						console.error("close itmes error");
-
-						reject("close itmes error");
+						reject("close items error");
 					}
 					else {
 						resolve();
@@ -1367,9 +1371,9 @@ module SinglefinModule {
 					resolve();
 				}, (ex) => {
 					if(ex) {
-						console.error("close itmes error");
+						console.error("close items error");
 
-						reject("close itmes error");
+						reject("close items error");
 					}
 					else {
 						resolve();
