@@ -191,6 +191,7 @@ var SinglefinModule;
                     page.isWidget = true;
                     page.view = widgets[page.widget].view;
                     page.hidden = widgets[page.widget].hidden;
+                    page.showed = widgets[page.widget].showed;
                     page.controllers = widgets[page.widget].controllers;
                     page.replace = widgets[page.widget].replace;
                     page.append = widgets[page.widget].append;
@@ -213,7 +214,7 @@ var SinglefinModule;
                 page.styles = this.unbundleFiles(page.styles);
                 page.scripts = this.unbundleFiles(page.scripts);
                 page.events = this.processEvents(page.events);
-                singlefin.addPage(pageName, page.hidden, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
+                singlefin.addPage(pageName, page.hidden, page.showed, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
                 this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("commit", pagePath, page.commit, widgets, singlefin, page.isWidget, page.appRootPath);
@@ -459,7 +460,7 @@ var SinglefinModule;
 var SinglefinModule;
 (function (SinglefinModule) {
     class Page {
-        constructor(app, name, hidden, action, container, path, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models) {
+        constructor(app, name, hidden, showed, action, container, path, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models) {
             this._index = 0;
             this._groupIndex = 0;
             this._groupNextStepEnabled = true;
@@ -468,6 +469,7 @@ var SinglefinModule;
             this._app = app;
             this._name = name;
             this._hidden = hidden;
+            this._showed = showed;
             this._action = action;
             this._container = container;
             this._path = path;
@@ -502,6 +504,12 @@ var SinglefinModule;
         }
         set hidden(value) {
             this._hidden = value;
+        }
+        get showed() {
+            return this._showed;
+        }
+        set showed(value) {
+            this._showed = value;
         }
         get action() {
             return this._action;
@@ -1088,6 +1096,12 @@ var SinglefinModule;
                         console.error("page '" + page.name + "' handle event error: " + ex);
                     }
                 }).then(() => __awaiter(this, void 0, void 0, function* () {
+                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+                }), (ex) => {
+                    if (ex) {
+                        console.error("page '" + page.name + "' handle event error: " + ex);
+                    }
+                }).then(() => __awaiter(this, void 0, void 0, function* () {
                     return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }), (ex) => {
                     if (ex) {
@@ -1170,6 +1184,15 @@ var SinglefinModule;
             }
             return Promise.reject("method '" + delegate.page + "' not supported");
         }
+        handleEventEvent(singlefin, delegate, page, parameters, pageModels) {
+            if (!delegate.event) {
+                return Promise.resolve();
+            }
+            if (delegate.event.delegate) {
+                return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
+            }
+            return Promise.reject("method '" + delegate.page + "' not supported");
+        }
         handleRequestEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
             if (!delegate.request) {
                 return Promise.resolve();
@@ -1187,7 +1210,8 @@ var SinglefinModule;
         }
         renderView(singlefin, page, data, models) {
             if (!page.view) {
-                return $();
+                return null;
+                //return $();
             }
             var group = null;
             var currentGroupPage = page.getCurrentGroupPage(singlefin);
@@ -1310,17 +1334,32 @@ var SinglefinModule;
         addHtmlElement(container, page, singlefin) {
             var element = container;
             var elements = $();
+            if (!element) {
+                var containerPage = singlefin.pages[page.container];
+                var parentPage = singlefin.pages[containerPage.container];
+                element = parentPage.htmlElement;
+            }
             if (page.hidden) {
                 var hidden = SinglefinModule.Runtime.getProperty(singlefin.models, page.hidden);
+                console.log(page.hidden);
+                console.log(hidden);
                 if (hidden == true) {
+                    return;
+                }
+            }
+            if (page.showed) {
+                var showed = SinglefinModule.Runtime.getProperty(singlefin.models, page.showed);
+                console.log(page.showed);
+                console.log(showed);
+                if (showed == false) {
                     return;
                 }
             }
             page.appendStyles();
             page.appendScripts();
             var pageName = page.name.split('#')[0];
-            var pageTag = container.find("page[" + pageName + "]");
-            var containerPagesAttribute = container.find("[pages]");
+            var pageTag = element.find("page[" + pageName + "]");
+            var containerPagesAttribute = element.find("[pages]");
             containerPagesAttribute.each((i, item) => {
                 var pageAttributeValues = $(item).attr("pages");
                 var pages = pageAttributeValues.split(',');
@@ -1328,7 +1367,7 @@ var SinglefinModule;
                     element = elements.add($(item));
                 }
             });
-            var containerPageAttribute = container.find(`[page="` + pageName + `"]`);
+            var containerPageAttribute = element.find(`[page="` + pageName + `"]`);
             if (containerPageAttribute.length > 0) {
                 element = elements.add(containerPageAttribute);
             }
@@ -2100,10 +2139,10 @@ var SinglefinModule;
                 var app = new SinglefinModule.App(this);
                 this._body = name;
                 this._home = name;
-                var body = new SinglefinModule.Page(app, name, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
+                var body = new SinglefinModule.Page(app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
                 this._pages[this._body] = body;
             }
-            addPage(pageName, hidden, action, pagePath, container, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models, appRootPath) {
+            addPage(pageName, hidden, showed, action, pagePath, container, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models, appRootPath) {
                 var bodyRegexp = new RegExp("^(" + this.body + "/)");
                 var pathContainer = container.replace(bodyRegexp, "");
                 var app = new SinglefinModule.App(this);
@@ -2115,7 +2154,7 @@ var SinglefinModule;
                 if (pathContainer == this.body) {
                     relativePath = pageName;
                 }
-                this._pages[pagePath] = new SinglefinModule.Page(app, pageName, hidden, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
+                this._pages[pagePath] = new SinglefinModule.Page(app, pageName, hidden, showed, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
                 return this._pages[pagePath];
             }
             addSurrogate(name, path, containerPath, page) {
@@ -2125,7 +2164,7 @@ var SinglefinModule;
                 var groupChildren = this.createSurrogates(path, page.group);
                 var bodyRegexp = new RegExp("^(" + this.body + "/)");
                 var relativePath = path.replace(bodyRegexp, "");
-                this._pages[path] = new SinglefinModule.Page(page.app, name, page.hidden, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
+                this._pages[path] = new SinglefinModule.Page(page.app, name, page.hidden, page.showed, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
                 return this._pages[path];
             }
             createSurrogates(path, pagesPath) {

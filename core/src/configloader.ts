@@ -123,6 +123,7 @@ module SinglefinModule {
 					page.isWidget = true;
 					page.view = widgets[page.widget].view;
 					page.hidden = widgets[page.widget].hidden;
+					page.showed = widgets[page.widget].showed;
 					page.controllers = widgets[page.widget].controllers;
 					page.replace = widgets[page.widget].replace;
 					page.append = widgets[page.widget].append;
@@ -150,7 +151,7 @@ module SinglefinModule {
 				page.scripts = this.unbundleFiles(page.scripts);
 				page.events = this.processEvents(page.events);
 
-				singlefin.addPage(pageName, page.hidden, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
+				singlefin.addPage(pageName, page.hidden, page.showed, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
 
 				this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
 				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);

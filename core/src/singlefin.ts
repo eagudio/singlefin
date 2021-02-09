@@ -441,12 +441,12 @@ module SinglefinModule {
             this._body = name;
             this._home = name;
 
-            var body: Page = new Page(app, name, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
+            var body: Page = new Page(app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
 
             this._pages[this._body] = body;
         }
 
-        addPage(pageName: string, hidden: any, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any, appRootPath: string): Page {
+        addPage(pageName: string, hidden: any, showed: any, action: string, pagePath: string, container: string, view: string, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: string, events: string[], parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any, appRootPath: string): Page {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
 			var pathContainer = container.replace(bodyRegexp, "");
 
@@ -464,7 +464,7 @@ module SinglefinModule {
                 relativePath = pageName;
             }
 
-            this._pages[pagePath] = new Page(app, pageName, hidden, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
+            this._pages[pagePath] = new Page(app, pageName, hidden, showed, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
 
             return this._pages[pagePath];
         }
@@ -478,7 +478,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(page.app, name, page.hidden, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
+            this._pages[path] = new Page(page.app, name, page.hidden, page.showed, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
 
             return this._pages[path];
         }

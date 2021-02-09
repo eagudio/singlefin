@@ -4,6 +4,7 @@ module SinglefinModule {
 		private _app: App;
         private _name: string;
 		private _hidden: string;
+		private _showed: string;
         private _action: string;
         private _container: string;
         private _path: string;
@@ -31,10 +32,11 @@ module SinglefinModule {
 		private _binding: Binding = new Binding();
         
 
-        constructor(app: App, name: string, hidden: any, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: {}, events: any, parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
+        constructor(app: App, name: string, hidden: any, showed: any, action: string, container: string, path: string, view: any, controllers: any[], replace: any[], append: any[], commit: any[], group: any[], unwind: {}, events: any, parameters: any, isWidget: boolean, styles: string[], scripts: string[], models: any) {
 			this._app = app;
 			this._name = name;
 			this._hidden = hidden;
+			this._showed = showed;
             this._action = action;
             this._container = container;
             this._path = path;
@@ -75,6 +77,14 @@ module SinglefinModule {
 
         public set hidden(value: string) {
             this._hidden = value;
+        }
+
+		public get showed(): string {
+            return this._showed;
+        }
+
+        public set showed(value: string) {
+            this._showed = value;
         }
 
         public get action(): string {
@@ -838,6 +848,12 @@ module SinglefinModule {
 					console.error("page '" + page.name + "' handle event error: " + ex);
 				}
 			}).then(async () => {
+				return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+			}, (ex: any) => {
+				if(ex) {
+					console.error("page '" + page.name + "' handle event error: " + ex);
+				}
+			}).then(async () => {
 				return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
 			}, (ex: any) => {
 				if(ex) {
@@ -941,6 +957,18 @@ module SinglefinModule {
 			return Promise.reject("method '" + delegate.page + "' not supported");
 		}
 
+		handleEventEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any) {
+			if(!delegate.event) {
+				return Promise.resolve();
+			}
+
+			if(delegate.event.delegate) {
+				return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
+			}
+			
+			return Promise.reject("method '" + delegate.page + "' not supported");
+		}
+
 		handleRequestEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, result: any, pageModels: any, eventObject?: any) {
 			if(!delegate.request) {
 				return Promise.resolve();
@@ -963,7 +991,8 @@ module SinglefinModule {
 		
 		renderView(singlefin: Singlefin, page: Page, data: any, models: any) {
 			if(!page.view) {
-				return $();
+				return null;
+				//return $();
 			}
 
 			var group: any = null;
@@ -1128,6 +1157,14 @@ module SinglefinModule {
 			var element = container;
 			var elements = $();
 
+			if(!element) {
+				var containerPage: Page = singlefin.pages[page.container];
+				
+				var parentPage: Page = singlefin.pages[containerPage.container];
+
+				element = parentPage.htmlElement;
+			}
+
 			if(page.hidden) {
 				var hidden: boolean = Runtime.getProperty(singlefin.models, page.hidden);
 
@@ -1136,13 +1173,21 @@ module SinglefinModule {
 				}
 			}
 
+			if(page.showed) {
+				var showed: boolean = Runtime.getProperty(singlefin.models, page.showed);
+
+				if(showed == false) {
+					return;
+				}
+			}
+
 			page.appendStyles();
 			page.appendScripts();
 			
 			var pageName = page.name.split('#')[0];
-			var pageTag = container.find("page[" + pageName +"]");
+			var pageTag = element.find("page[" + pageName +"]");
 
-			var containerPagesAttribute = container.find("[pages]");
+			var containerPagesAttribute = element.find("[pages]");
 
 			containerPagesAttribute.each((i: number, item: any) => {
 				var pageAttributeValues = $(item).attr("pages");
@@ -1153,7 +1198,7 @@ module SinglefinModule {
 				}
 			});
 
-			var containerPageAttribute = container.find(`[page="` + pageName + `"]`);
+			var containerPageAttribute = element.find(`[page="` + pageName + `"]`);
 
 			if(containerPageAttribute.length > 0) {
 				element = elements.add(containerPageAttribute);

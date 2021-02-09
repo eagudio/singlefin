@@ -149,6 +149,7 @@ var SinglefinDeployment;
             page.events = _page.events;
             page.parameters = _page.parameters;
             page.hidden = _page.hidden;
+            page.showed = _page.showed;
             page.models = _page.models;
             page.unwind = _page.unwind;
             if (_page.view) {
