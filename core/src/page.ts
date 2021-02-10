@@ -383,6 +383,28 @@ module SinglefinModule {
 				});
 			});
 		}
+
+		close(singlefin: Singlefin, parameters: any, models: any) {
+			return new Promise<void>((resolve, reject) => {
+				this.closeItems(singlefin, this, parameters).then(() => {
+					this.handleEvent(singlefin, this.events, "close", this, parameters, models).then((viewParameters: any) => {
+						if(this.action == "commit") {
+							this.htmlElement.remove();
+						}
+
+						resolve();
+					}).catch((ex: any) => {
+						console.error("close error");
+					
+						reject("close error");
+					});
+				}, (ex: any) => {
+					console.error("close error");
+					
+					reject("close error");
+				});
+			});
+        }
 		
 		getCurrentGroupPage(singlefin: Singlefin) {
             if(!this.group) {
@@ -723,7 +745,7 @@ module SinglefinModule {
 					surrogate.index = i;
 
 					await this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then(async (viewParameters: any) => {
-						surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters, models);
+						surrogate.htmlElement = surrogate.renderView(singlefin, surrogate, viewParameters, models);
 
 						this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters, models);
 						surrogate.bind(singlefin, surrogate.htmlElement, viewParameters, models);
@@ -817,57 +839,41 @@ module SinglefinModule {
 				}
                 
 				for(var i=0; i<eventsList.length; i++) {
-					result = await this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject);
+					await this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result: any) => {
+						result = _result;
+					}).catch((ex: any) => {
+						return reject(ex);
+					});
 				}
 
 				resolve(result);
 			});
 		}
 
-		async handleAction(singlefin: Singlefin, action: any, page: Page, parameters: any, _result: any, pageModels: any, eventObject?: any) {
-			var result = _result;
-
-			await this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then(async (_result: any) => {
-				result = _result;
-
-				return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
-			}).then(async () => {
-				return this.handlePageEvent(singlefin, action);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
-			}).then(async () => {
-				return this.handleGroupEvent(singlefin, action);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
-			}).then(async () => {
-				return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
-			}).then(async () => {
-				return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
-			}).then(async () => {
-				return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
-			}, (ex: any) => {
-				if(ex) {
-					console.error("page '" + page.name + "' handle event error: " + ex);
-				}
+		handleAction(singlefin: Singlefin, action: any, page: Page, parameters: any, _result: any, pageModels: any, eventObject?: any) {
+			return new Promise((resolve, reject) => {
+				var result = _result;
+				
+				this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then(async (_result: any) => {
+					result = _result;
+	
+					return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
+				}).then(() => {
+					return this.handlePageEvent(singlefin, action);
+				}).then(() => {
+					return this.handleGroupEvent(singlefin, action);
+				}).then(() => {
+					return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+				}).then(() => {
+					return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
+				}).then(() => {
+					return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
+				}).then(() => {
+					resolve(result);
+				}).catch((ex: any) => {
+					reject("page '" + page.name + "' handle event error: " + ex);
+				});
 			});
-
-			return result;
 		}
 
 		handleControllerEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, event?: any) {
@@ -928,21 +934,30 @@ module SinglefinModule {
 		}
 
 		handlePageEvent(singlefin: Singlefin, delegate: any) {
-			if(!delegate.page) {
-				return Promise.resolve();
-			}
+			return new Promise<void>((resolve, reject) => {
+				if(!delegate.page) {
+					return resolve();
+				}
 
-			if(delegate.page.open) {
-				return singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models);
-			}
-			else if(delegate.page.refresh) {
-				return singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models);
-			}
-			else if(delegate.page.close) {
-				return singlefin.close(delegate.page.close, delegate.page.parameters);
-			}
-			
-			return Promise.reject("method '" + delegate.page + "' not supported");
+				if(delegate.page.open) {
+					singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
+						return resolve();
+					});
+				}
+				else if(delegate.page.refresh) {
+					singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
+						return resolve();
+					});
+				}
+				else if(delegate.page.close) {
+					singlefin.close(delegate.page.close, delegate.page.parameters).then(() => {
+						return resolve();
+					});
+				}
+				else {
+					reject("method '" + delegate.page + "' not supported");
+				}
+			});
 		}
 
 		handleGroupEvent(singlefin: Singlefin, delegate: any) {
@@ -1327,52 +1342,6 @@ module SinglefinModule {
 			});
         }
         
-		close(singlefin: Singlefin, parameters: any) {
-			return new Promise<void>((resolve, reject) => {
-				this.closeController(this, parameters).then(() => {
-					this.closeItems(singlefin, this, parameters).then(() => {
-						if(this.action == "commit") {
-							this.htmlElement.remove();
-						}
-
-						resolve();
-					}, (ex: any) => {
-                        console.error("close error");
-                        
-                        reject("close error");
-					});
-				}, (ex: any) => {
-                    console.error("close error");
-
-					reject("close error");
-				});
-			});
-        }
-        
-		closeController(page: any, parameters: any) {
-			return new Promise(async (resolve, reject) => {
-				if(!page.controllers) {
-					return resolve(parameters);
-				}
-
-				var result = parameters;
-
-				for(var i=0; i<page.controllers.length; i++) {
-					if(page.controllers[i].close) {
-						await page.controllers[i].close(page).then((_result: any) => {
-							result = _result;
-						}, (ex: any) => {
-                            console.error("close controller error: " + ex);
-                            
-							return reject("close controller error" + ex);
-						});
-					}
-				}
-
-				resolve(result);
-			});
-        }
-        
 		closeItems(singlefin: Singlefin, page: any, parameters: any) {
 			return new Promise<void>((resolve, reject) => {
 				if(page.group.length > 0) {
@@ -1445,10 +1414,7 @@ module SinglefinModule {
 					}
 
 					await this.closeItems(singlefin, page, parameters).then(async () => {
-						this.closeController(page, parameters).then(() => {
-						}, (ex) => {
-							console.error("close children error");
-						});
+						
 					}, (ex) => {
 						console.error("close children error");
 					});

@@ -745,6 +745,24 @@ var SinglefinModule;
                 });
             });
         }
+        close(singlefin, parameters, models) {
+            return new Promise((resolve, reject) => {
+                this.closeItems(singlefin, this, parameters).then(() => {
+                    this.handleEvent(singlefin, this.events, "close", this, parameters, models).then((viewParameters) => {
+                        if (this.action == "commit") {
+                            this.htmlElement.remove();
+                        }
+                        resolve();
+                    }).catch((ex) => {
+                        console.error("close error");
+                        reject("close error");
+                    });
+                }, (ex) => {
+                    console.error("close error");
+                    reject("close error");
+                });
+            });
+        }
         getCurrentGroupPage(singlefin) {
             if (!this.group) {
                 return null;
@@ -999,7 +1017,7 @@ var SinglefinModule;
                     var surrogate = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
                     surrogate.index = i;
                     yield this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                        surrogate.htmlElement = this.renderView(singlefin, surrogate, viewParameters, models);
+                        surrogate.htmlElement = surrogate.renderView(singlefin, surrogate, viewParameters, models);
                         this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters, models);
                         surrogate.bind(singlefin, surrogate.htmlElement, viewParameters, models);
                         yield this.drawItems(singlefin, surrogate, viewParameters, models).then(() => __awaiter(this, void 0, void 0, function* () {
@@ -1068,53 +1086,36 @@ var SinglefinModule;
                     return resolve(result);
                 }
                 for (var i = 0; i < eventsList.length; i++) {
-                    result = yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject);
+                    yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
+                        result = _result;
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
                 }
                 resolve(result);
             }));
         }
         handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
-            return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
                 var result = _result;
-                yield this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
                     result = _result;
                     return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
-                }).then(() => __awaiter(this, void 0, void 0, function* () {
+                })).then(() => {
                     return this.handlePageEvent(singlefin, action);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
-                }).then(() => __awaiter(this, void 0, void 0, function* () {
+                }).then(() => {
                     return this.handleGroupEvent(singlefin, action);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
-                }).then(() => __awaiter(this, void 0, void 0, function* () {
+                }).then(() => {
                     return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
-                }).then(() => __awaiter(this, void 0, void 0, function* () {
+                }).then(() => {
                     return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
-                }).then(() => __awaiter(this, void 0, void 0, function* () {
+                }).then(() => {
                     return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }), (ex) => {
-                    if (ex) {
-                        console.error("page '" + page.name + "' handle event error: " + ex);
-                    }
+                }).then(() => {
+                    resolve(result);
+                }).catch((ex) => {
+                    reject("page '" + page.name + "' handle event error: " + ex);
                 });
-                return result;
             });
         }
         handleControllerEvent(singlefin, delegate, page, parameters, event) {
@@ -1161,19 +1162,29 @@ var SinglefinModule;
             return modelMethod.call(model, page.app, singlefin.models, parameters);
         }
         handlePageEvent(singlefin, delegate) {
-            if (!delegate.page) {
-                return Promise.resolve();
-            }
-            if (delegate.page.open) {
-                return singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models);
-            }
-            else if (delegate.page.refresh) {
-                return singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models);
-            }
-            else if (delegate.page.close) {
-                return singlefin.close(delegate.page.close, delegate.page.parameters);
-            }
-            return Promise.reject("method '" + delegate.page + "' not supported");
+            return new Promise((resolve, reject) => {
+                if (!delegate.page) {
+                    return resolve();
+                }
+                if (delegate.page.open) {
+                    singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
+                        return resolve();
+                    });
+                }
+                else if (delegate.page.refresh) {
+                    singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
+                        return resolve();
+                    });
+                }
+                else if (delegate.page.close) {
+                    singlefin.close(delegate.page.close, delegate.page.parameters).then(() => {
+                        return resolve();
+                    });
+                }
+                else {
+                    reject("method '" + delegate.page + "' not supported");
+                }
+            });
         }
         handleGroupEvent(singlefin, delegate) {
             if (!delegate.group) {
@@ -1341,16 +1352,12 @@ var SinglefinModule;
             }
             if (page.hidden) {
                 var hidden = SinglefinModule.Runtime.getProperty(singlefin.models, page.hidden);
-                console.log(page.hidden);
-                console.log(hidden);
                 if (hidden == true) {
                     return;
                 }
             }
             if (page.showed) {
                 var showed = SinglefinModule.Runtime.getProperty(singlefin.models, page.showed);
-                console.log(page.showed);
-                console.log(showed);
                 if (showed == false) {
                     return;
                 }
@@ -1466,43 +1473,6 @@ var SinglefinModule;
                 this.addEventsHandlers(singlefin, app, page, $(item), parameters, pageModels);
             });
         }
-        close(singlefin, parameters) {
-            return new Promise((resolve, reject) => {
-                this.closeController(this, parameters).then(() => {
-                    this.closeItems(singlefin, this, parameters).then(() => {
-                        if (this.action == "commit") {
-                            this.htmlElement.remove();
-                        }
-                        resolve();
-                    }, (ex) => {
-                        console.error("close error");
-                        reject("close error");
-                    });
-                }, (ex) => {
-                    console.error("close error");
-                    reject("close error");
-                });
-            });
-        }
-        closeController(page, parameters) {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                if (!page.controllers) {
-                    return resolve(parameters);
-                }
-                var result = parameters;
-                for (var i = 0; i < page.controllers.length; i++) {
-                    if (page.controllers[i].close) {
-                        yield page.controllers[i].close(page).then((_result) => {
-                            result = _result;
-                        }, (ex) => {
-                            console.error("close controller error: " + ex);
-                            return reject("close controller error" + ex);
-                        });
-                    }
-                }
-                resolve(result);
-            }));
-        }
         closeItems(singlefin, page, parameters) {
             return new Promise((resolve, reject) => {
                 if (page.group.length > 0) {
@@ -1564,10 +1534,6 @@ var SinglefinModule;
                         return resolve();
                     }
                     yield this.closeItems(singlefin, page, parameters).then(() => __awaiter(this, void 0, void 0, function* () {
-                        this.closeController(page, parameters).then(() => {
-                        }, (ex) => {
-                            console.error("close children error");
-                        });
                     }), (ex) => {
                         console.error("close children error");
                     });
@@ -2085,7 +2051,7 @@ var SinglefinModule;
                 }
                 return page.isPreviousGroupStepEnabled(this);
             }
-            close(pageName, parameters) {
+            close(pageName, parameters, models) {
                 return new Promise((resolve) => {
                     var _pageName = this._body + "/" + pageName;
                     var page = this.pages[_pageName];
@@ -2093,7 +2059,7 @@ var SinglefinModule;
                         console.error("an error occured during close page: page '" + pageName + "' not found");
                         return resolve();
                     }
-                    page.close(this, parameters).then(() => {
+                    page.close(this, parameters, models).then(() => {
                         resolve();
                     }, (error) => {
                         console.error("an error occurred during close page '" + pageName + "'");
@@ -2259,7 +2225,7 @@ var SinglefinModule;
                             }
                             if (valuePath) {
                                 valuePath = valuePath.replace(".$", "[" + page.index + "]");
-                                var elementBinding = this.makeBinding(element, elementAttributeName, modelProperty);
+                                var elementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
                                 elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
                                 var proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
                                 var object = SinglefinModule.Runtime.getParentInstance(data, valuePath);
@@ -2288,6 +2254,12 @@ var SinglefinModule;
             }
             else if (element.is('select')) {
                 return new SinglefinModule.SelectBinding(element, attributeName, property);
+            }
+            else if (attributeName == "hide") {
+                return new SinglefinModule.HideBinding(element, attributeName, property);
+            }
+            else if (attributeName == "show") {
+                return new SinglefinModule.ShowBinding(element, attributeName, property);
             }
             return new SinglefinModule.ElementBinding(element, attributeName, property);
         }
@@ -2468,6 +2440,9 @@ var SinglefinModule;
             this._attribute = attribute;
             this._property = property;
         }
+        set htmlElement(value) {
+            this._htmlElement = value;
+        }
         get htmlElement() {
             return this._htmlElement;
         }
@@ -2522,6 +2497,25 @@ var SinglefinModule;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {
+    class HideBinding extends SinglefinModule.ElementBinding {
+        init(value) {
+            this.update(value);
+        }
+        watch(singlefin, page, model, valuePath, data, pageData) {
+        }
+        update(value) {
+            if (value == true) {
+                this.htmlElement.hide();
+            }
+            else {
+                this.htmlElement.show();
+            }
+        }
+    }
+    SinglefinModule.HideBinding = HideBinding;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
     class InputBinding extends SinglefinModule.ElementBinding {
         init(value) {
             this.update(value);
@@ -2562,95 +2556,6 @@ var SinglefinModule;
     }
     SinglefinModule.InputBinding = InputBinding;
 })(SinglefinModule || (SinglefinModule = {}));
-/*module SinglefinModule {
-    export class InputBinding {
-
-        in(singlefin: Singlefin, page: Page, model: any, container: any, element: any, dataProxy: DataProxy, key: string) {
-            if(!element.is('input')) {
-                return;
-            }
-
-            if(!key) {
-                return;
-            }
-
-            element.on("change paste keyup", {
-                page: page,
-                dataProxy: dataProxy,
-                key: key,
-                model: model
-            }, (event: any) => {
-                var _page = event.data.page;
-                var _dataProxy: DataProxy = event.data.dataProxy;
-                var _key = event.data.key;
-                var _model = event.data.model;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
-            
-                Runtime.setProperty(_key, _dataProxy.data, value);
-                
-                if(!_model) {
-                    return;
-                }
-
-                if(!_model.on) {
-                    return;
-                }
-
-                page.handleEvent(singlefin, _model, "on", _page, value, event);
-            });
-        }
-
-        is(container: any, element: any, data: any, key: string) {
-        }
-
-        outAttribute(dataProxyHandlers: DataProxyHandler[], page: Page, container: any, element: any, dataProxy: DataProxy, key: string, exp: string) {
-            if(!element.is('input')) {
-                return;
-            }
-
-            if(!key) {
-                return;
-            }
-
-            if(!exp) {
-                return;
-            }
-
-            var result: any = Runtime.getProperty(dataProxy.data, exp);
-
-            if(key == "value") {
-                element.val(result);
-            }
-            else {
-                element.attr(key, result);
-            }
-
-            var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
-                element: element,
-                key: key,
-                exp: exp,
-                dataProxy: dataProxy
-            }, (parameters: any) => {
-                try {
-                    var result: any = Runtime.getProperty(parameters.dataProxy.data, exp);
-
-                    if(parameters.key == "value") {
-                        parameters.element.val(result);
-                    }
-                    else {
-                        parameters.element.attr(parameters.key, result);
-                    }
-                }
-                catch(ex) {
-                    console.error("element attribute binding error: " + ex);
-                }
-            });
-
-            dataProxyHandlers.push(dataProxyHandler);
-        }
-    }
-}*/ 
 var SinglefinModule;
 (function (SinglefinModule) {
     class ListBinding extends SinglefinModule.ElementBinding {
@@ -2818,6 +2723,25 @@ var SinglefinModule;
         }
     }
     SinglefinModule.SelectBinding = SelectBinding;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
+    class ShowBinding extends SinglefinModule.ElementBinding {
+        init(value) {
+            this.update(value);
+        }
+        watch(singlefin, page, model, valuePath, data, pageData) {
+        }
+        update(value) {
+            if (value == false) {
+                this.htmlElement.hide();
+            }
+            else {
+                this.htmlElement.show();
+            }
+        }
+    }
+    SinglefinModule.ShowBinding = ShowBinding;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {

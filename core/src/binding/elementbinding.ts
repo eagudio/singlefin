@@ -10,6 +10,10 @@ module SinglefinModule {
             this._property = property;
         }
 
+        set htmlElement(value: any) {
+            this._htmlElement = value;
+        }
+
         get htmlElement() {
             return this._htmlElement;
         }

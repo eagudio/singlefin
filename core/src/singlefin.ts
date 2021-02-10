@@ -368,7 +368,7 @@ module SinglefinModule {
             return page.isPreviousGroupStepEnabled(this);
         }
         
-        close(pageName: string, parameters: any) {
+        close(pageName: string, parameters: any, models?: any) {
             return new Promise<void>((resolve) => {
                 var _pageName = this._body + "/" + pageName;
                 var page: Page = this.pages[_pageName];
@@ -379,7 +379,7 @@ module SinglefinModule {
                     return resolve();
                 }
                 
-                page.close(this, parameters).then(() => {
+                page.close(this, parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during close page '" + pageName + "'");

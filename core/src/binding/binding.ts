@@ -58,7 +58,7 @@ module SinglefinModule {
                             if(valuePath) {
                                 valuePath = valuePath.replace(".$", "[" + page.index + "]");
 
-                                var elementBinding: ElementBinding = this.makeBinding(element, elementAttributeName, modelProperty);
+                                var elementBinding: ElementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
                 
                                 elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
 
@@ -95,6 +95,12 @@ module SinglefinModule {
             }
             else if(element.is('select')) {
                 return new SelectBinding(element, attributeName, property);
+            }
+            else if(attributeName == "hide") {
+                return new HideBinding(element, attributeName, property);
+            }
+            else if(attributeName == "show") {
+                return new ShowBinding(element, attributeName, property);
             }
 
             return new ElementBinding(element, attributeName, property);
