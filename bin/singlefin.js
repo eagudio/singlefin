@@ -465,6 +465,7 @@ var SinglefinModule;
             this._groupIndex = 0;
             this._groupNextStepEnabled = true;
             this._groupPreviousStepEnabled = true;
+            this._eventManager = new SinglefinModule.EventManager();
             this._binding = new SinglefinModule.Binding();
             this._app = app;
             this._name = name;
@@ -637,18 +638,21 @@ var SinglefinModule;
         set groupPreviousStepEnabled(value) {
             this._groupPreviousStepEnabled = value;
         }
+        get eventManager() {
+            return this._eventManager;
+        }
         draw(singlefin, parameters, models) {
             return new Promise((resolve, reject) => {
                 this.drawBody(singlefin, parameters, models).then(() => {
                     this.drawContainer(singlefin, this, this.container, parameters, models).then((htmlContainerElement) => {
-                        this.handleEvent(singlefin, this.events, "open", this, parameters, models).then((viewParameters) => {
+                        this.eventManager.handleEvent(singlefin, this.events, "open", this, parameters, models).then((viewParameters) => {
                             this.htmlElement = this.renderView(singlefin, this, viewParameters, models);
-                            this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters, models);
+                            this.eventManager.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters, models);
                             this.bind(singlefin, this.htmlElement, viewParameters, models);
                             this.drawItems(singlefin, this, viewParameters, models).then(() => {
                                 this.addHtmlElement(htmlContainerElement, this, singlefin);
                                 this.fireShowHtmlElementEvent();
-                                this.handleEvent(singlefin, this.events, "show", this, viewParameters, models).then(() => {
+                                this.eventManager.handleEvent(singlefin, this.events, "show", this, viewParameters, models).then(() => {
                                     resolve(this.htmlElement);
                                 }, () => {
                                     console.error("draw error");
@@ -695,17 +699,17 @@ var SinglefinModule;
         redraw(singlefin, parameters, models) {
             return new Promise((resolve, reject) => {
                 this.drawContainer(singlefin, this, this.container, parameters, models).then((htmlContainerElement) => {
-                    this.handleEvent(singlefin, this.events, "refresh", this, parameters, models).then((viewParameters) => {
+                    this.eventManager.handleEvent(singlefin, this.events, "refresh", this, parameters, models).then((viewParameters) => {
                         var previousPageHtmlElement = this.htmlElement;
                         this.htmlElement = this.renderView(singlefin, this, viewParameters, models);
-                        this.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters, models);
+                        this.eventManager.addEventsHandlers(singlefin, this.app, this, this.htmlElement, viewParameters, models);
                         this.bind(singlefin, this.htmlElement, viewParameters, models);
                         this.drawItems(singlefin, this, viewParameters, models).then(() => {
                             previousPageHtmlElement.replaceWith(this.htmlElement);
                             this.appendStyles();
                             this.appendScripts();
                             this.fireShowHtmlElementEvent();
-                            this.handleEvent(singlefin, this.events, "show", this, viewParameters, models).then(() => {
+                            this.eventManager.handleEvent(singlefin, this.events, "show", this, viewParameters, models).then(() => {
                                 resolve(this.htmlElement);
                             }, (ex) => {
                                 if (ex) {
@@ -748,7 +752,7 @@ var SinglefinModule;
         close(singlefin, parameters, models) {
             return new Promise((resolve, reject) => {
                 this.closeItems(singlefin, this, parameters).then(() => {
-                    this.handleEvent(singlefin, this.events, "close", this, parameters, models).then((viewParameters) => {
+                    this.eventManager.handleEvent(singlefin, this.events, "close", this, parameters, models).then((viewParameters) => {
                         if (this.action == "commit") {
                             this.htmlElement.remove();
                         }
@@ -863,13 +867,13 @@ var SinglefinModule;
                 return Promise.resolve(body.htmlElement);
             }
             return new Promise((resolve, reject) => {
-                this.handleEvent(singlefin, body.events, "open", body, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
+                this.eventManager.handleEvent(singlefin, body.events, "open", body, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                     body.htmlElement = $("#" + body.name);
                     body.appendStyles();
                     body.appendScripts();
                     var view = this.renderView(singlefin, body, viewParameters, models);
                     body.htmlElement.append(view);
-                    this.handleEvent(singlefin, body.events, "show", body, viewParameters, models).then(() => {
+                    this.eventManager.handleEvent(singlefin, body.events, "show", body, viewParameters, models).then(() => {
                         resolve(body.htmlElement);
                     }, () => {
                         console.error("draw body error");
@@ -933,9 +937,9 @@ var SinglefinModule;
                     return reject("page not found");
                 }
                 this.drawContainer(singlefin, page, parentPage.container, parameters, models).then((htmlContainerElement) => {
-                    this.handleEvent(singlefin, parentPage.events, "open", parentPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
+                    this.eventManager.handleEvent(singlefin, parentPage.events, "open", parentPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         parentPage.htmlElement = this.renderView(singlefin, parentPage, viewParameters, models);
-                        this.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters, models);
+                        this.eventManager.addEventsHandlers(singlefin, parentPage.app, parentPage, htmlContainerElement, viewParameters, models);
                         parentPage.bind(singlefin, htmlContainerElement, viewParameters, models);
                         this.addHtmlElement(htmlContainerElement, parentPage, singlefin);
                         resolve(parentPage.htmlElement);
@@ -964,7 +968,7 @@ var SinglefinModule;
                             continue;
                         }
                     }
-                    yield this.handleEvent(singlefin, childPage.events, "open", childPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.eventManager.handleEvent(singlefin, childPage.events, "open", childPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         if (childPage.unwind) {
                             yield this.unwindItems(singlefin, parent, childPageName, childPage, viewParameters, parameters, models).then(() => __awaiter(this, void 0, void 0, function* () {
                             }), (ex) => {
@@ -976,11 +980,11 @@ var SinglefinModule;
                         }
                         else if (childPage.action != "commit") {
                             childPage.htmlElement = this.renderView(singlefin, childPage, viewParameters, models);
-                            this.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters, models);
+                            this.eventManager.addEventsHandlers(singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters, models);
                             childPage.bind(singlefin, childPage.htmlElement, viewParameters, models);
                             this.addHtmlElement(parent.htmlElement, childPage, singlefin);
                             yield this.drawItems(singlefin, childPage, viewParameters, models).then(() => __awaiter(this, void 0, void 0, function* () {
-                                yield this.handleEvent(singlefin, childPage.events, "show", childPage, viewParameters, models).then(() => {
+                                yield this.eventManager.handleEvent(singlefin, childPage.events, "show", childPage, viewParameters, models).then(() => {
                                 }, () => {
                                     console.error("draw children error");
                                     reject("draw children error");
@@ -1016,9 +1020,9 @@ var SinglefinModule;
                 for (var i = 0; i < unwind.length; i++) {
                     var surrogate = singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
                     surrogate.index = i;
-                    yield this.handleEvent(singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
+                    yield this.eventManager.handleEvent(singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         surrogate.htmlElement = surrogate.renderView(singlefin, surrogate, viewParameters, models);
-                        this.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters, models);
+                        this.eventManager.addEventsHandlers(singlefin, page.app, surrogate, surrogate.htmlElement, viewParameters, models);
                         surrogate.bind(singlefin, surrogate.htmlElement, viewParameters, models);
                         yield this.drawItems(singlefin, surrogate, viewParameters, models).then(() => __awaiter(this, void 0, void 0, function* () {
                             this.addHtmlElement(parent.htmlElement, surrogate, singlefin);
@@ -1054,170 +1058,6 @@ var SinglefinModule;
                 }
                 resolve();
             }));
-        }
-        addHandleEvent(singlefin, htmlElement, eventType, event, page, parameters, pageModels) {
-            if (!page.events) {
-                return;
-            }
-            var events = page.events[event];
-            if (!events) {
-                return;
-            }
-            htmlElement.on(eventType, {
-                event: event,
-                app: singlefin,
-                models: singlefin.models,
-                page: page,
-                data: parameters,
-                pageModels: pageModels
-            }, (event) => {
-                var eventData = event.data;
-                eventData.page.handleEvent(singlefin, eventData.page.events, eventData.event, eventData.page, eventData.data, eventData.pageModels, event);
-            });
-        }
-        handleEvent(singlefin, events, event, page, parameters, pageModels, eventObject) {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var result = parameters;
-                if (!events) {
-                    return resolve(result);
-                }
-                var eventsList = events[event];
-                if (!eventsList) {
-                    return resolve(result);
-                }
-                for (var i = 0; i < eventsList.length; i++) {
-                    yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
-                        result = _result;
-                    }).catch((ex) => {
-                        return reject(ex);
-                    });
-                }
-                resolve(result);
-            }));
-        }
-        handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
-            return new Promise((resolve, reject) => {
-                var result = _result;
-                this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
-                    result = _result;
-                    return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
-                })).then(() => {
-                    return this.handlePageEvent(singlefin, action);
-                }).then(() => {
-                    return this.handleGroupEvent(singlefin, action);
-                }).then(() => {
-                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
-                }).then(() => {
-                    return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    resolve(result);
-                }).catch((ex) => {
-                    reject("page '" + page.name + "' handle event error: " + ex);
-                });
-            });
-        }
-        handleControllerEvent(singlefin, delegate, page, parameters, event) {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var result = parameters;
-                if (!delegate.controller) {
-                    return resolve(result);
-                }
-                for (var i = 0; i < page.controllers.length; i++) {
-                    var controller = page.controllers[i];
-                    var controllerMethod = controller[delegate.controller];
-                    if (controllerMethod) {
-                        var promise = controllerMethod.call(controller, page.app, page, parameters, event);
-                        if (promise) {
-                            yield promise.then((_result) => __awaiter(this, void 0, void 0, function* () {
-                                result = _result;
-                            }), (ex) => {
-                                if (ex) {
-                                    console.error("page '" + page.name + "' handle controller error: " + ex);
-                                }
-                                reject(ex);
-                            });
-                        }
-                    }
-                }
-                resolve(result);
-            }));
-        }
-        handleModelEvent(singlefin, delegate, page, parameters, pageModels) {
-            if (!delegate.model) {
-                return Promise.resolve();
-            }
-            if (pageModels) {
-                var modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
-                if (pageModels[modelMethodName]) {
-                    var pageModelMethodName = pageModels[modelMethodName].binding;
-                    var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, pageModelMethodName);
-                    var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, pageModelMethodName);
-                    return modelMethod.call(model, page.app, singlefin.models, parameters);
-                }
-            }
-            var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, delegate.model);
-            var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
-            return modelMethod.call(model, page.app, singlefin.models, parameters);
-        }
-        handlePageEvent(singlefin, delegate) {
-            return new Promise((resolve, reject) => {
-                if (!delegate.page) {
-                    return resolve();
-                }
-                if (delegate.page.open) {
-                    singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
-                        return resolve();
-                    });
-                }
-                else if (delegate.page.refresh) {
-                    singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
-                        return resolve();
-                    });
-                }
-                else if (delegate.page.close) {
-                    singlefin.close(delegate.page.close, delegate.page.parameters).then(() => {
-                        return resolve();
-                    });
-                }
-                else {
-                    reject("method '" + delegate.page + "' not supported");
-                }
-            });
-        }
-        handleGroupEvent(singlefin, delegate) {
-            if (!delegate.group) {
-                return Promise.resolve();
-            }
-            if (delegate.group.open) {
-                return singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models);
-            }
-            return Promise.reject("method '" + delegate.page + "' not supported");
-        }
-        handleEventEvent(singlefin, delegate, page, parameters, pageModels) {
-            if (!delegate.event) {
-                return Promise.resolve();
-            }
-            if (delegate.event.delegate) {
-                return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
-            }
-            return Promise.reject("method '" + delegate.page + "' not supported");
-        }
-        handleRequestEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
-            if (!delegate.request) {
-                return Promise.resolve();
-            }
-            var request = delegate.request.handler;
-            return request.call(singlefin, page, singlefin.models, result, pageModels);
-        }
-        handleBrowserEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
-            if (!delegate.browser) {
-                return Promise.resolve();
-            }
-            if (delegate.browser == "refresh") {
-                window.location.href = window.location.href;
-            }
         }
         renderView(singlefin, page, data, models) {
             if (!page.view) {
@@ -1428,51 +1268,6 @@ var SinglefinModule;
                 this.htmlElement.append(script);
             }
         }
-        addEventsHandlers(singlefin, app, page, element, parameters, pageModels) {
-            if (!element) {
-                return;
-            }
-            element.each((i, item) => {
-                $.each(item.attributes, (i, attribute) => {
-                    if (attribute.specified) {
-                        if (attribute.name.startsWith("on-")) {
-                            var onAttribute = attribute.name.split("on-");
-                            var event = onAttribute[1];
-                            var handlerList = [];
-                            if (attribute.value) {
-                                handlerList = attribute.value.split(",");
-                            }
-                            for (var n = 0; n < handlerList.length; n++) {
-                                var handler = handlerList[n];
-                                var paths = [];
-                                if (singlefin.handlers[handler]) {
-                                    paths = singlefin.handlers[handler];
-                                }
-                                this.addHandleEvent(singlefin, element, event, handler, page, parameters, pageModels);
-                            }
-                        }
-                        if (attribute.name == "href") {
-                            if (attribute.value.startsWith("page#")) {
-                                var href = attribute.value;
-                                var markup = href.split("#");
-                                if (markup.length > 0) {
-                                    var path = markup[1];
-                                    element.on("click", (event) => {
-                                        event.preventDefault();
-                                        singlefin.open(path);
-                                        return false;
-                                    });
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-            var children = element.children();
-            children.each((i, item) => {
-                this.addEventsHandlers(singlefin, app, page, $(item), parameters, pageModels);
-            });
-        }
         closeItems(singlefin, page, parameters) {
             return new Promise((resolve, reject) => {
                 if (page.group.length > 0) {
@@ -1602,10 +1397,9 @@ var SinglefinModule;
 (function (SinglefinModule) {
     class Request {
         constructor(config) {
+            this._config = config;
             this._route = config.route;
             this._httpMethod = config.httpMethod ? config.httpMethod : "post";
-            this._done = config.done;
-            this._error = config.error;
             this._models = config.models ? config.models : {};
         }
         call(singlefin, page, models, parameters, pageModels) {
@@ -1627,7 +1421,7 @@ var SinglefinModule;
                             if (typeof response !== 'undefined' && this._models.result) {
                                 SinglefinModule.Runtime.setProperty(this._models.result, models, response);
                             }
-                            page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels).then(() => {
+                            page.eventManager.handleEvent(singlefin, this._config, "resolved", page, parameters, null).then(() => {
                                 resolve();
                             }).catch(() => {
                                 reject();
@@ -1637,7 +1431,7 @@ var SinglefinModule;
                             if (error && this._models.error) {
                                 SinglefinModule.Runtime.setProperty(this._models.error, models, error.responseText);
                             }
-                            page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels).then(() => {
+                            page.eventManager.handleEvent(singlefin, this._config, "rejected", page, parameters, null).then(() => {
                                 resolve();
                             }).catch(() => {
                                 reject();
@@ -2477,7 +2271,7 @@ var SinglefinModule;
                 if (!_model.on) {
                     return;
                 }
-                _page.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
+                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
             });
         }
         update(value) {
@@ -2542,7 +2336,7 @@ var SinglefinModule;
                 if (!_model.on) {
                     return;
                 }
-                _page.handleEvent(_singlefin, _model, "on", _page, value, event);
+                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, value, event);
             });
         }
         update(value) {
@@ -2576,8 +2370,8 @@ var SinglefinModule;
             if (!this._model.on) {
                 return;
             }
-            SinglefinModule.ProxyHandlerMap.deleteProxyStartWith(this._model.from + "[");
-            this._page.handleEvent(this._singlefin, this._model, "on", this._page, value, null);
+            SinglefinModule.ProxyHandlerMap.deleteProxyStartWith(this._model.list + "[");
+            this._page.eventManager.handleEvent(this._singlefin, this._model, "on", this._page, value, null);
         }
     }
     SinglefinModule.ListBinding = ListBinding;
@@ -2702,7 +2496,7 @@ var SinglefinModule;
                 if (!_model.on) {
                     return;
                 }
-                _page.handleEvent(_singlefin, _model, "on", _page, value, event);
+                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, value, event);
             });
             this.htmlElement.on("singlefin:show", {
                 elementBinding: this,
@@ -2771,7 +2565,7 @@ var SinglefinModule;
                 if (!_model.on) {
                     return;
                 }
-                _page.handleEvent(_singlefin, _model, "on", _page, value, event);
+                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, value, event);
             });
         }
         update(value) {
@@ -2784,5 +2578,221 @@ var SinglefinModule;
         }
     }
     SinglefinModule.TextareaBinding = TextareaBinding;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
+    class EventManager {
+        addEventsHandlers(singlefin, app, page, element, parameters, pageModels) {
+            if (!element) {
+                return;
+            }
+            element.each((i, item) => {
+                $.each(item.attributes, (i, attribute) => {
+                    if (attribute.specified) {
+                        if (attribute.name.startsWith("on-")) {
+                            var onAttribute = attribute.name.split("on-");
+                            var event = onAttribute[1];
+                            var handlerList = [];
+                            if (attribute.value) {
+                                handlerList = attribute.value.split(",");
+                            }
+                            for (var n = 0; n < handlerList.length; n++) {
+                                var handler = handlerList[n];
+                                var paths = [];
+                                if (singlefin.handlers[handler]) {
+                                    paths = singlefin.handlers[handler];
+                                }
+                                this.addHandleEvent(singlefin, element, event, handler, page, parameters, pageModels);
+                            }
+                        }
+                        if (attribute.name == "href") {
+                            if (attribute.value.startsWith("page#")) {
+                                var href = attribute.value;
+                                var markup = href.split("#");
+                                if (markup.length > 0) {
+                                    var path = markup[1];
+                                    element.on("click", (event) => {
+                                        event.preventDefault();
+                                        singlefin.open(path);
+                                        return false;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            var children = element.children();
+            children.each((i, item) => {
+                this.addEventsHandlers(singlefin, app, page, $(item), parameters, pageModels);
+            });
+        }
+        addHandleEvent(singlefin, htmlElement, eventType, event, page, parameters, pageModels) {
+            if (!page.events) {
+                return;
+            }
+            var events = page.events[event];
+            if (!events) {
+                return;
+            }
+            htmlElement.on(eventType, {
+                event: event,
+                app: singlefin,
+                models: singlefin.models,
+                page: page,
+                data: parameters,
+                pageModels: pageModels
+            }, (event) => {
+                var eventData = event.data;
+                var _page = eventData.page;
+                _page.eventManager.handleEvent(singlefin, eventData.page.events, eventData.event, eventData.page, eventData.data, eventData.pageModels, event);
+            });
+        }
+        handleEvent(singlefin, events, event, page, parameters, pageModels, eventObject) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                var result = parameters;
+                if (!events) {
+                    return resolve(result);
+                }
+                var eventsList = events[event];
+                if (!eventsList) {
+                    return resolve(result);
+                }
+                for (var i = 0; i < eventsList.length; i++) {
+                    yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
+                        result = _result;
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
+                }
+                resolve(result);
+            }));
+        }
+        handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
+            return new Promise((resolve, reject) => {
+                var result = _result;
+                this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                    result = _result;
+                    return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
+                })).then(() => {
+                    return this.handlePageEvent(singlefin, action);
+                }).then(() => {
+                    return this.handleGroupEvent(singlefin, action);
+                }).then(() => {
+                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+                }).then(() => {
+                    return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
+                }).then(() => {
+                    return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
+                }).then(() => {
+                    resolve(result);
+                }).catch((ex) => {
+                    reject("page '" + page.name + "' handle event error: " + ex);
+                });
+            });
+        }
+        handleControllerEvent(singlefin, delegate, page, parameters, event) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                var result = parameters;
+                if (!delegate.controller) {
+                    return resolve(result);
+                }
+                for (var i = 0; i < page.controllers.length; i++) {
+                    var controller = page.controllers[i];
+                    var controllerMethod = controller[delegate.controller];
+                    if (controllerMethod) {
+                        var promise = controllerMethod.call(controller, page.app, page, parameters, event);
+                        if (promise) {
+                            yield promise.then((_result) => __awaiter(this, void 0, void 0, function* () {
+                                result = _result;
+                            }), (ex) => {
+                                if (ex) {
+                                    console.error("page '" + page.name + "' handle controller error: " + ex);
+                                }
+                                reject(ex);
+                            });
+                        }
+                    }
+                }
+                resolve(result);
+            }));
+        }
+        handleModelEvent(singlefin, delegate, page, parameters, pageModels) {
+            if (!delegate.model) {
+                return Promise.resolve();
+            }
+            if (pageModels) {
+                var modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
+                if (pageModels[modelMethodName]) {
+                    var pageModelMethodName = pageModels[modelMethodName].binding;
+                    var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, pageModelMethodName);
+                    var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, pageModelMethodName);
+                    return modelMethod.call(model, page.app, singlefin.models, parameters);
+                }
+            }
+            var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, delegate.model);
+            var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
+            return modelMethod.call(model, page.app, singlefin.models, parameters);
+        }
+        handlePageEvent(singlefin, delegate) {
+            return new Promise((resolve, reject) => {
+                if (!delegate.page) {
+                    return resolve();
+                }
+                if (delegate.page.open) {
+                    singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
+                        return resolve();
+                    });
+                }
+                else if (delegate.page.refresh) {
+                    singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
+                        return resolve();
+                    });
+                }
+                else if (delegate.page.close) {
+                    singlefin.close(delegate.page.close, delegate.page.parameters).then(() => {
+                        return resolve();
+                    });
+                }
+                else {
+                    reject("method '" + delegate.page + "' not supported");
+                }
+            });
+        }
+        handleGroupEvent(singlefin, delegate) {
+            if (!delegate.group) {
+                return Promise.resolve();
+            }
+            if (delegate.group.open) {
+                return singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models);
+            }
+            return Promise.reject("method '" + delegate.page + "' not supported");
+        }
+        handleEventEvent(singlefin, delegate, page, parameters, pageModels) {
+            if (!delegate.event) {
+                return Promise.resolve();
+            }
+            if (delegate.event.delegate) {
+                return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
+            }
+            return Promise.reject("method '" + delegate.page + "' not supported");
+        }
+        handleRequestEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
+            if (!delegate.request) {
+                return Promise.resolve();
+            }
+            var request = delegate.request.handler;
+            return request.call(singlefin, page, singlefin.models, result, pageModels);
+        }
+        handleBrowserEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
+            if (!delegate.browser) {
+                return Promise.resolve();
+            }
+            if (delegate.browser == "refresh") {
+                window.location.href = window.location.href;
+            }
+        }
+    }
+    SinglefinModule.EventManager = EventManager;
 })(SinglefinModule || (SinglefinModule = {}));
 //# sourceMappingURL=singlefin.js.map

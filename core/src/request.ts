@@ -1,16 +1,15 @@
 module SinglefinModule {
     export class Request {
+        private _config: any;
         private _route: string;
         private _httpMethod: string;
-        private _done: string;
-        private _error: string;
         private _models: any;
 
-        constructor(config: any) {//_route: string, _httpMethod: string, _data: any, _result: any) {
+        constructor(config: any) {
+            this._config = config;
+            
             this._route = config.route;
             this._httpMethod = config.httpMethod ? config.httpMethod : "post";
-            this._done = config.done;
-            this._error = config.error;
             this._models = config.models ? config.models : {};
         }
         
@@ -37,7 +36,7 @@ module SinglefinModule {
                                 Runtime.setProperty(this._models.result, models, response);
                             }
 
-                            page.handleEvent(singlefin, page.events, this._done, page, parameters, pageModels).then(() => {
+                            page.eventManager.handleEvent(singlefin, this._config, "resolved", page, parameters, null).then(() => {
                                 resolve();
                             }).catch(() => {
                                 reject();
@@ -48,7 +47,7 @@ module SinglefinModule {
                                 Runtime.setProperty(this._models.error, models, error.responseText);
                             }
 
-                            page.handleEvent(singlefin, page.events, this._error, page, parameters, pageModels).then(() => {
+                            page.eventManager.handleEvent(singlefin, this._config, "rejected", page, parameters, null).then(() => {
                                 resolve();
                             }).catch(() => {
                                 reject();

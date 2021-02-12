@@ -40,7 +40,7 @@ module SinglefinModule {
                 model: model
             }, (event: any) => {
                 var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
+                var _page: Page = event.data.page;
                 var _valuePath = event.data.valuePath;
                 var _model = event.data.model;
                 var _data = event.data.data;
@@ -56,7 +56,7 @@ module SinglefinModule {
                     return;
                 }
 
-                _page.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
+                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
             });
         }
 

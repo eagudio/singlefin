@@ -29,9 +29,9 @@ module SinglefinModule {
                 return;
             }
 
-            ProxyHandlerMap.deleteProxyStartWith(this._model.from + "[");
+            ProxyHandlerMap.deleteProxyStartWith(this._model.list + "[");
 
-            this._page.handleEvent(this._singlefin, this._model, "on", this._page, value, null);
+            this._page.eventManager.handleEvent(this._singlefin, this._model, "on", this._page, value, null);
         }
     }
 }
