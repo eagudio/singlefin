@@ -14,7 +14,7 @@ module SinglefinModule {
         }
         
         call(singlefin: Singlefin, page: Page, models: any, parameters: any, pageModels: any) {
-            return new Promise<void>((resolve, reject: any) => {
+            return new Promise<void>((resolve: any, reject: any) => {
                 var jsonData: any = {};
 
                 if(!this._models.data) {

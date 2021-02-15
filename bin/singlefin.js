@@ -2041,7 +2041,12 @@ var SinglefinModule;
         }
         makeBinding(element, attributeName, property) {
             if (element.is('input')) {
-                return new SinglefinModule.InputBinding(element, attributeName, property);
+                if (element.attr("type") == "file") {
+                    return new SinglefinModule.InputFileBinding(element, attributeName, property);
+                }
+                else {
+                    return new SinglefinModule.InputBinding(element, attributeName, property);
+                }
             }
             else if (element.is('textarea')) {
                 return new SinglefinModule.TextareaBinding(element, attributeName, property);
@@ -2352,6 +2357,47 @@ var SinglefinModule;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {
+    class InputFileBinding extends SinglefinModule.ElementBinding {
+        init(value) {
+        }
+        watch(singlefin, page, model, valuePath, data, pageData) {
+            this.htmlElement.on("change", {
+                singlefin: singlefin,
+                page: page,
+                data: data,
+                valuePath: valuePath,
+                model: model
+            }, (event) => {
+                var _singlefin = event.data.singlefin;
+                var _page = event.data.page;
+                var _valuePath = event.data.valuePath;
+                var _model = event.data.model;
+                var _data = event.data.data;
+                var inputElement = event.currentTarget;
+                if (inputElement.files && inputElement.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = ((e) => {
+                        var fileContent = e.target.result;
+                        SinglefinModule.Runtime.setProperty(_valuePath, _data, fileContent);
+                        if (!_model) {
+                            return;
+                        }
+                        if (!_model.on) {
+                            return;
+                        }
+                        _page.eventManager.handleEvent(_singlefin, _model, "on", _page, fileContent, event);
+                    });
+                    reader.readAsDataURL(inputElement.files[0]);
+                }
+            });
+        }
+        update(value) {
+        }
+    }
+    SinglefinModule.InputFileBinding = InputFileBinding;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
     class ListBinding extends SinglefinModule.ElementBinding {
         constructor(htmlElement, attribute, property, singlefin, page, model) {
             super(htmlElement, attribute, property);
@@ -2658,6 +2704,7 @@ var SinglefinModule;
                 if (!eventsList) {
                     return resolve(result);
                 }
+                console.log(eventsList);
                 for (var i = 0; i < eventsList.length; i++) {
                     yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
                         result = _result;
@@ -2671,20 +2718,28 @@ var SinglefinModule;
         handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
             return new Promise((resolve, reject) => {
                 var result = _result;
+                console.log("handleAction");
                 this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
                     result = _result;
+                    console.log("handleControllerEvent");
                     return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
                 })).then(() => {
-                    return this.handlePageEvent(singlefin, action);
+                    console.log("handleModelEvent");
+                    return this.handlePageEvent(singlefin, action, page);
                 }).then(() => {
+                    console.log("handlePageEvent");
                     return this.handleGroupEvent(singlefin, action);
                 }).then(() => {
-                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+                    console.log("handleGroupEvent");
+                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
+                    console.log("handleEventEvent");
                     return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
+                    console.log("handleRequestEvent");
                     return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
+                    console.log("handleBrowserEvent");
                     resolve(result);
                 }).catch((ex) => {
                     reject("page '" + page.name + "' handle event error: " + ex);
@@ -2697,6 +2752,7 @@ var SinglefinModule;
                 if (!delegate.controller) {
                     return resolve(result);
                 }
+                console.log(page);
                 for (var i = 0; i < page.controllers.length; i++) {
                     var controller = page.controllers[i];
                     var controllerMethod = controller[delegate.controller];
@@ -2706,10 +2762,8 @@ var SinglefinModule;
                             yield promise.then((_result) => __awaiter(this, void 0, void 0, function* () {
                                 result = _result;
                             }), (ex) => {
-                                if (ex) {
-                                    console.error("page '" + page.name + "' handle controller error: " + ex);
-                                }
-                                reject(ex);
+                                console.error("page '" + page.name + "' handle controller error: " + ex);
+                                return reject(ex);
                             });
                         }
                     }
@@ -2734,18 +2788,26 @@ var SinglefinModule;
             var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
             return modelMethod.call(model, page.app, singlefin.models, parameters);
         }
-        handlePageEvent(singlefin, delegate) {
+        handlePageEvent(singlefin, delegate, page) {
             return new Promise((resolve, reject) => {
                 if (!delegate.page) {
                     return resolve();
                 }
+                var pageModels = {};
+                for (var key in delegate.page.models) {
+                    var valuePath = delegate.page.models[key].binding;
+                    valuePath = valuePath.replace(".$", "[" + page.index + "]");
+                    valuePath = valuePath.trim();
+                    pageModels[key] = {};
+                    pageModels[key].binding = valuePath;
+                }
                 if (delegate.page.open) {
-                    singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
+                    singlefin.open(delegate.page.open, delegate.page.parameters, pageModels).then(() => {
                         return resolve();
                     });
                 }
                 else if (delegate.page.refresh) {
-                    singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
+                    singlefin.refresh(delegate.page.refresh, delegate.page.parameters, pageModels).then(() => {
                         return resolve();
                     });
                 }
@@ -2768,14 +2830,20 @@ var SinglefinModule;
             }
             return Promise.reject("method '" + delegate.page + "' not supported");
         }
-        handleEventEvent(singlefin, delegate, page, parameters, pageModels) {
+        handleEventEvent(singlefin, delegate, page, parameters, pageModels, eventObject) {
             if (!delegate.event) {
                 return Promise.resolve();
+            }
+            if (delegate.event.preventDefault == true) {
+                eventObject.preventDefault();
+                if (!delegate.event.delegate) {
+                    return Promise.resolve();
+                }
             }
             if (delegate.event.delegate) {
                 return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
             }
-            return Promise.reject("method '" + delegate.page + "' not supported");
+            return Promise.reject("method '" + delegate.event + "' not supported");
         }
         handleRequestEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
             if (!delegate.request) {
@@ -2789,8 +2857,10 @@ var SinglefinModule;
                 return Promise.resolve();
             }
             if (delegate.browser == "refresh") {
-                window.location.href = window.location.href;
+                //window.location.href = window.location.href;
+                window.location.reload();
             }
+            return Promise.resolve();
         }
     }
     SinglefinModule.EventManager = EventManager;

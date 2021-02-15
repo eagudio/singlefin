@@ -72,6 +72,7 @@ module SinglefinModule {
                                 Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
 
                                 var value: any = Runtime.getProperty(data, valuePath);
+                                
                                 elementBinding.init(value);
                             }
                         }
@@ -88,7 +89,12 @@ module SinglefinModule {
 
         makeBinding(element: any, attributeName: string, property: string): ElementBinding {
             if(element.is('input')) {
-                return new InputBinding(element, attributeName, property);
+                if(element.attr("type") == "file") {
+                    return new InputFileBinding(element, attributeName, property);
+                }
+                else {
+                    return new InputBinding(element, attributeName, property);
+                }
             }
             else if(element.is('textarea')) {
                 return new TextareaBinding(element, attributeName, property);

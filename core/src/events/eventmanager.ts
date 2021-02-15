@@ -117,21 +117,29 @@ module SinglefinModule {
 			return new Promise((resolve, reject) => {
 				var result = _result;
 				
+				console.log("handleAction");
 				this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then(async (_result: any) => {
 					result = _result;
 	
+					console.log("handleControllerEvent");
 					return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
 				}).then(() => {
-					return this.handlePageEvent(singlefin, action);
+					console.log("handleModelEvent");
+					return this.handlePageEvent(singlefin, action, page);
 				}).then(() => {
+					console.log("handlePageEvent");
 					return this.handleGroupEvent(singlefin, action);
 				}).then(() => {
-					return this.handleEventEvent(singlefin, action, page, parameters, pageModels);
+					console.log("handleGroupEvent");
+					return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
+					console.log("handleEventEvent");
 					return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
+					console.log("handleRequestEvent");
 					return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
+					console.log("handleBrowserEvent");
 					resolve(result);
 				}).catch((ex: any) => {
 					reject("page '" + page.name + "' handle event error: " + ex);
@@ -147,6 +155,7 @@ module SinglefinModule {
 					return resolve(result);
 				}
 	
+				console.log(page);
 				for(var i=0; i<page.controllers.length; i++) {
 					var controller = page.controllers[i];
 					var controllerMethod = controller[delegate.controller];
@@ -155,14 +164,12 @@ module SinglefinModule {
 						var promise = controllerMethod.call(controller, page.app, page, parameters, event);
 
 						if(promise) {
-							await promise.then(async (_result: any) => {
+							await promise.then((_result: any) => {
 								result = _result;
 							}, (ex: any) => {
-								if(ex) {
-									console.error("page '" + page.name +  "' handle controller error: " + ex);
-								}
+								console.error("page '" + page.name +  "' handle controller error: " + ex);
 								
-								reject(ex);
+								return reject(ex);
 							});
 						}
 					}
@@ -196,19 +203,31 @@ module SinglefinModule {
 			return modelMethod.call(model, page.app, singlefin.models, parameters);
 		}
 
-		handlePageEvent(singlefin: Singlefin, delegate: any) {
+		handlePageEvent(singlefin: Singlefin, delegate: any, page: Page) {
 			return new Promise<void>((resolve, reject) => {
 				if(!delegate.page) {
 					return resolve();
 				}
 
+				var pageModels: any = {};
+
+				for(var key in delegate.page.models) {
+					var valuePath = delegate.page.models[key].binding
+
+					valuePath = valuePath.replace(".$", "[" + page.index + "]");
+					valuePath = valuePath.trim();
+
+					pageModels[key] = {};
+					pageModels[key].binding = valuePath;
+				}
+
 				if(delegate.page.open) {
-					singlefin.open(delegate.page.open, delegate.page.parameters, delegate.page.models).then(() => {
+					singlefin.open(delegate.page.open, delegate.page.parameters, pageModels).then(() => {
 						return resolve();
 					});
 				}
 				else if(delegate.page.refresh) {
-					singlefin.refresh(delegate.page.refresh, delegate.page.parameters, delegate.page.models).then(() => {
+					singlefin.refresh(delegate.page.refresh, delegate.page.parameters, pageModels).then(() => {
 						return resolve();
 					});
 				}
@@ -235,16 +254,24 @@ module SinglefinModule {
 			return Promise.reject("method '" + delegate.page + "' not supported");
 		}
 
-		handleEventEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any) {
+		handleEventEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, eventObject: any) {
 			if(!delegate.event) {
 				return Promise.resolve();
+			}
+
+			if(delegate.event.preventDefault == true) {
+				eventObject.preventDefault();
+
+				if(!delegate.event.delegate) {
+					return Promise.resolve();
+				}
 			}
 
 			if(delegate.event.delegate) {
 				return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
 			}
 			
-			return Promise.reject("method '" + delegate.page + "' not supported");
+			return Promise.reject("method '" + delegate.event + "' not supported");
 		}
 
 		handleRequestEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, result: any, pageModels: any, eventObject?: any) {
@@ -263,8 +290,11 @@ module SinglefinModule {
 			}
 
 			if(delegate.browser == "refresh") {
-				window.location.href = window.location.href;
+				//window.location.href = window.location.href;
+				window.location.reload();
 			}
+
+			return Promise.resolve();
 		}
     }
 }
