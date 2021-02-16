@@ -136,7 +136,7 @@ var SinglefinModule;
             singlefin.getBody().styles = this.unbundleFiles(body.styles);
             singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
             singlefin.getBody().events = this.processEvents(body.events);
-            this.addHandlers(singlefin.body, singlefin);
+            singlefin.getBody().events = this.processModels(body.models);
             this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
             this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
             this.processPages("commit", singlefin.body, body.commit, config.widgets, singlefin, false, singlefin.body);
@@ -156,20 +156,6 @@ var SinglefinModule;
                 }
             }
             singlefin.resources = module.resources;
-        }
-        addHandlers(pagePath, singlefin) {
-            /*var _page: any = singlefin.pages[pagePath];
-
-            if(_page.events) {
-                for(var h=0; h<_page.events.length; h++) {
-                    if(!singlefin.handlers[_page.events[h]]) {
-                        singlefin.handlers[_page.events[h]] = [];
-                    }
-
-                    singlefin.handlers[_page.events[h]].push(pagePath);
-                }
-                
-            }*/
         }
         processPages(action, containerName, pages, widgets, singlefin, isWidget, appRootPath) {
             if (!action) {
@@ -214,12 +200,12 @@ var SinglefinModule;
                 page.styles = this.unbundleFiles(page.styles);
                 page.scripts = this.unbundleFiles(page.scripts);
                 page.events = this.processEvents(page.events);
+                page.models = this.processModels(page.models);
                 singlefin.addPage(pageName, page.hidden, page.showed, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
                 this.processPages("replace", pagePath, page.replace, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("commit", pagePath, page.commit, widgets, singlefin, page.isWidget, page.appRootPath);
                 this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget, page.appRootPath);
-                this.addHandlers(pagePath, singlefin);
             }
         }
         processChildrenPage(parentPagePath, childrenPage) {
@@ -235,13 +221,29 @@ var SinglefinModule;
             return children;
         }
         processEvents(events) {
+            if (!events) {
+                return events;
+            }
             for (var eventKey in events) {
-                var event = events[eventKey];
-                for (var i = 0; i < event.length; i++) {
-                    event[i] = this.bundleRequest(event[i]);
-                }
+                events[eventKey] = this.processEventDelegates(events[eventKey]);
             }
             return events;
+        }
+        processEventDelegates(delegates) {
+            if (!delegates) {
+                return delegates;
+            }
+            for (var i = 0; i < delegates.length; i++) {
+                delegates[i] = this.bundleRequest(delegates[i]);
+            }
+            return delegates;
+        }
+        processModels(models) {
+            for (var modelKey in models) {
+                var model = models[modelKey];
+                model.on = this.processEventDelegates(model.on);
+            }
+            return models;
         }
         bundleRequest(eventHandler) {
             if (!eventHandler) {
@@ -2704,7 +2706,6 @@ var SinglefinModule;
                 if (!eventsList) {
                     return resolve(result);
                 }
-                console.log(eventsList);
                 for (var i = 0; i < eventsList.length; i++) {
                     yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
                         result = _result;
@@ -2718,28 +2719,20 @@ var SinglefinModule;
         handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
             return new Promise((resolve, reject) => {
                 var result = _result;
-                console.log("handleAction");
                 this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
                     result = _result;
-                    console.log("handleControllerEvent");
                     return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
                 })).then(() => {
-                    console.log("handleModelEvent");
                     return this.handlePageEvent(singlefin, action, page);
                 }).then(() => {
-                    console.log("handlePageEvent");
                     return this.handleGroupEvent(singlefin, action);
                 }).then(() => {
-                    console.log("handleGroupEvent");
                     return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
-                    console.log("handleEventEvent");
                     return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
-                    console.log("handleRequestEvent");
                     return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
                 }).then(() => {
-                    console.log("handleBrowserEvent");
                     resolve(result);
                 }).catch((ex) => {
                     reject("page '" + page.name + "' handle event error: " + ex);
@@ -2752,16 +2745,15 @@ var SinglefinModule;
                 if (!delegate.controller) {
                     return resolve(result);
                 }
-                console.log(page);
                 for (var i = 0; i < page.controllers.length; i++) {
                     var controller = page.controllers[i];
                     var controllerMethod = controller[delegate.controller];
                     if (controllerMethod) {
                         var promise = controllerMethod.call(controller, page.app, page, parameters, event);
                         if (promise) {
-                            yield promise.then((_result) => __awaiter(this, void 0, void 0, function* () {
+                            yield promise.then((_result) => {
                                 result = _result;
-                            }), (ex) => {
+                            }, (ex) => {
                                 console.error("page '" + page.name + "' handle controller error: " + ex);
                                 return reject(ex);
                             });

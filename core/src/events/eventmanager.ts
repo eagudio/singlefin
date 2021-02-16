@@ -117,29 +117,21 @@ module SinglefinModule {
 			return new Promise((resolve, reject) => {
 				var result = _result;
 				
-				console.log("handleAction");
 				this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then(async (_result: any) => {
 					result = _result;
 	
-					console.log("handleControllerEvent");
 					return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
 				}).then(() => {
-					console.log("handleModelEvent");
 					return this.handlePageEvent(singlefin, action, page);
 				}).then(() => {
-					console.log("handlePageEvent");
 					return this.handleGroupEvent(singlefin, action);
 				}).then(() => {
-					console.log("handleGroupEvent");
 					return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
-					console.log("handleEventEvent");
 					return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
-					console.log("handleRequestEvent");
 					return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
-					console.log("handleBrowserEvent");
 					resolve(result);
 				}).catch((ex: any) => {
 					reject("page '" + page.name + "' handle event error: " + ex);
@@ -155,7 +147,6 @@ module SinglefinModule {
 					return resolve(result);
 				}
 	
-				console.log(page);
 				for(var i=0; i<page.controllers.length; i++) {
 					var controller = page.controllers[i];
 					var controllerMethod = controller[delegate.controller];

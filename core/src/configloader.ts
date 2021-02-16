@@ -53,8 +53,7 @@ module SinglefinModule {
 			singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
 
 			singlefin.getBody().events = this.processEvents(body.events);
-
-			this.addHandlers(singlefin.body, singlefin);
+			singlefin.getBody().events = this.processModels(body.models);
 			
 			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
 			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
@@ -82,21 +81,6 @@ module SinglefinModule {
 
 			singlefin.resources = module.resources;
 		}
-
-        addHandlers(pagePath: string, singlefin: Singlefin) {
-			/*var _page: any = singlefin.pages[pagePath];
-
-			if(_page.events) {
-				for(var h=0; h<_page.events.length; h++) {
-					if(!singlefin.handlers[_page.events[h]]) {
-						singlefin.handlers[_page.events[h]] = [];
-					}
-
-					singlefin.handlers[_page.events[h]].push(pagePath);
-				}
-				
-			}*/
-        }
         
         processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {
 			if(!action) {
@@ -150,6 +134,7 @@ module SinglefinModule {
 				page.styles = this.unbundleFiles(page.styles);
 				page.scripts = this.unbundleFiles(page.scripts);
 				page.events = this.processEvents(page.events);
+				page.models = this.processModels(page.models);
 
 				singlefin.addPage(pageName, page.hidden, page.showed, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
 
@@ -157,8 +142,6 @@ module SinglefinModule {
 				this.processPages("append", pagePath, page.append, widgets, singlefin, page.isWidget, page.appRootPath);
 				this.processPages("commit", pagePath, page.commit, widgets, singlefin, page.isWidget, page.appRootPath);
 				this.processPages("group", pagePath, page.group, widgets, singlefin, page.isWidget, page.appRootPath);
-
-				this.addHandlers(pagePath, singlefin);
 			}
         }
         
@@ -181,15 +164,37 @@ module SinglefinModule {
 		}
 
 		processEvents(events: any) {
-			for(var eventKey in events) {
-                var event = events[eventKey];
+			if(!events) {
+				return events;
+			}
 
-                for(var i=0; i<event.length; i++) {
-                    event[i] = this.bundleRequest(event[i]);
-                }
+			for(var eventKey in events) {
+				events[eventKey] = this.processEventDelegates(events[eventKey]);
 			}
 			
 			return events;
+		}
+
+		processEventDelegates(delegates: any) {
+			if(!delegates) {
+				return delegates;
+			}
+			
+			for(var i=0; i<delegates.length; i++) {
+				delegates[i] = this.bundleRequest(delegates[i]);
+			}
+
+			return delegates;
+		}
+
+		processModels(models: any) {
+			for(var modelKey in models) {
+                var model = models[modelKey];
+
+				model.on = this.processEventDelegates(model.on);
+			}
+			
+			return models;
 		}
 
 		bundleRequest(eventHandler: any) {
