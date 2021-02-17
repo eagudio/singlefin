@@ -779,24 +779,24 @@ module SinglefinModule {
 					ProxyHandlerMap.registerPage(page.path);
 
 					var valuePath = page.unwind.list;
-					var data = singlefin.modelProxy.data;
 
 					var valuePath = valuePath.replace(".$", "[" + page.index + "]");
 
 					var elementBinding: ElementBinding = new ListBinding(page.htmlElement, "unwind", null, singlefin, page, page.unwind);
 
-					elementBinding.watch(singlefin, page, null, valuePath, data, parameters);
+					elementBinding.watch(singlefin, page, null, valuePath, singlefin.models, parameters);
 
 					var proxyPath = Runtime.getParentPath(valuePath);
-					var object = Runtime.getParentInstance(data, valuePath);
+					var object = Runtime.getParentInstance(singlefin.models, valuePath);
 					var property = Runtime.getPropertyName(valuePath);
 
 					var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
 					ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
-					
-					Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
 
-					var value: any = Runtime.getProperty(data, valuePath);
+					var value: any = Runtime.getProperty(singlefin.models, valuePath);
+					
+					Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
+
 					elementBinding.init(value);
 				}
 

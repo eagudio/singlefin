@@ -27,8 +27,6 @@ module SinglefinModule {
             "it-IT": {}
         };
 
-        private _modelProxy: any;
-
         public static moduleMap: any = {};
         public static loadModuleCallbacks: any = {};
 
@@ -66,15 +64,11 @@ module SinglefinModule {
         }
 
         get models(): any {
-            return this._modelProxy.proxy;
+            return this._models;
         }
 
         get handlers() {
             return this._handlers;
-        }
-
-        public get modelProxy(): any {
-            return this._modelProxy;
         }
 
         getBody(): Page {
@@ -88,8 +82,6 @@ module SinglefinModule {
                 var configLoader = new ConfigLoader();
 
                 configLoader.load(config, this).then(() => {
-                    this._modelProxy = new DataProxy(this._models);
-
                     var _homepage = config.homepage;
 
                     if(homepage) {

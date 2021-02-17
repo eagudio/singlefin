@@ -5,18 +5,12 @@ module SinglefinModule {
 				return;
             }
 
-            var dataProxy: DataProxy = singlefin.modelProxy;
-            
-            if(!dataProxy) {
-				return;
-            }
-
             ProxyHandlerMap.registerPage(page.path);
             
-            this.bindPageElements(singlefin, page, element, models, dataProxy.data, pageData);
+            this.bindPageElements(singlefin, page, element, models, pageData);
         }
 
-        bindPageElements(singlefin: Singlefin, page: Page, element: any, models: any, data: any, pageData: any) {
+        bindPageElements(singlefin: Singlefin, page: Page, element: any, models: any, pageData: any) {
             if(!element) {
 				return;
             }
@@ -60,18 +54,18 @@ module SinglefinModule {
 
                                 var elementBinding: ElementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
                 
-                                elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
+                                elementBinding.watch(singlefin, page, model, valuePath, singlefin.models, pageData);
 
                                 var proxyPath = Runtime.getParentPath(valuePath);
-                                var object = Runtime.getParentInstance(data, valuePath);
+                                var object = Runtime.getParentInstance(singlefin.models, valuePath);
                                 var property = Runtime.getPropertyName(valuePath);
 
                                 var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
                                 ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
                                 
-                                Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
+                                var value: any = Runtime.getProperty(singlefin.models, valuePath);
 
-                                var value: any = Runtime.getProperty(data, valuePath);
+                                Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
                                 
                                 elementBinding.init(value);
                             }
@@ -83,7 +77,7 @@ module SinglefinModule {
             var children = element.children();
 
 			children.each((i: number, item: any) => {
-				this.bindPageElements(singlefin, page, $(item), models, data, pageData);
+				this.bindPageElements(singlefin, page, $(item), models, pageData);
 			});
         }
 

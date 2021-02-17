@@ -1045,17 +1045,16 @@ var SinglefinModule;
                 if (page.unwind && page.unwind.list) {
                     SinglefinModule.ProxyHandlerMap.registerPage(page.path);
                     var valuePath = page.unwind.list;
-                    var data = singlefin.modelProxy.data;
                     var valuePath = valuePath.replace(".$", "[" + page.index + "]");
                     var elementBinding = new SinglefinModule.ListBinding(page.htmlElement, "unwind", null, singlefin, page, page.unwind);
-                    elementBinding.watch(singlefin, page, null, valuePath, data, parameters);
+                    elementBinding.watch(singlefin, page, null, valuePath, singlefin.models, parameters);
                     var proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
-                    var object = SinglefinModule.Runtime.getParentInstance(data, valuePath);
+                    var object = SinglefinModule.Runtime.getParentInstance(singlefin.models, valuePath);
                     var property = SinglefinModule.Runtime.getPropertyName(valuePath);
                     var proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
                     SinglefinModule.ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
-                    SinglefinModule.Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
-                    var value = SinglefinModule.Runtime.getProperty(data, valuePath);
+                    var value = SinglefinModule.Runtime.getProperty(singlefin.models, valuePath);
+                    SinglefinModule.Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
                     elementBinding.init(value);
                 }
                 resolve();
@@ -1632,13 +1631,10 @@ var SinglefinModule;
                 this._models = _models;
             }
             get models() {
-                return this._modelProxy.proxy;
+                return this._models;
             }
             get handlers() {
                 return this._handlers;
-            }
-            get modelProxy() {
-                return this._modelProxy;
             }
             getBody() {
                 return this._pages[this._body];
@@ -1648,7 +1644,6 @@ var SinglefinModule;
                     var params = this.getUrlParams(window.location.href);
                     var configLoader = new SinglefinModule.ConfigLoader();
                     configLoader.load(config, this).then(() => {
-                        this._modelProxy = new SinglefinModule.DataProxy(this._models);
                         var _homepage = config.homepage;
                         if (homepage) {
                             _homepage = homepage;
@@ -1980,14 +1975,10 @@ var SinglefinModule;
             if (!element) {
                 return;
             }
-            var dataProxy = singlefin.modelProxy;
-            if (!dataProxy) {
-                return;
-            }
             SinglefinModule.ProxyHandlerMap.registerPage(page.path);
-            this.bindPageElements(singlefin, page, element, models, dataProxy.data, pageData);
+            this.bindPageElements(singlefin, page, element, models, pageData);
         }
-        bindPageElements(singlefin, page, element, models, data, pageData) {
+        bindPageElements(singlefin, page, element, models, pageData) {
             if (!element) {
                 return;
             }
@@ -2022,14 +2013,14 @@ var SinglefinModule;
                             if (valuePath) {
                                 valuePath = valuePath.replace(".$", "[" + page.index + "]");
                                 var elementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
-                                elementBinding.watch(singlefin, page, model, valuePath, data, pageData);
+                                elementBinding.watch(singlefin, page, model, valuePath, singlefin.models, pageData);
                                 var proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
-                                var object = SinglefinModule.Runtime.getParentInstance(data, valuePath);
+                                var object = SinglefinModule.Runtime.getParentInstance(singlefin.models, valuePath);
                                 var property = SinglefinModule.Runtime.getPropertyName(valuePath);
                                 var proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
                                 SinglefinModule.ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
-                                SinglefinModule.Runtime.setProperty(proxyPath, data, proxyHandler.proxy);
-                                var value = SinglefinModule.Runtime.getProperty(data, valuePath);
+                                var value = SinglefinModule.Runtime.getProperty(singlefin.models, valuePath);
+                                SinglefinModule.Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
                                 elementBinding.init(value);
                             }
                         }
@@ -2038,7 +2029,7 @@ var SinglefinModule;
             });
             var children = element.children();
             children.each((i, item) => {
-                this.bindPageElements(singlefin, page, $(item), models, data, pageData);
+                this.bindPageElements(singlefin, page, $(item), models, pageData);
             });
         }
         makeBinding(element, attributeName, property) {
@@ -2408,6 +2399,10 @@ var SinglefinModule;
             this._model = model;
         }
         init(value) {
+            if (!this._model) {
+                return;
+            }
+            SinglefinModule.ProxyHandlerMap.deleteProxyStartWith(this._model.list + "[");
         }
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
@@ -2415,10 +2410,10 @@ var SinglefinModule;
             if (!this._model) {
                 return;
             }
+            SinglefinModule.ProxyHandlerMap.deleteProxyStartWith(this._model.list + "[");
             if (!this._model.on) {
                 return;
             }
-            SinglefinModule.ProxyHandlerMap.deleteProxyStartWith(this._model.list + "[");
             this._page.eventManager.handleEvent(this._singlefin, this._model, "on", this._page, value, null);
         }
     }
