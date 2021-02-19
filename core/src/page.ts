@@ -829,7 +829,7 @@ module SinglefinModule {
 				group: group
 			});
 
-			html = this.resolveBracketsMarkup(html, singlefin.models, models);
+			html = page.resolveBracketsMarkup(html, singlefin.models, models);
 
 			var htmlElement = $(html);
 
@@ -949,6 +949,12 @@ module SinglefinModule {
 					if(pageModels) {
 						if(pageModels[valuePath]) {
 							valuePath = pageModels[valuePath].binding;
+						}
+					}
+
+					if(this.models) {
+						if(this.models[valuePath]) {
+							valuePath = this.models[valuePath].binding;
 						}
 					}
 

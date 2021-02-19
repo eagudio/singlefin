@@ -188,7 +188,10 @@ class Route {
     }
     makeService(services, serviceName) {
         if (!serviceName) {
-            return;
+            this._service = new EmptyDataService();
+        }
+        if (serviceName == "data") {
+            this._service = new DataService();
         }
         if (serviceName == "file") {
             this._service = new FileService();
@@ -784,6 +787,15 @@ class DataService {
     onResponse(request, response, modelMap, parameters) {
         var data = modelMap.getValue("data");
         response.send(data);
+        return Promise.resolve();
+    }
+}
+class EmptyDataService {
+    onRequest(request, response, modelMap, parameters) {
+        return Promise.resolve();
+    }
+    onResponse(request, response, modelMap, parameters) {
+        response.end();
         return Promise.resolve();
     }
 }

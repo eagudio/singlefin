@@ -171,27 +171,54 @@ module SinglefinModule {
 		}
 
 		handleModelEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any) {
-			if(!delegate.model) {
-				return Promise.resolve();
-			}
-
-			if(pageModels) {
-				var modelMethodName = Runtime.getPropertyName(delegate.model);
-
-				if(pageModels[modelMethodName]) {
-					var pageModelMethodName = pageModels[modelMethodName].binding;
-					
-					var model = Runtime.getParentInstance(singlefin.models, pageModelMethodName);
-					var modelMethod = Runtime.getProperty(singlefin.models, pageModelMethodName);
-
-					return modelMethod.call(model, page.app, singlefin.models, parameters);
+			return new Promise<void>((resolve, reject) => {
+				if(!delegate.model) {
+					return resolve();
 				}
-			}
-
-			var model = Runtime.getParentInstance(singlefin.models, delegate.model);
-			var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
-
-			return modelMethod.call(model, page.app, singlefin.models, parameters);
+	
+				if(pageModels) {
+					var modelMethodName = Runtime.getPropertyName(delegate.model);
+	
+					if(pageModels[modelMethodName]) {
+						var pageModelMethodName = pageModels[modelMethodName].binding;
+						
+						if(!pageModelMethodName) {
+							this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
+								return resolve();
+							}).catch((ex: any) => {
+								return reject(ex);
+							});
+						}
+						else {
+							var model = Runtime.getParentInstance(singlefin.models, pageModelMethodName);
+							var modelMethod = Runtime.getProperty(singlefin.models, pageModelMethodName);
+	
+							modelMethod.call(model, page.app, singlefin.models, parameters, page).then(() => {
+								if(!pageModels[modelMethodName].on) {
+									return resolve();
+								}
+								
+								this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
+									return resolve();
+								}).catch((ex: any) => {
+									return reject(ex);
+								});
+							}).catch((ex: any) => {
+								return reject(ex);
+							});
+						}
+					}
+				}
+	
+				var model = Runtime.getParentInstance(singlefin.models, delegate.model);
+				var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
+	
+				modelMethod.call(model, page.app, singlefin.models, parameters, page).then(() => {
+					return resolve();
+				}).catch((ex: any) => {
+					return reject(ex);
+				});
+			});
 		}
 
 		handlePageEvent(singlefin: Singlefin, delegate: any, page: Page) {
@@ -203,13 +230,17 @@ module SinglefinModule {
 				var pageModels: any = {};
 
 				for(var key in delegate.page.models) {
+					pageModels[key] = {};
+
 					var valuePath = delegate.page.models[key].binding
 
-					valuePath = valuePath.replace(".$", "[" + page.index + "]");
-					valuePath = valuePath.trim();
+					if(valuePath) {
+						valuePath = valuePath.replace(".$", "[" + page.index + "]");
+						valuePath = valuePath.trim();
+					}
 
-					pageModels[key] = {};
 					pageModels[key].binding = valuePath;
+					pageModels[key].on = delegate.page.models[key].on;
 				}
 
 				if(delegate.page.open) {

@@ -94,7 +94,11 @@ class Route {
 
     makeService(services: any, serviceName: string) {
         if(!serviceName) {
-            return;
+            this._service = new EmptyDataService();
+        }
+
+        if(serviceName == "data") {
+            this._service = new DataService();
         }
 
         if(serviceName == "file") {
