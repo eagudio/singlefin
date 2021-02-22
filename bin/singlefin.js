@@ -1259,7 +1259,6 @@ var SinglefinModule;
                 toShow.attr("singlefin-status", false);
                 toShow.replaceWith(html);
             }
-            //element.find(`[singlefin-toremove]`).remove();
         }
         fireShowHtmlElementEvent() {
             if (!this.htmlElement) {
@@ -2317,11 +2316,9 @@ var SinglefinModule;
                 if (this.htmlElement.attr("singlefin-status") == "hide") {
                     this.htmlElement.attr("singlefin-status", "show");
                 }
-                //this.htmlElement.hide();
             }
             else {
                 this.htmlElement.attr("singlefin-status", "hide");
-                //this.htmlElement.show();
             }
         }
     }
@@ -2593,13 +2590,11 @@ var SinglefinModule;
         update(value) {
             if (!value) {
                 this.htmlElement.attr("singlefin-status", "hide");
-                //this.htmlElement.hide();
             }
             else {
                 if (this.htmlElement.attr("singlefin-status") == "hide") {
                     this.htmlElement.attr("singlefin-status", "show");
                 }
-                //this.htmlElement.show();
             }
         }
     }
