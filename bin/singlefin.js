@@ -1226,6 +1226,7 @@ var SinglefinModule;
             }
             if (pageTag.length > 0) {
                 pageTag.before(page.htmlElement);
+                pageTag.find(`[singlefin-toremove]`).remove();
                 if (elements.length == 0) {
                     return;
                 }
@@ -1248,6 +1249,17 @@ var SinglefinModule;
                 containerPage.appendStyles();
                 containerPage.appendScripts();
             }
+            var toHide = element.find(`[singlefin-status="hide"]`);
+            if (toHide.length > 0) {
+                toHide.replaceWith("<!--" + toHide.html() + "-->");
+            }
+            var toShow = element.find(`[singlefin-status="show"]`);
+            if (toShow.length > 0) {
+                var html = toShow.html().substring(4, toShow.html().length - 3);
+                toShow.attr("singlefin-status", false);
+                toShow.replaceWith(html);
+            }
+            //element.find(`[singlefin-toremove]`).remove();
         }
         fireShowHtmlElementEvent() {
             if (!this.htmlElement) {
@@ -2301,11 +2313,15 @@ var SinglefinModule;
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
         update(value) {
-            if (value == true) {
-                this.htmlElement.hide();
+            if (!value) {
+                if (this.htmlElement.attr("singlefin-status") == "hide") {
+                    this.htmlElement.attr("singlefin-status", "show");
+                }
+                //this.htmlElement.hide();
             }
             else {
-                this.htmlElement.show();
+                this.htmlElement.attr("singlefin-status", "hide");
+                //this.htmlElement.show();
             }
         }
     }
@@ -2575,11 +2591,15 @@ var SinglefinModule;
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
         update(value) {
-            if (value == false) {
-                this.htmlElement.hide();
+            if (!value) {
+                this.htmlElement.attr("singlefin-status", "hide");
+                //this.htmlElement.hide();
             }
             else {
-                this.htmlElement.show();
+                if (this.htmlElement.attr("singlefin-status") == "hide") {
+                    this.htmlElement.attr("singlefin-status", "show");
+                }
+                //this.htmlElement.show();
             }
         }
     }

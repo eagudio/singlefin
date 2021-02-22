@@ -1028,6 +1028,8 @@ module SinglefinModule {
 			if(pageTag.length > 0) {
 				pageTag.before(page.htmlElement);
 
+				pageTag.find(`[singlefin-toremove]`).remove();
+
 				if(elements.length == 0) {
 					return;
 				}
@@ -1054,6 +1056,22 @@ module SinglefinModule {
 
 				containerPage.appendStyles();
 				containerPage.appendScripts();
+			}
+
+			var toHide = element.find(`[singlefin-status="hide"]`);
+
+			if(toHide.length > 0) {
+				toHide.replaceWith("<!--" + toHide.html() +  "-->");
+			}
+
+			var toShow = element.find(`[singlefin-status="show"]`);
+
+			if(toShow.length > 0) {
+				var html = toShow.html().substring(4, toShow.html().length-3);
+
+				toShow.attr("singlefin-status", false);
+
+				toShow.replaceWith(html);
 			}
 		}
 
