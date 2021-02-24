@@ -1,2 +1,2 @@
 # Singlefin
-Singlefin is a JavaScript-based open-source front-end web framework.
+Singlefin is a JavaScript-based open-source front-end and back-end web framework.
