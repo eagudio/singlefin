@@ -824,7 +824,6 @@ module SinglefinModule {
 			var html: string = this.resolveMarkup(page.view, {
 				data: data,
 				parameters: page.parameters,
-				resources: singlefin.defaultResources,
 				models: singlefin.models,
 				group: group
 			});
@@ -907,7 +906,6 @@ module SinglefinModule {
 					var code = `(() => {
 						var data = context.data;
 						var parameters = context.parameters;
-						var resources = context.resources;
 						var models = context.models;
 						var model = context.model;
 						var group = context.group;

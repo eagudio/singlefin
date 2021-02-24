@@ -124,6 +124,7 @@ export module SinglefinDeployment {
 
 			this.bundleResources(app.resources, bundle);
             this.bundleModels(app.models, bundle);
+            this.bundleProxies(app.proxies, bundle);
             this.bundleWidgets(app.widgets, bundle);
             this.bundlePages(app.pages, bundle);
         }
@@ -159,6 +160,25 @@ export module SinglefinDeployment {
                 var fileBundle = this.bundleFile(models[model]);
 
                 bundle.models[model] = fileBundle;
+			}
+        }
+
+        bundleProxies(proxies: any, bundle: any) {
+            bundle.proxies = [];
+
+            if(!proxies) {
+                return;
+            }
+
+			for(var i=0; i<proxies.length; i++) {
+                var proxy: any = {};
+                proxy.events = proxies[i].events;
+
+                var fileBundle = this.bundleFile(proxies[i].proxy);
+
+                proxy.proxy = fileBundle;
+
+                bundle.proxies.push(proxy);
 			}
         }
 

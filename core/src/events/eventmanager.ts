@@ -117,14 +117,14 @@ module SinglefinModule {
 			return new Promise((resolve, reject) => {
 				var result = _result;
 				
-				this.handleControllerEvent(singlefin, action, page, parameters, eventObject).then(async (_result: any) => {
+				this.handleControllerEvent(singlefin, action, page, parameters, pageModels, eventObject).then(async (_result: any) => {
 					result = _result;
 	
-					return this.handleModelEvent(singlefin, action, page, parameters, pageModels);
+					return this.handleModelEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
-					return this.handlePageEvent(singlefin, action, page);
+					return this.handlePageEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
-					return this.handleGroupEvent(singlefin, action);
+					return this.handleGroupEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
 					return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
 				}).then(() => {
@@ -139,7 +139,7 @@ module SinglefinModule {
 			});
 		}
 
-		handleControllerEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, event?: any) {
+		handleControllerEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any) {
 			return new Promise(async (resolve, reject) => {
 				var result = parameters;
 
@@ -152,7 +152,7 @@ module SinglefinModule {
 					var controllerMethod = controller[delegate.controller];
 	
 					if(controllerMethod) {
-						var promise = controllerMethod.call(controller, page.app, page, parameters, event);
+						var promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
 
 						if(promise) {
 							await promise.then((_result: any) => {
@@ -170,7 +170,7 @@ module SinglefinModule {
 			});
 		}
 
-		handleModelEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any) {
+		handleModelEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any) {
 			return new Promise<void>((resolve, reject) => {
 				if(!delegate.model) {
 					return resolve();
@@ -193,7 +193,7 @@ module SinglefinModule {
 							var model = Runtime.getParentInstance(singlefin.models, pageModelMethodName);
 							var modelMethod = Runtime.getProperty(singlefin.models, pageModelMethodName);
 	
-							modelMethod.call(model, page.app, singlefin.models, parameters, page).then(() => {
+							modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
 								if(!pageModels[modelMethodName].on) {
 									return resolve();
 								}
@@ -212,8 +212,8 @@ module SinglefinModule {
 	
 				var model = Runtime.getParentInstance(singlefin.models, delegate.model);
 				var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
-	
-				modelMethod.call(model, page.app, singlefin.models, parameters, page).then(() => {
+
+				modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
 					return resolve();
 				}).catch((ex: any) => {
 					return reject(ex);
@@ -221,7 +221,7 @@ module SinglefinModule {
 			});
 		}
 
-		handlePageEvent(singlefin: Singlefin, delegate: any, page: Page) {
+		handlePageEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any) {
 			return new Promise<void>((resolve, reject) => {
 				if(!delegate.page) {
 					return resolve();
@@ -264,46 +264,64 @@ module SinglefinModule {
 			});
 		}
 
-		handleGroupEvent(singlefin: Singlefin, delegate: any) {
-			if(!delegate.group) {
-				return Promise.resolve();
-			}
+		handleGroupEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any) {
+			return new Promise<void>((resolve, reject) => {
+				if(!delegate.group) {
+					return resolve();
+				}
 
-			if(delegate.group.open) {
-				return singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models);
-			}
-			
-			return Promise.reject("method '" + delegate.page + "' not supported");
+				if(!delegate.group.open) {
+					return reject("method '" + delegate.page + "' not supported");
+				}
+				
+				singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+					return resolve();
+				}).catch((ex: any) => {
+					return reject(ex);
+				});
+			});
 		}
 
 		handleEventEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, eventObject: any) {
-			if(!delegate.event) {
-				return Promise.resolve();
-			}
+			return new Promise<void>((resolve, reject) => {
+				if(!delegate.event) {
+					return resolve();
+				}
 
-			if(delegate.event.preventDefault == true) {
-				eventObject.preventDefault();
+				if(delegate.event.preventDefault == true) {
+					eventObject.preventDefault();
+
+					if(!delegate.event.delegate) {
+						return resolve();
+					}
+				}
 
 				if(!delegate.event.delegate) {
-					return Promise.resolve();
+					return reject("method '" + delegate.event + "' not supported");
 				}
-			}
-
-			if(delegate.event.delegate) {
-				return this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels);
-			}
-			
-			return Promise.reject("method '" + delegate.event + "' not supported");
+				
+				this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels).then(() => {
+					return resolve();
+				}).catch((ex: any) => {
+					return reject(ex);
+				});
+			});
 		}
 
 		handleRequestEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, result: any, pageModels: any, eventObject?: any) {
-			if(!delegate.request) {
-				return Promise.resolve();
-			}
+			return new Promise<void>((resolve, reject) => {
+				if(!delegate.request) {
+					return resolve();
+				}
 
-			var request: Request = delegate.request.handler;
+				var request: Request = delegate.request.handler;
 
-			return request.call(singlefin, page, singlefin.models, result, pageModels);
+				request.call(singlefin, page, singlefin.models, result, pageModels).then(() => {
+					resolve();
+				}).catch((ex: any) => {
+					reject(ex);
+				});
+			});
 		}
 
 		handleBrowserEvent(singlefin: Singlefin, delegate: any, page: Page, parameters: any, result: any, pageModels: any, eventObject?: any) {
@@ -312,7 +330,6 @@ module SinglefinModule {
 			}
 
 			if(delegate.browser == "refresh") {
-				//window.location.href = window.location.href;
 				window.location.reload();
 			}
 

@@ -21,11 +21,8 @@ module SinglefinModule {
         private _instances: any[] = [];
         private _pages: any = {};
         private _models: any = {};
+        private _proxies: any[] = [];
         private _handlers: any = {};
-        private _defaultLanguage: string = "it-IT";
-        private _resources: any = {
-            "it-IT": {}
-        };
 
         public static moduleMap: any = {};
         public static loadModuleCallbacks: any = {};
@@ -37,18 +34,6 @@ module SinglefinModule {
 
         get instances() {
             return this._instances;
-        }
-
-        set resources(_resources: any) {
-            this._resources = _resources;
-        }
-
-        get resources() {
-            return this._resources;
-        }
-
-        get defaultResources() {
-            return this._resources[this._defaultLanguage];
         }
 
         get body() {
@@ -65,6 +50,14 @@ module SinglefinModule {
 
         get models(): any {
             return this._models;
+        }
+
+        set proxies(_proxies: any[]) {
+            this._proxies = _proxies;
+        }
+
+        get proxies(): any[] {
+            return this._proxies;
         }
 
         get handlers() {

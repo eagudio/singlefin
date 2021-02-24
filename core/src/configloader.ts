@@ -7,8 +7,8 @@ module SinglefinModule {
 
 
         load(config: any, singlefin: Singlefin) {
-			var resources = config.resources;
 			var models = config.models;
+			var proxies = config.proxies;
 			var pages = config.pages;
 			
 			if(!pages) {
@@ -16,8 +16,6 @@ module SinglefinModule {
 			}
 
 			this._bodyName = Object.keys(pages)[0];
-
-			this.processResources(resources, singlefin);
 
 			if(models) {
 				var module = this.getModule(this._bodyName);
@@ -32,6 +30,24 @@ module SinglefinModule {
 				}
 
 				singlefin.models = module.models;
+			}
+
+			if(proxies) {
+				var module = this.getModule(this._bodyName);
+				module.proxies = [];
+
+				for(var i=0; i<proxies.length; i++) {
+					var proxy: any = {};
+					proxy.events = proxies[i].events;
+
+					var path = "['" + this._bodyName + "'].proxies[" + i + "].proxy";
+
+					proxy.proxy = this.unbundleJavascriptObject(path, "object", proxies[i].proxy);
+
+					module.proxies.push(proxy);
+				}
+
+				singlefin.proxies = module.proxies;
 			}
 
 			singlefin.addBody(this._bodyName);
@@ -53,7 +69,7 @@ module SinglefinModule {
 			singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
 
 			singlefin.getBody().events = this.processEvents(body.events);
-			singlefin.getBody().events = this.processModels(body.models);
+			singlefin.getBody().models = this.processModels(body.models);
 			
 			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
 			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
@@ -61,25 +77,6 @@ module SinglefinModule {
 			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
 
 			return this.loadModules();
-		}
-
-		processResources(resources: any, singlefin: Singlefin) {
-			singlefin.resources = {};
-
-			var module = this.getModule(this._bodyName);
-			module.resources = {};
-
-			for (var languageKey in resources) {
-				module.resources[languageKey] = {};
-				var path = "['" + this._bodyName + "'].resources['" + languageKey + "']";
-
-				for (var resourceKey in resources[languageKey]) {
-					path += "['" + resourceKey + "']";
-					module.resources[languageKey][resourceKey] = this.unbundleJavascriptObject(path, "object", resources[languageKey][resourceKey]); //serve il path...
-				}
-			}
-
-			singlefin.resources = module.resources;
 		}
         
         processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {

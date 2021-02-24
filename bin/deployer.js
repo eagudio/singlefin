@@ -95,6 +95,7 @@ var SinglefinDeployment;
             bundle.homepage = app.homepage;
             this.bundleResources(app.resources, bundle);
             this.bundleModels(app.models, bundle);
+            this.bundleProxies(app.proxies, bundle);
             this.bundleWidgets(app.widgets, bundle);
             this.bundlePages(app.pages, bundle);
         }
@@ -120,6 +121,19 @@ var SinglefinDeployment;
                 bundle.models[model] = {};
                 var fileBundle = this.bundleFile(models[model]);
                 bundle.models[model] = fileBundle;
+            }
+        }
+        bundleProxies(proxies, bundle) {
+            bundle.proxies = [];
+            if (!proxies) {
+                return;
+            }
+            for (var i = 0; i < proxies.length; i++) {
+                var proxy = {};
+                proxy.events = proxies[i].events;
+                var fileBundle = this.bundleFile(proxies[i].proxy);
+                proxy.proxy = fileBundle;
+                bundle.proxies.push(proxy);
             }
         }
         bundleWidgets(widgets, bundle) {
