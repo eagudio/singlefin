@@ -314,7 +314,7 @@ module SinglefinModule {
 					return resolve();
 				}
 
-				var request: Request = delegate.request.handler;
+				var request: Request = new Request(delegate.request);
 
 				request.call(singlefin, page, singlefin.models, result, pageModels).then(() => {
 					resolve();

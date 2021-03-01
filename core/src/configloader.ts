@@ -68,8 +68,8 @@ module SinglefinModule {
 			singlefin.getBody().styles = this.unbundleFiles(body.styles);
 			singlefin.getBody().scripts = this.unbundleFiles(body.scripts);
 
-			singlefin.getBody().events = this.processEvents(body.events);
-			singlefin.getBody().models = this.processModels(body.models);
+			singlefin.getBody().events = body.events;
+			singlefin.getBody().models = body.models;
 			
 			this.processPages("append", singlefin.body, body.append, config.widgets, singlefin, false, singlefin.body);
 			this.processPages("replace", singlefin.body, body.replace, config.widgets, singlefin, false, singlefin.body);
@@ -130,8 +130,8 @@ module SinglefinModule {
 
 				page.styles = this.unbundleFiles(page.styles);
 				page.scripts = this.unbundleFiles(page.scripts);
-				page.events = this.processEvents(page.events);
-				page.models = this.processModels(page.models);
+				page.events = page.events;
+				page.models = page.models;
 
 				singlefin.addPage(pageName, page.hidden, page.showed, action, pagePath, containerName, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models, page.appRootPath);
 
@@ -158,54 +158,6 @@ module SinglefinModule {
 			}
 
 			return children;
-		}
-
-		processEvents(events: any) {
-			if(!events) {
-				return events;
-			}
-
-			for(var eventKey in events) {
-				events[eventKey] = this.processEventDelegates(events[eventKey]);
-			}
-			
-			return events;
-		}
-
-		processEventDelegates(delegates: any) {
-			if(!delegates) {
-				return delegates;
-			}
-			
-			for(var i=0; i<delegates.length; i++) {
-				delegates[i] = this.bundleRequest(delegates[i]);
-			}
-
-			return delegates;
-		}
-
-		processModels(models: any) {
-			for(var modelKey in models) {
-                var model = models[modelKey];
-
-				model.on = this.processEventDelegates(model.on);
-			}
-			
-			return models;
-		}
-
-		bundleRequest(eventHandler: any) {
-            if(!eventHandler) {
-                return eventHandler;
-            }
-
-            if(!eventHandler.request) {
-                return eventHandler;
-			}
-
-			eventHandler.request.handler = new Request(eventHandler.request);
-
-            return eventHandler;
 		}
 
 		unbundleView(view: string): any {
