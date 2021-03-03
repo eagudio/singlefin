@@ -253,19 +253,14 @@ var SinglefinModule;
             return objects;
         }
         unbundleJavascriptObject(path, moduleType, javascriptObject) {
-            var controllerContent = this.decodeBase64(javascriptObject);
-            if (controllerContent.startsWith("class")) {
-                return this.addModuleCode(path, moduleType, controllerContent);
+            var code = this.decodeBase64(javascriptObject);
+            if (moduleType == "array") {
+                this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
             }
-            //TODO: workaround: tutti i moduli (controller, model, ecc.) devono essere convertiti in classi e il define va eliminato, così come l'eval!
-            var define = (_obj) => {
-                if (typeof _obj === "function") {
-                    return _obj();
-                }
-                return _obj;
-            };
-            var obj = eval(controllerContent);
-            return obj;
+            else {
+                this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
+            }
+            return null;
         }
         decodeBase64(data) {
             return decodeURIComponent(escape(atob(data)));
@@ -275,15 +270,6 @@ var SinglefinModule;
                 SinglefinModule.Singlefin.moduleMap[path] = {};
             }
             return SinglefinModule.Singlefin.moduleMap[path];
-        }
-        addModuleCode(path, moduleType, code) {
-            if (moduleType == "array") {
-                this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
-            }
-            else {
-                this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
-            }
-            return null;
         }
         loadModules() {
             return new Promise((resolve, reject) => {
@@ -2577,6 +2563,9 @@ var SinglefinModule;
                 var _data = event.data.data;
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
+                if (value === "null") {
+                    value = null;
+                }
                 SinglefinModule.Runtime.setProperty(_valuePath, _data, value);
                 if (!_model) {
                     return;
@@ -2597,10 +2586,10 @@ var SinglefinModule;
         }
         update(value) {
             if (this.attribute == "value") {
-                this.htmlElement.val(value);
+                this.htmlElement.val(String(value));
             }
             else {
-                this.htmlElement.attr(this.attribute, value);
+                this.htmlElement.attr(this.attribute, String(value));
             }
         }
     }

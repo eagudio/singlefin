@@ -20,6 +20,10 @@ module SinglefinModule {
 
                 var inputElement = $(event.currentTarget);
                 var value = inputElement.val();
+
+                if(value === "null") {
+                    value = null;
+                }
             
                 Runtime.setProperty(_valuePath, _data, value);
                 
@@ -47,10 +51,10 @@ module SinglefinModule {
 
         update(value: any) {
             if(this.attribute == "value") {
-                this.htmlElement.val(value);
+                this.htmlElement.val(String(value));
             }
             else {
-                this.htmlElement.attr(this.attribute, value);
+                this.htmlElement.attr(this.attribute, String(value));
             }
         }
 

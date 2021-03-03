@@ -207,24 +207,16 @@ module SinglefinModule {
 		}
 
 		unbundleJavascriptObject(path: string, moduleType: string, javascriptObject: string): any {
-			var controllerContent = this.decodeBase64(javascriptObject);
-			
-			if(controllerContent.startsWith("class")) {
-				return this.addModuleCode(path, moduleType, controllerContent);
+			var code = this.decodeBase64(javascriptObject);
+
+			if(moduleType == "array") {
+				this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
+			}
+			else {
+				this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
 			}
 
-			//TODO: workaround: tutti i moduli (controller, model, ecc.) devono essere convertiti in classi e il define va eliminato, così come l'eval!
-			var define = (_obj: any) => {
-				if(typeof _obj === "function") {
-					return _obj();
-				}
-
-				return _obj;
-			};
-
-			var obj = eval(controllerContent);
-			
-			return obj;
+			return null;
 		}
 
 		decodeBase64(data: string) {
@@ -237,17 +229,6 @@ module SinglefinModule {
 			}
 
 			return Singlefin.moduleMap[path];
-		}
-
-		addModuleCode(path: string, moduleType: string, code: string) {
-			if(moduleType == "array") {
-				this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
-			}
-			else {
-				this._modulesCode += `Singlefin.moduleMap` + path + ` = new ` + code + `()\n`;
-			}
-
-			return null;
 		}
 
 		loadModules() {
