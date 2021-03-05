@@ -7,6 +7,7 @@ module SinglefinModule {
 
 
         load(config: any, singlefin: Singlefin) {
+			var modules = config.modules;
 			var models = config.models;
 			var proxies = config.proxies;
 			var pages = config.pages;
@@ -16,6 +17,14 @@ module SinglefinModule {
 			}
 
 			this._bodyName = Object.keys(pages)[0];
+
+			var module = this.getModule(this._bodyName);
+				
+			module.modules = {};
+
+			this.processModules(module.modules, config.modules, null);
+
+			Singlefin.modules = module.modules;
 
 			if(models) {
 				var module = this.getModule(this._bodyName);
@@ -77,6 +86,32 @@ module SinglefinModule {
 			this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
 
 			return this.loadModules();
+		}
+
+		processModules(modules: any, modulesConfig: any, path: any) {
+			if(!modulesConfig) {
+				return;
+			}
+
+			for (var key in modulesConfig) {
+				if(!path) {
+					path = key;
+				}
+				else {
+					path = path + "." + key;
+				}
+
+				if(typeof modulesConfig[key] != "string") {
+					modules[key] = {};
+
+                    this.processModules(modules[key], modulesConfig[key], path);
+                }
+                else {
+					var classPath = "['" + this._bodyName + "'].modules." + path;
+
+					modules[key] = this.unbundleJavascriptClass(classPath, "object", modulesConfig[key]);
+				}
+			}
 		}
         
         processPages(action: string, containerName: string, pages: any, widgets: any, singlefin: Singlefin, isWidget: boolean, appRootPath: string) {
@@ -204,6 +239,19 @@ module SinglefinModule {
 			};
 
 			return objects;
+		}
+
+		unbundleJavascriptClass(path: string, moduleType: string, javascriptClass: string): any {
+			var code = this.decodeBase64(javascriptClass);
+
+			if(moduleType == "array") {
+				this._modulesCode += `Singlefin.moduleMap` + path + `.push(` + code + `)\n`;
+			}
+			else {
+				this._modulesCode += `Singlefin.moduleMap` + path + ` = ` + code + `\n`;
+			}
+
+			return null;
 		}
 
 		unbundleJavascriptObject(path: string, moduleType: string, javascriptObject: string): any {

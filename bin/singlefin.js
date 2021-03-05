@@ -105,6 +105,7 @@ var SinglefinModule;
             this._modulesCode = "";
         }
         load(config, singlefin) {
+            var modules = config.modules;
             var models = config.models;
             var proxies = config.proxies;
             var pages = config.pages;
@@ -112,6 +113,10 @@ var SinglefinModule;
                 throw "pages cannot be null or undefined";
             }
             this._bodyName = Object.keys(pages)[0];
+            var module = this.getModule(this._bodyName);
+            module.modules = {};
+            this.processModules(module.modules, config.modules, null);
+            SinglefinModule.Singlefin.modules = module.modules;
             if (models) {
                 var module = this.getModule(this._bodyName);
                 module.models = {};
@@ -153,6 +158,27 @@ var SinglefinModule;
             this.processPages("commit", singlefin.body, body.commit, config.widgets, singlefin, false, singlefin.body);
             this.processPages("group", singlefin.body, body.group, config.widgets, singlefin, false, singlefin.body);
             return this.loadModules();
+        }
+        processModules(modules, modulesConfig, path) {
+            if (!modulesConfig) {
+                return;
+            }
+            for (var key in modulesConfig) {
+                if (!path) {
+                    path = key;
+                }
+                else {
+                    path = path + "." + key;
+                }
+                if (typeof modulesConfig[key] != "string") {
+                    modules[key] = {};
+                    this.processModules(modules[key], modulesConfig[key], path);
+                }
+                else {
+                    var classPath = "['" + this._bodyName + "'].modules." + path;
+                    modules[key] = this.unbundleJavascriptClass(classPath, "object", modulesConfig[key]);
+                }
+            }
         }
         processPages(action, containerName, pages, widgets, singlefin, isWidget, appRootPath) {
             if (!action) {
@@ -251,6 +277,16 @@ var SinglefinModule;
             }
             ;
             return objects;
+        }
+        unbundleJavascriptClass(path, moduleType, javascriptClass) {
+            var code = this.decodeBase64(javascriptClass);
+            if (moduleType == "array") {
+                this._modulesCode += `Singlefin.moduleMap` + path + `.push(` + code + `)\n`;
+            }
+            else {
+                this._modulesCode += `Singlefin.moduleMap` + path + ` = ` + code + `\n`;
+            }
+            return null;
         }
         unbundleJavascriptObject(path, moduleType, javascriptObject) {
             var code = this.decodeBase64(javascriptObject);
@@ -1992,6 +2028,7 @@ var SinglefinModule;
         }
         Singlefin.moduleMap = {};
         Singlefin.loadModuleCallbacks = {};
+        Singlefin.modules = {};
         return Singlefin;
     })();
     SinglefinModule.Singlefin = Singlefin;

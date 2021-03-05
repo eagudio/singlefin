@@ -26,6 +26,7 @@ module SinglefinModule {
 
         public static moduleMap: any = {};
         public static loadModuleCallbacks: any = {};
+        public static modules: any = {};
 
 
         constructor(config: any, homepage?: string) {

@@ -14,10 +14,29 @@ export module SinglefinDeployment {
 
             var schema = require(schemasPath);
 
+            this.bundleModules(schema.modules);
+
             this.bundleDomains(schema.domains);
-            this.bundleApps(schema.apps);
+            this.bundleApps(schema.apps, schema.modules);
 
             console.log("all bundles builded!");
+        }
+
+        bundleModules(modulesSchema: any) {
+            if(!modulesSchema) {
+                return;
+            }
+
+            for(var key in modulesSchema) {
+                if(typeof modulesSchema[key] != "string") {
+                    this.bundleModules(modulesSchema[key]);
+                }
+                else {
+                    var moduleBundle = this.bundleFile(modulesSchema[key]);
+
+                    modulesSchema[key] = moduleBundle;
+                }
+            }
         }
 
         bundleDomains(domainsSchema: any) {
@@ -107,9 +126,11 @@ export module SinglefinDeployment {
             this._serverInstanceMap[instancePath] = this.readFile(instancePath, 'utf8');
         }
 
-        bundleApps(appsSchema: any) {
+        bundleApps(appsSchema: any, modules: any) {
             for(var key in appsSchema) {
-                var app = {};
+                var app: any = {};
+
+                app.modules = modules;
 
                 this.bundleApp(appsSchema[key], app);
     

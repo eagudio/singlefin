@@ -12,9 +12,24 @@ var SinglefinDeployment;
         make(schemasPath) {
             console.log("build bundles...");
             var schema = require(schemasPath);
+            this.bundleModules(schema.modules);
             this.bundleDomains(schema.domains);
-            this.bundleApps(schema.apps);
+            this.bundleApps(schema.apps, schema.modules);
             console.log("all bundles builded!");
+        }
+        bundleModules(modulesSchema) {
+            if (!modulesSchema) {
+                return;
+            }
+            for (var key in modulesSchema) {
+                if (typeof modulesSchema[key] != "string") {
+                    this.bundleModules(modulesSchema[key]);
+                }
+                else {
+                    var moduleBundle = this.bundleFile(modulesSchema[key]);
+                    modulesSchema[key] = moduleBundle;
+                }
+            }
         }
         bundleDomains(domainsSchema) {
             if (!domainsSchema) {
@@ -83,9 +98,10 @@ var SinglefinDeployment;
         addServerInstance(instancePath) {
             this._serverInstanceMap[instancePath] = this.readFile(instancePath, 'utf8');
         }
-        bundleApps(appsSchema) {
+        bundleApps(appsSchema, modules) {
             for (var key in appsSchema) {
                 var app = {};
+                app.modules = modules;
                 this.bundleApp(appsSchema[key], app);
                 console.log(appsSchema[key].bundle);
                 this.saveBundle(key, appsSchema[key].bundle, app);
