@@ -35,7 +35,7 @@ module SinglefinModule {
 
                             if(pageModels) {
                                 if(pageModels[originalValuePath]) {
-                                    valuePath = pageModels[originalValuePath].binding;
+                                    valuePath = pageModels[originalValuePath].ref;
                                     model = pageModels[originalValuePath];
                                     modelProperty = pageModels[originalValuePath].property;
                                 }
@@ -43,7 +43,7 @@ module SinglefinModule {
                 
                             if(models) {
                                 if(models[originalValuePath]) {
-                                    valuePath = models[originalValuePath].binding;
+                                    valuePath = models[originalValuePath].ref;
                                     model = models[originalValuePath];
                                     modelProperty = models[originalValuePath].property;
                                 }

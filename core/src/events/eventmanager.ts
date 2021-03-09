@@ -180,7 +180,7 @@ module SinglefinModule {
 					var modelMethodName = Runtime.getPropertyName(delegate.model);
 	
 					if(pageModels[modelMethodName]) {
-						var pageModelMethodName = pageModels[modelMethodName].binding;
+						var pageModelMethodName = pageModels[modelMethodName].ref;
 						
 						if(!pageModelMethodName) {
 							this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
@@ -232,14 +232,14 @@ module SinglefinModule {
 				for(var key in delegate.page.models) {
 					pageModels[key] = {};
 
-					var valuePath = delegate.page.models[key].binding
+					var valuePath = delegate.page.models[key].ref
 
 					if(valuePath) {
 						valuePath = valuePath.replace(".$", "[" + page.index + "]");
 						valuePath = valuePath.trim();
 					}
 
-					pageModels[key].binding = valuePath;
+					pageModels[key].ref = valuePath;
 					pageModels[key].on = delegate.page.models[key].on;
 				}
 

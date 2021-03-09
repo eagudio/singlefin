@@ -828,7 +828,9 @@ module SinglefinModule {
 				group: group
 			});
 
-			html = page.resolveBracketsMarkup(html, singlefin.models, models);
+			var markup = new Markup(html);
+
+			html = markup.resolve(singlefin.models, models, this.models, this.index);
 
 			var htmlElement = $(html);
 
@@ -917,48 +919,6 @@ module SinglefinModule {
 					eval(code);
 
 					str = str.replace(match[0], result);
-
-					match = markupRegex.exec(str);
-				}
-
-				return str;
-            }
-            catch(ex) {
-                console.error("resolve markup error: " + ex);
-                
-                return markup;
-            }
-		}
-
-		resolveBracketsMarkup(markup: string, models: any, pageModels: any): string {
-			try {
-				var markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
-				
-				var str = markup;
-
-				var match = markupRegex.exec(str);
-				
-				while(match) {
-					var valuePath = match[1];				
-
-					valuePath = valuePath.replace(".$", "[" + this.index + "]");
-					valuePath = valuePath.trim();
-
-					if(pageModels) {
-						if(pageModels[valuePath]) {
-							valuePath = pageModels[valuePath].binding;
-						}
-					}
-
-					if(this.models) {
-						if(this.models[valuePath]) {
-							valuePath = this.models[valuePath].binding;
-						}
-					}
-
-					var value: any = Runtime.getProperty(models, valuePath);
-
-					str = str.replace(match[0], value);
 
 					match = markupRegex.exec(str);
 				}

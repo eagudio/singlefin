@@ -445,6 +445,67 @@ var SinglefinModule;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {
+    class Markup {
+        constructor(text) {
+            this._text = text;
+        }
+        resolve(models, refModels, pageModels, pageIndex) {
+            try {
+                var markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
+                var match = markupRegex.exec(this._text);
+                while (match) {
+                    var isRefModelsResolved = this.resolveModelsReference(match[0], refModels, match[1], models, pageIndex);
+                    var isPageModelsResolved = this.resolveModelsReference(match[0], pageModels, match[1], models, pageIndex);
+                    if (!isRefModelsResolved && !isPageModelsResolved) {
+                        var valuePath = match[1].replace(".$", "[" + pageIndex + "]");
+                        var value = SinglefinModule.Runtime.getProperty(models, valuePath);
+                        this._text = this._text.replace(match[0], value);
+                    }
+                    match = markupRegex.exec(this._text);
+                }
+                return this._text;
+            }
+            catch (ex) {
+                console.error("resolve markup error: " + ex);
+                return this._text;
+            }
+        }
+        resolveModelsReference(text, refModels, modelPath, models, pageIndex) {
+            var valuePath = modelPath.replace(".$", "[" + pageIndex + "]");
+            valuePath = valuePath.trim();
+            if (refModels) {
+                if (refModels[valuePath]) {
+                    var ref = refModels[valuePath].ref;
+                    if (typeof ref !== "string") {
+                        var mapPath = ref.map.replace(".$", "[" + pageIndex + "]");
+                        var map = SinglefinModule.Runtime.getProperty(models, mapPath);
+                        var keyPath = ref.key.replace(".$", "[" + pageIndex + "]");
+                        var key = SinglefinModule.Runtime.getProperty(models, keyPath);
+                        var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
+                        if (map[key] !== undefined) {
+                            this._text = this._text.replace(text, map[key]);
+                            return true;
+                        }
+                        else if (defaultValuePath) {
+                            var defaultValue = SinglefinModule.Runtime.getProperty(models, defaultValuePath);
+                            this._text = this._text.replace(text, defaultValue);
+                            return true;
+                        }
+                    }
+                    else {
+                        valuePath = ref.replace(".$", "[" + pageIndex + "]");
+                        var value = SinglefinModule.Runtime.getProperty(models, valuePath);
+                        this._text = this._text.replace(text, value);
+                    }
+                }
+            }
+            return false;
+        }
+    }
+    SinglefinModule.Markup = Markup;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
     class Page {
         constructor(app, name, hidden, showed, action, container, path, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models) {
             this._index = 0;
@@ -1063,7 +1124,8 @@ var SinglefinModule;
                 models: singlefin.models,
                 group: group
             });
-            html = page.resolveBracketsMarkup(html, singlefin.models, models);
+            var markup = new SinglefinModule.Markup(html);
+            html = markup.resolve(singlefin.models, models, this.models, this.index);
             var htmlElement = $(html);
             return htmlElement;
         }
@@ -1131,36 +1193,6 @@ var SinglefinModule;
                     //TODO: eliminare eval e inserire il codice nella pagina
                     eval(code);
                     str = str.replace(match[0], result);
-                    match = markupRegex.exec(str);
-                }
-                return str;
-            }
-            catch (ex) {
-                console.error("resolve markup error: " + ex);
-                return markup;
-            }
-        }
-        resolveBracketsMarkup(markup, models, pageModels) {
-            try {
-                var markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
-                var str = markup;
-                var match = markupRegex.exec(str);
-                while (match) {
-                    var valuePath = match[1];
-                    valuePath = valuePath.replace(".$", "[" + this.index + "]");
-                    valuePath = valuePath.trim();
-                    if (pageModels) {
-                        if (pageModels[valuePath]) {
-                            valuePath = pageModels[valuePath].binding;
-                        }
-                    }
-                    if (this.models) {
-                        if (this.models[valuePath]) {
-                            valuePath = this.models[valuePath].binding;
-                        }
-                    }
-                    var value = SinglefinModule.Runtime.getProperty(models, valuePath);
-                    str = str.replace(match[0], value);
                     match = markupRegex.exec(str);
                 }
                 return str;
@@ -2064,14 +2096,14 @@ var SinglefinModule;
                             var modelProperty = null;
                             if (pageModels) {
                                 if (pageModels[originalValuePath]) {
-                                    valuePath = pageModels[originalValuePath].binding;
+                                    valuePath = pageModels[originalValuePath].ref;
                                     model = pageModels[originalValuePath];
                                     modelProperty = pageModels[originalValuePath].property;
                                 }
                             }
                             if (models) {
                                 if (models[originalValuePath]) {
-                                    valuePath = models[originalValuePath].binding;
+                                    valuePath = models[originalValuePath].ref;
                                     model = models[originalValuePath];
                                     modelProperty = models[originalValuePath].property;
                                 }
@@ -2839,7 +2871,7 @@ var SinglefinModule;
                 if (pageModels) {
                     var modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
                     if (pageModels[modelMethodName]) {
-                        var pageModelMethodName = pageModels[modelMethodName].binding;
+                        var pageModelMethodName = pageModels[modelMethodName].ref;
                         if (!pageModelMethodName) {
                             this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
                                 return resolve();
@@ -2882,12 +2914,12 @@ var SinglefinModule;
                 var pageModels = {};
                 for (var key in delegate.page.models) {
                     pageModels[key] = {};
-                    var valuePath = delegate.page.models[key].binding;
+                    var valuePath = delegate.page.models[key].ref;
                     if (valuePath) {
                         valuePath = valuePath.replace(".$", "[" + page.index + "]");
                         valuePath = valuePath.trim();
                     }
-                    pageModels[key].binding = valuePath;
+                    pageModels[key].ref = valuePath;
                     pageModels[key].on = delegate.page.models[key].on;
                 }
                 if (delegate.page.open) {
