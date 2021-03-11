@@ -116,7 +116,7 @@ module SinglefinModule {
                     return resolve();
                 }
 
-                page.draw(this, parameters, models).then(() => {
+                page.draw(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during open page '" + pageName + "'");
@@ -142,7 +142,7 @@ module SinglefinModule {
                     return resolve();
                 }
 
-                page.redraw(this, parameters, models).then(() => {
+                page.redraw(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during refresh page '" + pageName + "'");
@@ -168,7 +168,7 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.nextStep(this, parameters, models).then(() => {
+                page.nextStep(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -194,7 +194,7 @@ module SinglefinModule {
                     return resolve();
 				}
 
-                page.previousStep(this, parameters, models).then(() => {
+                page.previousStep(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during next step of page '" + pageName + "'");
@@ -365,7 +365,7 @@ module SinglefinModule {
                     return resolve();
                 }
                 
-                page.close(this, parameters, models).then(() => {
+                page.close(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
                     console.error("an error occurred during close page '" + pageName + "'");
@@ -427,7 +427,7 @@ module SinglefinModule {
             this._body = name;
             this._home = name;
 
-            var body: Page = new Page(app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
+            var body: Page = new Page(this, app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
 
             this._pages[this._body] = body;
         }
@@ -450,7 +450,7 @@ module SinglefinModule {
                 relativePath = pageName;
             }
 
-            this._pages[pagePath] = new Page(app, pageName, hidden, showed, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
+            this._pages[pagePath] = new Page(this, app, pageName, hidden, showed, action, container, relativePath, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models);
 
             return this._pages[pagePath];
         }
@@ -464,7 +464,7 @@ module SinglefinModule {
             var bodyRegexp = new RegExp("^(" + this.body + "/)");
             var relativePath = path.replace(bodyRegexp, "");
 
-            this._pages[path] = new Page(page.app, name, page.hidden, page.showed, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
+            this._pages[path] = new Page(this, page.app, name, page.hidden, page.showed, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
 
             return this._pages[path];
         }
