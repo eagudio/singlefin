@@ -1826,13 +1826,13 @@ var SinglefinModule;
                     }
                     var page = this.pages[_pageName];
                     if (!page) {
-                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        console.error("an error occurred during previous step of page '" + pageName + "': page not found");
                         return resolve();
                     }
                     page.previousStep(parameters, models).then(() => {
                         resolve();
                     }, (error) => {
-                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        console.error("an error occurred during previous step of page '" + pageName + "'");
                         resolve();
                     });
                 });
@@ -1845,13 +1845,13 @@ var SinglefinModule;
                     }
                     var page = this.pages[_pageName];
                     if (!page) {
-                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        console.error("an error occurred during open group page by index '" + pageName + "': page not found");
                         return resolve();
                     }
                     page.openGroupPageByIndex(this, index, parameters, models).then(() => {
                         resolve();
                     }, (error) => {
-                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        console.error("an error occurred during open group page by index '" + pageName + "'");
                         resolve();
                     });
                 });
@@ -1864,17 +1864,28 @@ var SinglefinModule;
                     }
                     var page = this.pages[_pageName];
                     if (!page) {
-                        console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                        console.error("an error occurred during open group page '" + pageName + "': page not found");
                         return resolve();
                     }
                     var target = this.body + "/" + page.path + "/" + pageTarget;
                     page.openGroupPage(this, target, parameters, models).then(() => {
                         resolve();
                     }, (error) => {
-                        console.error("an error occurred during next step of page '" + pageName + "'");
+                        console.error("an error occurred during open group page '" + pageName + "'");
                         resolve();
                     });
                 });
+            }
+            resetGroupPage(pageName) {
+                var _pageName = this._body + "/" + pageName;
+                if (_pageName == this.body) {
+                    return;
+                }
+                var page = this.pages[_pageName];
+                if (!page) {
+                    console.error("an error occurred during reset group page '" + pageName + "': page not found");
+                }
+                page.groupIndex = 0;
             }
             getGroupCount(pageName) {
                 var _pageName = this._body + "/" + pageName;
@@ -2948,14 +2959,17 @@ var SinglefinModule;
                 if (!delegate.group) {
                     return resolve();
                 }
-                if (!delegate.group.open) {
-                    return reject("method '" + delegate.page + "' not supported");
+                if (delegate.group.open) {
+                    singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+                        return resolve();
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
                 }
-                singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+                if (delegate.group.reset) {
+                    singlefin.resetGroupPage(delegate.group.reset);
                     return resolve();
-                }).catch((ex) => {
-                    return reject(ex);
-                });
+                }
             });
         }
         handleEventEvent(singlefin, delegate, page, parameters, pageModels, eventObject) {

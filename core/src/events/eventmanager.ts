@@ -269,16 +269,20 @@ module SinglefinModule {
 				if(!delegate.group) {
 					return resolve();
 				}
-
-				if(!delegate.group.open) {
-					return reject("method '" + delegate.page + "' not supported");
-				}
 				
-				singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+				if(delegate.group.open) {
+					singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+						return resolve();
+					}).catch((ex: any) => {
+						return reject(ex);
+					});
+				}
+
+				if(delegate.group.reset) {
+					singlefin.resetGroupPage(delegate.group.reset);
+
 					return resolve();
-				}).catch((ex: any) => {
-					return reject(ex);
-				});
+				}
 			});
 		}
 

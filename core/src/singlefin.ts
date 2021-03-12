@@ -189,7 +189,7 @@ module SinglefinModule {
 				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    console.error("an error occurred during previous step of page '" + pageName + "': page not found");
                     
                     return resolve();
 				}
@@ -197,7 +197,7 @@ module SinglefinModule {
                 page.previousStep(parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    console.error("an error occurred during previous step of page '" + pageName + "'");
     
                     resolve();
                 });
@@ -215,7 +215,7 @@ module SinglefinModule {
 				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    console.error("an error occurred during open group page by index '" + pageName + "': page not found");
                     
                     return resolve();
 				}
@@ -223,7 +223,7 @@ module SinglefinModule {
                 page.openGroupPageByIndex(this, index, parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    console.error("an error occurred during open group page by index '" + pageName + "'");
     
                     resolve();
                 });
@@ -241,7 +241,7 @@ module SinglefinModule {
 				var page: Page = this.pages[_pageName];
 	
 				if(!page) {
-                    console.error("an error occurred during next step of page '" + pageName + "': page not found");
+                    console.error("an error occurred during open group page '" + pageName + "': page not found");
                     
                     return resolve();
                 }
@@ -251,11 +251,27 @@ module SinglefinModule {
                 page.openGroupPage(this, target, parameters, models).then(() => {
                     resolve();
                 }, (error: any) => {
-                    console.error("an error occurred during next step of page '" + pageName + "'");
+                    console.error("an error occurred during open group page '" + pageName + "'");
     
                     resolve();
                 });
             });
+        }
+
+        resetGroupPage(pageName: string) {
+            var _pageName = this._body + "/" + pageName;
+
+            if(_pageName == this.body) {
+                return;
+            }
+            
+            var page: Page = this.pages[_pageName];
+
+            if(!page) {
+                console.error("an error occurred during reset group page '" + pageName + "': page not found");
+            }
+
+            page.groupIndex = 0;
         }
 
         getGroupCount(pageName: string) {
