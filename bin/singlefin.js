@@ -1016,8 +1016,8 @@ var SinglefinModule;
                             continue;
                         }
                     }
-                    yield this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
-                        if (childPage.unwind) {
+                    if (childPage.unwind) {
+                        yield this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                             yield this.unwindItems(parent, childPageName, childPage, viewParameters, parameters, models).then(() => __awaiter(this, void 0, void 0, function* () {
                             }), (ex) => {
                                 if (ex) {
@@ -1025,8 +1025,15 @@ var SinglefinModule;
                                     return reject("draw children error");
                                 }
                             });
-                        }
-                        else if (childPage.action != "commit") {
+                        }), (ex) => {
+                            if (ex) {
+                                console.error("draw children error");
+                                return reject("draw children error");
+                            }
+                        });
+                    }
+                    else if (childPage.action != "commit") {
+                        yield this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                             childPage.htmlElement = this.renderView(childPage, viewParameters, models);
                             this.eventManager.addEventsHandlers(this._singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters, models);
                             childPage.bind(childPage.htmlElement, viewParameters, models);
@@ -1043,13 +1050,13 @@ var SinglefinModule;
                                     return reject("draw children error");
                                 }
                             });
-                        }
-                    }), (ex) => {
-                        if (ex) {
-                            console.error("draw children error");
-                            return reject("draw children error");
-                        }
-                    });
+                        }), (ex) => {
+                            if (ex) {
+                                console.error("draw children error");
+                                return reject("draw children error");
+                            }
+                        });
+                    }
                 }
                 resolve();
             }));

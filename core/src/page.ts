@@ -681,8 +681,8 @@ module SinglefinModule {
 						}
 					}
 
-					await this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then(async (viewParameters: any) => {
-						if(childPage.unwind) {
+					if(childPage.unwind) {
+						await this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then(async (viewParameters: any) => {
 							await this.unwindItems(parent, childPageName, childPage, viewParameters, parameters, models).then(async () => {
 								
 							}, (ex) => {
@@ -692,8 +692,16 @@ module SinglefinModule {
 									return reject("draw children error");
 								}
 							});
-						}
-						else if(childPage.action != "commit") {
+						}, (ex) => {
+							if(ex) {
+								console.error("draw children error");
+	
+								return reject("draw children error");
+							}
+						});
+					}
+					else if(childPage.action != "commit") {
+						await this.eventManager.handleEvent(this._singlefin, childPage.events, "open", childPage, parameters, models).then(async (viewParameters: any) => {
 							childPage.htmlElement = this.renderView(childPage, viewParameters, models);
 
 							this.eventManager.addEventsHandlers(this._singlefin, childPage.app, childPage, childPage.htmlElement, viewParameters, models);
@@ -716,14 +724,14 @@ module SinglefinModule {
 									return reject("draw children error");
 								}
 							});
-						}
-					}, (ex) => {
-						if(ex) {
-                            console.error("draw children error");
-
-							return reject("draw children error");
-						}
-					});
+						}, (ex) => {
+							if(ex) {
+								console.error("draw children error");
+	
+								return reject("draw children error");
+							}
+						});
+					}
 				}
 
 				resolve();
