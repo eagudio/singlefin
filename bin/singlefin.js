@@ -2748,6 +2748,81 @@ var SinglefinModule;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {
+    class EventHandler {
+        constructor(eventManager) {
+            this.eventManager = eventManager;
+        }
+    }
+    SinglefinModule.EventHandler = EventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class BrowserEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
+            if (delegate.browser == "refresh") {
+                window.location.reload();
+            }
+            return Promise.resolve();
+        }
+    }
+    SinglefinModule.BrowserEventHandler = BrowserEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class ControllerEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                var result = parameters;
+                for (var i = 0; i < page.controllers.length; i++) {
+                    var controller = page.controllers[i];
+                    var controllerMethod = controller[delegate.controller];
+                    if (controllerMethod) {
+                        var promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
+                        if (promise) {
+                            yield promise.then((_result) => {
+                                result = _result;
+                            }, (ex) => {
+                                console.error("page '" + page.name + "' handle controller error: " + ex);
+                                return reject(ex);
+                            });
+                        }
+                    }
+                }
+                resolve(result);
+            }));
+        }
+    }
+    SinglefinModule.ControllerEventHandler = ControllerEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class DelegateEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
+            return new Promise((resolve, reject) => {
+                if (delegate.event.preventDefault == true) {
+                    event.preventDefault();
+                    if (!delegate.event.delegate) {
+                        return resolve();
+                    }
+                }
+                if (!delegate.event.delegate) {
+                    return reject("method '" + delegate.event + "' not supported");
+                }
+                this.eventManager.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels).then(() => {
+                    return resolve();
+                }).catch((ex) => {
+                    return reject(ex);
+                });
+            });
+        }
+    }
+    SinglefinModule.DelegateEventHandler = DelegateEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+var SinglefinModule;
+(function (SinglefinModule) {
     class EventManager {
         addEventsHandlers(singlefin, app, page, element, parameters, pageModels) {
             if (!element) {
@@ -2835,64 +2910,77 @@ var SinglefinModule;
                 resolve(result);
             }));
         }
-        handleAction(singlefin, action, page, parameters, _result, pageModels, eventObject) {
+        handleAction(singlefin, actions, page, parameters, result, pageModels, eventObject) {
             return new Promise((resolve, reject) => {
-                var result = _result;
-                this.handleControllerEvent(singlefin, action, page, parameters, pageModels, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
-                    result = _result;
-                    return this.handleModelEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                })).then(() => {
-                    return this.handlePageEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    return this.handleGroupEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    return this.handleEventEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    return this.handleRequestEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    return this.handleBrowserEvent(singlefin, action, page, parameters, pageModels, eventObject);
-                }).then(() => {
-                    resolve(result);
-                }).catch((ex) => {
+                var eventHandler = this.makeEventHandler(actions);
+                eventHandler.handle(singlefin, actions, page, parameters, pageModels, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
+                    resolve(_result);
+                })).catch((ex) => {
                     reject("page '" + page.name + "' handle event error: " + ex);
                 });
             });
         }
-        handleControllerEvent(singlefin, delegate, page, parameters, pageModels, event) {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var result = parameters;
-                if (!delegate.controller) {
-                    return resolve(result);
-                }
-                for (var i = 0; i < page.controllers.length; i++) {
-                    var controller = page.controllers[i];
-                    var controllerMethod = controller[delegate.controller];
-                    if (controllerMethod) {
-                        var promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
-                        if (promise) {
-                            yield promise.then((_result) => {
-                                result = _result;
-                            }, (ex) => {
-                                console.error("page '" + page.name + "' handle controller error: " + ex);
-                                return reject(ex);
-                            });
-                        }
-                    }
-                }
-                resolve(result);
-            }));
+        makeEventHandler(actions) {
+            if (actions.model) {
+                return new SinglefinModule.ModelEventHandler(this);
+            }
+            else if (actions.controller) {
+                return new SinglefinModule.ControllerEventHandler(this);
+            }
+            else if (actions.page) {
+                return new SinglefinModule.PageEventHandler(this);
+            }
+            else if (actions.group) {
+                return new SinglefinModule.GroupEventHandler(this);
+            }
+            else if (actions.request) {
+                return new SinglefinModule.RequestEventHandler(this);
+            }
+            else if (actions.browser) {
+                return new SinglefinModule.BrowserEventHandler(this);
+            }
+            else if (actions.event) {
+                return new SinglefinModule.DelegateEventHandler(this);
+            }
+            return new SinglefinModule.NullEventHandler(this);
         }
-        handleModelEvent(singlefin, delegate, page, parameters, pageModels, event) {
+    }
+    SinglefinModule.EventManager = EventManager;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class GroupEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
-                if (!delegate.model) {
+                if (delegate.group.open) {
+                    singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
+                        return resolve();
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
+                }
+                if (delegate.group.reset) {
+                    singlefin.resetGroupPage(delegate.group.reset);
                     return resolve();
                 }
+            });
+        }
+    }
+    SinglefinModule.GroupEventHandler = GroupEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class ModelEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
+            return new Promise((resolve, reject) => {
                 if (pageModels) {
                     var modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
                     if (pageModels[modelMethodName]) {
                         var pageModelMethodName = pageModels[modelMethodName].ref;
                         if (!pageModelMethodName) {
-                            this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
+                            this.eventManager.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
                                 return resolve();
                             }).catch((ex) => {
                                 return reject(ex);
@@ -2905,7 +2993,7 @@ var SinglefinModule;
                                 if (!pageModels[modelMethodName].on) {
                                     return resolve();
                                 }
-                                this.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
+                                this.eventManager.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
                                     return resolve();
                                 }).catch((ex) => {
                                     return reject(ex);
@@ -2919,17 +3007,39 @@ var SinglefinModule;
                 var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, delegate.model);
                 var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
                 modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
-                    return resolve();
+                    page.eventManager.handleEvent(singlefin, delegate, "resolved", page, parameters, null).then(() => {
+                        return resolve();
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
                 }).catch((ex) => {
-                    return reject(ex);
+                    page.eventManager.handleEvent(singlefin, delegate, "rejected", page, parameters, null).then(() => {
+                        return resolve();
+                    }).catch((ex) => {
+                        return reject(ex);
+                    });
                 });
             });
         }
-        handlePageEvent(singlefin, delegate, page, parameters, pageModels, event) {
+    }
+    SinglefinModule.ModelEventHandler = ModelEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class NullEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
+            return Promise.reject("null event handler");
+        }
+    }
+    SinglefinModule.NullEventHandler = NullEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class PageEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
-                if (!delegate.page) {
-                    return resolve();
-                }
                 var pageModels = {};
                 for (var key in delegate.page.models) {
                     pageModels[key] = {};
@@ -2961,68 +3071,24 @@ var SinglefinModule;
                 }
             });
         }
-        handleGroupEvent(singlefin, delegate, page, parameters, pageModels, event) {
+    }
+    SinglefinModule.PageEventHandler = PageEventHandler;
+})(SinglefinModule || (SinglefinModule = {}));
+/// <reference path="eventhandler.ts"/>
+var SinglefinModule;
+(function (SinglefinModule) {
+    class RequestEventHandler extends SinglefinModule.EventHandler {
+        handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
-                if (!delegate.group) {
-                    return resolve();
-                }
-                if (delegate.group.open) {
-                    singlefin.openGroupPage(delegate.group.open, delegate.group.page, delegate.group.parameters, delegate.group.models).then(() => {
-                        return resolve();
-                    }).catch((ex) => {
-                        return reject(ex);
-                    });
-                }
-                if (delegate.group.reset) {
-                    singlefin.resetGroupPage(delegate.group.reset);
-                    return resolve();
-                }
-            });
-        }
-        handleEventEvent(singlefin, delegate, page, parameters, pageModels, eventObject) {
-            return new Promise((resolve, reject) => {
-                if (!delegate.event) {
-                    return resolve();
-                }
-                if (delegate.event.preventDefault == true) {
-                    eventObject.preventDefault();
-                    if (!delegate.event.delegate) {
-                        return resolve();
-                    }
-                }
-                if (!delegate.event.delegate) {
-                    return reject("method '" + delegate.event + "' not supported");
-                }
-                this.handleEvent(singlefin, page.events, delegate.event.delegate, page, parameters, pageModels).then(() => {
-                    return resolve();
-                }).catch((ex) => {
-                    return reject(ex);
-                });
-            });
-        }
-        handleRequestEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
-            return new Promise((resolve, reject) => {
-                if (!delegate.request) {
-                    return resolve();
-                }
                 var request = new SinglefinModule.Request(delegate.request);
-                request.call(singlefin, page, singlefin.models, result, pageModels).then(() => {
+                request.call(singlefin, page, singlefin.models, parameters, pageModels).then(() => {
                     resolve();
                 }).catch((ex) => {
                     reject(ex);
                 });
             });
         }
-        handleBrowserEvent(singlefin, delegate, page, parameters, result, pageModels, eventObject) {
-            if (!delegate.browser) {
-                return Promise.resolve();
-            }
-            if (delegate.browser == "refresh") {
-                window.location.reload();
-            }
-            return Promise.resolve();
-        }
     }
-    SinglefinModule.EventManager = EventManager;
+    SinglefinModule.RequestEventHandler = RequestEventHandler;
 })(SinglefinModule || (SinglefinModule = {}));
 //# sourceMappingURL=singlefin.js.map
