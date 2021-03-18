@@ -28,7 +28,7 @@ class Route {
             this._method = "get";
         }
 
-        this._domain.router[this._method](this._route, (request: any, response: any) => {
+        this._domain.router[this._method](this._route, this._service.getMiddlewares(), (request: any, response: any) => {
             var models = this.initModels();
             var modelMap: ModelMap = new ModelMap(models, this._config.models);
 
@@ -103,6 +103,10 @@ class Route {
 
         if(serviceName == "file") {
             this._service = new FileService();
+        }
+
+        if(serviceName == "multipart") {
+            this._service = new MultipartService();
         }
 
         if(services[serviceName]) {

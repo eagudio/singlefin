@@ -136,7 +136,7 @@ class Route {
         if (!this._method) {
             this._method = "get";
         }
-        this._domain.router[this._method](this._route, (request, response) => {
+        this._domain.router[this._method](this._route, this._service.getMiddlewares(), (request, response) => {
             var models = this.initModels();
             var modelMap = new ModelMap(models, this._config.models);
             this.onRequest(request, response, models).then(() => {
@@ -195,6 +195,9 @@ class Route {
         }
         if (serviceName == "file") {
             this._service = new FileService();
+        }
+        if (serviceName == "multipart") {
+            this._service = new MultipartService();
         }
         if (services[serviceName]) {
             this._service = services[serviceName];
@@ -781,6 +784,9 @@ class NullEvent {
     }
 }
 class DataService {
+    getMiddlewares() {
+        return [];
+    }
     onRequest(request, response, modelMap, parameters) {
         return Promise.resolve();
     }
@@ -791,6 +797,9 @@ class DataService {
     }
 }
 class EmptyDataService {
+    getMiddlewares() {
+        return [];
+    }
     onRequest(request, response, modelMap, parameters) {
         return Promise.resolve();
     }
@@ -800,6 +809,9 @@ class EmptyDataService {
     }
 }
 class FileService {
+    getMiddlewares() {
+        return [];
+    }
     onRequest(request, response, modelMap, parameters) {
         return Promise.resolve();
     }
@@ -829,6 +841,33 @@ class ModelMap {
             throw new Error("an error occurred during set value from model map: property '" + property + "' does not exist");
         }
         Runtime.setProperty(valuePath, this._models, value);
+    }
+}
+class MultipartService {
+    constructor() {
+        this.multer = require('multer');
+        var storage = this.multer.diskStorage({
+            destination: function (req, file, cb) {
+                cb(null, 'uploads');
+            },
+            filename: function (req, file, cb) {
+                cb(null, file.fieldname + '-' + Date.now());
+            }
+        });
+        this.upload = this.multer({ storage: storage });
+    }
+    getMiddlewares() {
+        return [this.upload.single('attachment')];
+    }
+    onRequest(request, response, modelMap, parameters) {
+        return Promise.resolve();
+    }
+    onResponse(request, response, modelMap, parameters) {
+        //var multer  = require('multer')
+        //var upload = multer({ dest: 'uploads/' })
+        console.log("multiparteservice");
+        console.log(parameters);
+        return Promise.resolve();
     }
 }
 //# sourceMappingURL=singlefinserver.js.map
