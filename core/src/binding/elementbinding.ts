@@ -27,37 +27,6 @@ module SinglefinModule {
         }
 
         watch(singlefin: Singlefin, page: Page, model: any, valuePath: string, data: any, pageData: any) {
-            if(this.attribute == "content") {
-                return;
-            }
-            
-            this.htmlElement.on("click", {
-                singlefin: singlefin,
-                page: page,
-                data: data,
-                pageData: pageData,
-                valuePath: valuePath,
-                model: model
-            }, (event: any) => {
-                var _singlefin = event.data.singlefin;
-                var _page: Page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var _pageData = event.data.pageData;
-            
-                Runtime.setProperty(_valuePath, _data, _pageData);
-                
-                if(!_model) {
-                    return;
-                }
-
-                if(!_model.on) {
-                    return;
-                }
-
-                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
-            });
         }
 
         update(value: any) {

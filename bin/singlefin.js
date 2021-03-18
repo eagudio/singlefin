@@ -2362,9 +2362,10 @@ var SinglefinModule;
             this.update(value);
         }
         watch(singlefin, page, model, valuePath, data, pageData) {
-            if (this.attribute == "content") {
+            /*if(this.attribute == "content") {
                 return;
             }
+            
             this.htmlElement.on("click", {
                 singlefin: singlefin,
                 page: page,
@@ -2372,22 +2373,26 @@ var SinglefinModule;
                 pageData: pageData,
                 valuePath: valuePath,
                 model: model
-            }, (event) => {
+            }, (event: any) => {
                 var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
+                var _page: Page = event.data.page;
                 var _valuePath = event.data.valuePath;
                 var _model = event.data.model;
                 var _data = event.data.data;
                 var _pageData = event.data.pageData;
-                SinglefinModule.Runtime.setProperty(_valuePath, _data, _pageData);
-                if (!_model) {
+            
+                Runtime.setProperty(_valuePath, _data, _pageData);
+                
+                if(!_model) {
                     return;
                 }
-                if (!_model.on) {
+
+                if(!_model.on) {
                     return;
                 }
+
                 _page.eventManager.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
-            });
+            });*/
         }
         update(value) {
             var _value = value;
