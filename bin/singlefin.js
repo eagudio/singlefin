@@ -1464,11 +1464,29 @@ var SinglefinModule;
         ajaxRequest(singlefin, page, models, parameters, pageModels, data) {
             return new Promise((resolve, reject) => {
                 try {
-                    var stringifyData = JSON.stringify(data);
+                    var requestData = null;
+                    var contentType = "application/json";
+                    var processData;
+                    var cache;
+                    if (this._config.type == "formdata") {
+                        requestData = new FormData();
+                        contentType = false;
+                        processData = false;
+                        cache = false;
+                        for (var key in data) {
+                            requestData.append(key, data[key]);
+                        }
+                    }
+                    else {
+                        requestData = JSON.stringify(data);
+                    }
                     $.ajax({
                         type: this._httpMethod,
                         url: this._route,
-                        data: stringifyData,
+                        data: requestData,
+                        processData: processData,
+                        contentType: contentType,
+                        cache: cache,
                         success: (response) => __awaiter(this, void 0, void 0, function* () {
                             this.resolveProxyResponse(singlefin, page, response).then(() => {
                                 if (typeof response !== 'undefined' && this._models.result) {
@@ -1496,8 +1514,7 @@ var SinglefinModule;
                             }).catch((ex) => {
                                 reject(ex);
                             });
-                        }),
-                        contentType: "application/json"
+                        })
                     });
                 }
                 catch (ex) {
@@ -2362,37 +2379,6 @@ var SinglefinModule;
             this.update(value);
         }
         watch(singlefin, page, model, valuePath, data, pageData) {
-            /*if(this.attribute == "content") {
-                return;
-            }
-            
-            this.htmlElement.on("click", {
-                singlefin: singlefin,
-                page: page,
-                data: data,
-                pageData: pageData,
-                valuePath: valuePath,
-                model: model
-            }, (event: any) => {
-                var _singlefin = event.data.singlefin;
-                var _page: Page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var _pageData = event.data.pageData;
-            
-                Runtime.setProperty(_valuePath, _data, _pageData);
-                
-                if(!_model) {
-                    return;
-                }
-
-                if(!_model.on) {
-                    return;
-                }
-
-                _page.eventManager.handleEvent(_singlefin, _model, "on", _page, _pageData, event);
-            });*/
         }
         update(value) {
             var _value = value;
@@ -2492,19 +2478,33 @@ var SinglefinModule;
                 var _data = event.data.data;
                 var inputElement = event.currentTarget;
                 if (inputElement.files && inputElement.files[0]) {
-                    var reader = new FileReader();
-                    reader.onload = ((e) => {
+                    /*var reader = new FileReader();
+                    
+                    reader.onload = ((e: any) => {
                         var fileContent = e.target.result;
-                        SinglefinModule.Runtime.setProperty(_valuePath, _data, fileContent);
-                        if (!_model) {
+
+                        Runtime.setProperty(_valuePath, _data, fileContent);
+
+                        if(!_model) {
                             return;
                         }
-                        if (!_model.on) {
+        
+                        if(!_model.on) {
                             return;
                         }
+        
                         _page.eventManager.handleEvent(_singlefin, _model, "on", _page, fileContent, event);
                     });
-                    reader.readAsDataURL(inputElement.files[0]);
+                    
+                    reader.readAsDataURL(inputElement.files[0]);*/
+                    SinglefinModule.Runtime.setProperty(_valuePath, _data, inputElement.files[0]);
+                    if (!_model) {
+                        return;
+                    }
+                    if (!_model.on) {
+                        return;
+                    }
+                    _page.eventManager.handleEvent(_singlefin, _model, "on", _page, inputElement.files[0], event);
                 }
             });
         }

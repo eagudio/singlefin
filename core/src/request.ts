@@ -39,12 +39,32 @@ module SinglefinModule {
         ajaxRequest(singlefin: Singlefin, page: Page, models: any, parameters: any, pageModels: any, data: any) {
             return new Promise<void>((resolve: any, reject: any) => {
                 try {
-                    var stringifyData: string = JSON.stringify(data);
+                    var requestData: any = null;
+                    var contentType: any = "application/json";
+                    var processData;
+                    var cache;
+
+                    if(this._config.type == "formdata") {
+                        requestData = new FormData();
+                        contentType = false;
+                        processData = false;
+                        cache = false;
+
+                        for(var key in data) {
+                            requestData.append(key, data[key]);
+                        }
+                    }
+                    else {
+                        requestData = JSON.stringify(data);
+                    }
 
                     $.ajax({
                         type: this._httpMethod,
                         url: this._route,
-                        data: stringifyData,
+                        data: requestData,
+                        processData: processData,
+                        contentType: contentType,
+                        cache: cache,
                         success: async (response: any) => {
                             this.resolveProxyResponse(singlefin, page, response).then(() => {
                                 if(typeof response !== 'undefined' && this._models.result) {
@@ -74,8 +94,7 @@ module SinglefinModule {
                             }).catch((ex: any) => {
                                 reject(ex);
                             });
-                        },
-                        contentType: "application/json"
+                        }
                     });
                 }
                 catch(ex) {

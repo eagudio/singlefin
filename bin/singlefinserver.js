@@ -846,28 +846,33 @@ class ModelMap {
 class MultipartService {
     constructor() {
         this.multer = require('multer');
+        this.storagePath = "";
+        var path = require('path');
+        this.storagePath = path.join(__dirname, "../../../", "uploads");
         var storage = this.multer.diskStorage({
-            destination: function (req, file, cb) {
-                cb(null, 'uploads');
+            destination: (req, file, cb) => {
+                cb(null, this.storagePath);
             },
-            filename: function (req, file, cb) {
-                cb(null, file.fieldname + '-' + Date.now());
+            filename: (req, file, cb) => {
+                cb(null, file.fieldname + '-' + Date.now() + ".jpg");
             }
         });
         this.upload = this.multer({ storage: storage });
     }
     getMiddlewares() {
-        return [this.upload.single('attachment')];
+        return [this.upload.single('content')];
     }
     onRequest(request, response, modelMap, parameters) {
         return Promise.resolve();
     }
     onResponse(request, response, modelMap, parameters) {
-        //var multer  = require('multer')
-        //var upload = multer({ dest: 'uploads/' })
-        console.log("multiparteservice");
-        console.log(parameters);
-        return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            var file = request.file;
+            if (!file) {
+                return reject("uploadFileError");
+            }
+            response.send(file);
+        });
     }
 }
 //# sourceMappingURL=singlefinserver.js.map

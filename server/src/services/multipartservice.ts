@@ -1,15 +1,20 @@
 class MultipartService implements Service {
     private multer: any = require('multer');
     private upload: any;
+    private storagePath: string = "";
 
     
     constructor() {
+        var path = require('path');
+
+        this.storagePath = path.join(__dirname, "../../../", "uploads");
+
         var storage = this.multer.diskStorage({
-            destination: function (req: any, file: any, cb: any) {
-                cb(null, 'uploads')
+            destination: (req: any, file: any, cb: any) => {
+                cb(null, this.storagePath)
             },
-            filename: function (req: any, file: any, cb: any) {
-                cb(null, file.fieldname + '-' + Date.now())
+            filename: (req: any, file: any, cb: any) => {
+                cb(null, file.fieldname + '-' + Date.now() + ".jpg")
             }
         });
         
@@ -17,7 +22,7 @@ class MultipartService implements Service {
     }
 
     getMiddlewares() {
-        return [this.upload.single('attachment')];
+        return [this.upload.single('content')];
     }
     
     onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
@@ -25,12 +30,14 @@ class MultipartService implements Service {
     }
 
     onResponse(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
-        //var multer  = require('multer')
-        //var upload = multer({ dest: 'uploads/' })
+        return new Promise((resolve, reject) => {
+            var file = request.file
 
-        console.log("multiparteservice");
-        console.log(parameters);
+            if (!file) {
+                return reject("uploadFileError")
+            }
 
-        return Promise.resolve();
+            response.send(file);
+        });        
     }
 }
