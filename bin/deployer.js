@@ -78,12 +78,7 @@ var SinglefinDeployment;
                 return;
             }
             for (var key in routesSchema) {
-                routes[key] = {};
-                routes[key].service = routesSchema[key].service;
-                routes[key].method = routesSchema[key].method;
-                routes[key].models = routesSchema[key].models;
-                routes[key].events = routesSchema[key].events;
-                routes[key].from = routesSchema[key].from;
+                routes[key] = routesSchema[key];
                 if (routesSchema[key].service) {
                     if (servicesSchema[routesSchema[key].service]) {
                         if (servicesSchema[routesSchema[key].service].deployer) {

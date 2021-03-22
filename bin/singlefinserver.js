@@ -16,7 +16,6 @@ class Domain {
         this._schema = schema;
         this._path = path;
         this._options = schema.options;
-        this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
     }
     create(server) {
@@ -25,8 +24,14 @@ class Domain {
             this._router = express.Router(this.getRouterOptions());
             this._router.use('/sf', express.static(__dirname));
             this.initStatic(this._schema.static);
-            this.onInitialize().then(() => {
+            this.initServices(this._schema.services).then(() => {
+                return this.onInitialize();
+            }).then(() => {
                 this.initRoutes(this._schema.routes);
+                this._router.use((error, request, response, next) => {
+                    console.error(error);
+                    response.status(500).send(error);
+                });
                 server.use(this._path, this._router);
                 resolve();
             }).catch((error) => {
@@ -83,14 +88,24 @@ class Domain {
         return models;
     }
     initServices(servicesSchema) {
-        if (!servicesSchema) {
-            return;
-        }
-        for (var key in servicesSchema) {
-            var Service = servicesSchema[key].handler;
-            var service = new Service(servicesSchema[key]);
-            this._services[key] = service;
-        }
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            this._services["empty"] = new EmptyDataService();
+            this._services["data"] = new DataService();
+            this._services["file"] = new FileService();
+            this._services["multipart"] = new MultipartService();
+            for (var key in servicesSchema) {
+                var Service = servicesSchema[key].handler;
+                this._services[key] = new Service();
+            }
+            for (var key in this._services) {
+                yield this._services[key].run(servicesSchema[key]).then(() => {
+                }).catch((error) => {
+                    console.error("an error occurred during run service '" + key + "':" + error);
+                    return reject();
+                });
+            }
+            resolve();
+        }));
     }
     initEvents(eventsSchema) {
         for (var key in eventsSchema) {
@@ -121,7 +136,7 @@ class Domain {
 }
 class Route {
     constructor(domain, services, modelClasses, route, config) {
-        this._service = new DataService();
+        this._service = new EmptyDataService();
         this._events = {};
         this._domain = domain;
         this._route = route;
@@ -136,46 +151,89 @@ class Route {
         if (!this._method) {
             this._method = "get";
         }
-        this._domain.router[this._method](this._route, this._service.getMiddlewares(), (request, response) => {
-            var models = this.initModels();
-            var modelMap = new ModelMap(models, this._config.models);
-            this.onRequest(request, response, models).then(() => {
-                return this._service.onRequest(request, response, modelMap, this._config);
-            }).then(() => {
-                return this.onResponse(request, response, models);
-            }).then(() => {
-                return this._service.onResponse(request, response, modelMap, this._config);
-            }).then(() => {
-            }).catch((error) => {
-                response.status(400);
-                response.send(error);
-            });
-        });
+        var middlewares = this._service.onRoute(this, this._config);
+        this._domain.router[this._method](this._route, [(request, response, next) => {
+                var models = this.initModels();
+                var modelMap = new ModelMap(models, this._config.models);
+                request.singlefin = {
+                    models: models,
+                    modelMap: modelMap
+                };
+                next();
+            }, middlewares, (request, response, next) => {
+                var models = request.singlefin.models;
+                var modelMap = request.singlefin.modelMap;
+                this.onRequest(request, response, models, modelMap).then(() => {
+                    next();
+                }).catch((error) => {
+                    next(error);
+                });
+            }, (request, response, next) => {
+                var models = request.singlefin.models;
+                var modelMap = request.singlefin.modelMap;
+                this.onResponse(request, response, models, modelMap).then(() => {
+                }).catch((error) => {
+                    next(error);
+                });
+            }]);
     }
-    onRequest(request, response, models) {
+    onRequest(request, response, models, modelMap) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events["request"];
+            var hasError = false;
             if (routeEvents) {
                 for (var i = 0; i < routeEvents.length; i++) {
                     yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
+                        hasError = true;
                         return reject(error);
                     });
                 }
             }
-            resolve();
+            if (!hasError) {
+                this._service.onRequest(request, response, modelMap, this._config).then(() => {
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+            }
         }));
     }
-    onResponse(request, response, models) {
+    onResponse(request, response, models, modelMap) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events["response"];
+            var hasError = false;
             if (routeEvents) {
                 for (var i = 0; i < routeEvents.length; i++) {
                     yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
+                        hasError = true;
                         return reject(error);
                     });
                 }
             }
-            resolve();
+            if (!hasError) {
+                this._service.onResponse(request, response, modelMap, this._config).then(() => {
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+            }
+        }));
+    }
+    inform(event, request, response, models) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            var routeEvents = this._events[event];
+            var hasError = false;
+            if (routeEvents) {
+                for (var i = 0; i < routeEvents.length; i++) {
+                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
+                        hasError = true;
+                        return reject(error);
+                    });
+                }
+            }
+            if (!hasError) {
+                resolve();
+            }
         }));
     }
     initModels() {
@@ -188,20 +246,9 @@ class Route {
     }
     makeService(services, serviceName) {
         if (!serviceName) {
-            this._service = new EmptyDataService();
+            return;
         }
-        if (serviceName == "data") {
-            this._service = new DataService();
-        }
-        if (serviceName == "file") {
-            this._service = new FileService();
-        }
-        if (serviceName == "multipart") {
-            this._service = new MultipartService();
-        }
-        if (services[serviceName]) {
-            this._service = services[serviceName];
-        }
+        this._service = services[serviceName];
     }
     makeEvents(events) {
         for (var key in events) {
@@ -784,7 +831,10 @@ class NullEvent {
     }
 }
 class DataService {
-    getMiddlewares() {
+    run(parameters) {
+        return Promise.resolve();
+    }
+    onRoute(route, parameters) {
         return [];
     }
     onRequest(request, response, modelMap, parameters) {
@@ -797,7 +847,10 @@ class DataService {
     }
 }
 class EmptyDataService {
-    getMiddlewares() {
+    run(parameters) {
+        return Promise.resolve();
+    }
+    onRoute(route, parameters) {
         return [];
     }
     onRequest(request, response, modelMap, parameters) {
@@ -809,7 +862,10 @@ class EmptyDataService {
     }
 }
 class FileService {
-    getMiddlewares() {
+    run(parameters) {
+        return Promise.resolve();
+    }
+    onRoute(route, parameters) {
         return [];
     }
     onRequest(request, response, modelMap, parameters) {
@@ -846,21 +902,26 @@ class ModelMap {
 class MultipartService {
     constructor() {
         this.multer = require('multer');
-        this.storagePath = "";
-        var path = require('path');
-        this.storagePath = path.join(__dirname, "../../../", "uploads");
+    }
+    run(config) {
+        return Promise.resolve();
+    }
+    onRoute(route, parameters) {
         var storage = this.multer.diskStorage({
             destination: (req, file, cb) => {
-                cb(null, this.storagePath);
+                var path = require('path');
+                var storagePath = path.join(__dirname, "../../../", parameters.storage);
+                cb(null, storagePath);
             },
-            filename: (req, file, cb) => {
-                cb(null, file.fieldname + '-' + Date.now() + ".jpg");
+            filename: (request, file, cb) => {
+                route.inform("readfile", request, file, request.singlefin.models).then(() => {
+                    //var result = request.singlefin.modelMap.getValue("result");
+                    cb(null, file.fieldname + '-' + Date.now() + ".jpg");
+                });
             }
         });
-        this.upload = this.multer({ storage: storage });
-    }
-    getMiddlewares() {
-        return [this.upload.single('content')];
+        var upload = this.multer({ storage: storage });
+        return upload.single(parameters.fieldname);
     }
     onRequest(request, response, modelMap, parameters) {
         return Promise.resolve();
@@ -871,7 +932,7 @@ class MultipartService {
             if (!file) {
                 return reject("uploadFileError");
             }
-            response.send(file);
+            response.end();
         });
     }
 }

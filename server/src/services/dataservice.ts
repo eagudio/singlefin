@@ -1,5 +1,9 @@
 class DataService implements Service {
-    getMiddlewares() {
+    run(parameters: any): Promise<void> {
+        return Promise.resolve();
+    }
+    
+    onRoute(route: Route, parameters: any) {
         return [];
     }
     

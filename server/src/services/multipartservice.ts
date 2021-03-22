@@ -1,28 +1,32 @@
 class MultipartService implements Service {
     private multer: any = require('multer');
-    private upload: any;
-    private storagePath: string = "";
 
-    
-    constructor() {
-        var path = require('path');
 
-        this.storagePath = path.join(__dirname, "../../../", "uploads");
+    run(config: any): Promise<void> {
+        return Promise.resolve();
+    }
 
+    onRoute(route: Route, parameters: any) {
         var storage = this.multer.diskStorage({
             destination: (req: any, file: any, cb: any) => {
-                cb(null, this.storagePath)
+                var path = require('path');
+
+                var storagePath = path.join(__dirname, "../../../", parameters.storage);
+
+                cb(null, storagePath);
             },
-            filename: (req: any, file: any, cb: any) => {
-                cb(null, file.fieldname + '-' + Date.now() + ".jpg")
+            filename: (request: any, file: any, cb: any) => {
+                route.inform("readfile", request, file, request.singlefin.models).then(() => {
+                    //var result = request.singlefin.modelMap.getValue("result");
+
+                    cb(null, file.fieldname + '-' + Date.now() + ".jpg");
+                });
             }
         });
         
-        this.upload = this.multer({ storage: storage })
-    }
+        var upload = this.multer({ storage: storage });
 
-    getMiddlewares() {
-        return [this.upload.single('content')];
+        return upload.single(parameters.fieldname);
     }
     
     onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
@@ -37,7 +41,7 @@ class MultipartService implements Service {
                 return reject("uploadFileError")
             }
 
-            response.send(file);
+            response.end();
         });        
     }
 }

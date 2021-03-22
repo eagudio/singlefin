@@ -16,7 +16,6 @@ class Domain {
 
         this._options = schema.options;
 
-        this.initServices(this._schema.services);
         this.initEvents(this._schema.events);
     }
 
@@ -30,8 +29,15 @@ class Domain {
     
             this.initStatic(this._schema.static);
     
-            this.onInitialize().then(() => {
+            this.initServices(this._schema.services).then(() => {
+                return this.onInitialize();
+            }).then(() => {
                 this.initRoutes(this._schema.routes);
+
+                this._router.use((error: any, request: any, response: any, next: any) => {
+                    console.error(error);
+                    response.status(500).send(error);
+                });
     
                 server.use(this._path, this._router);
 
@@ -108,17 +114,30 @@ class Domain {
     }
 
     initServices(servicesSchema: any) {
-        if(!servicesSchema) {
-            return;
-        }
+        return new Promise<void>(async (resolve, reject) => {
+            this._services["empty"] = new EmptyDataService();
+            this._services["data"] = new DataService();
+            this._services["file"] = new FileService();
+            this._services["multipart"] = new MultipartService();
 
-        for(var key in servicesSchema) {
-            var Service = servicesSchema[key].handler;
+            for(var key in servicesSchema) {
+                var Service = servicesSchema[key].handler;
 
-            var service = new Service(servicesSchema[key]);
+                this._services[key] = new Service();
+            }
 
-            this._services[key] = service;
-        }
+            for(var key in this._services) {
+                await this._services[key].run(servicesSchema[key]).then(() => {
+
+                }).catch((error: any) =>  {
+                    console.error("an error occurred during run service '" + key + "':" + error);
+
+                    return reject();
+                });
+            }
+
+            resolve();
+        });
     }
 
     initEvents(eventsSchema: any) {
