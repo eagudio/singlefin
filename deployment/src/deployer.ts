@@ -113,6 +113,33 @@ export module SinglefinDeployment {
                         }
                     }
                 }
+
+                routes[key].events = routesSchema[key].events;
+
+                this.bundleServerRouteEvents(routes[key].events, routesSchema[key].events, servicesSchema);
+            }
+        }
+
+        bundleServerRouteEvents(routeEvents: any, routesEventsSchema: any, servicesSchema: any) {
+            for(var key in routesEventsSchema) {
+                routeEvents[key] = routesEventsSchema[key];
+
+                for(var i=0; i<routesEventsSchema[key].length; i++) {
+                    if(routesEventsSchema[key][i].service) {
+                        routeEvents[key].service = routesEventsSchema[key][i].service;
+
+                        if(servicesSchema[routesEventsSchema[key][i].service.service]) {
+                            
+                            if(servicesSchema[routesEventsSchema[key][i].service.service].deployer) {
+                                var Deployer = require(servicesSchema[routesEventsSchema[key][i].service.service].deployer);
+                            
+                                var service = new Deployer();
+            
+                                service.deploy(this, routeEvents[key].service, routesEventsSchema[key][i].service);
+                            }
+                        }
+                    }
+                }
             }
         }
 

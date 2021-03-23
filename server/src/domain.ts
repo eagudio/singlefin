@@ -35,8 +35,7 @@ class Domain {
                 this.initRoutes(this._schema.routes);
 
                 this._router.use((error: any, request: any, response: any, next: any) => {
-                    console.error(error);
-                    response.status(500).send(error);
+                    response.status(400).send(error);
                 });
     
                 server.use(this._path, this._router);
@@ -56,6 +55,10 @@ class Domain {
 
     get options() {
         return this._options;
+    }
+
+    get services() {
+        return this._services;
     }
 
     onInitialize() {

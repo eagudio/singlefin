@@ -6,7 +6,11 @@ class MultipartService implements Service {
         return Promise.resolve();
     }
 
-    onRoute(route: Route, parameters: any) {
+    call(route: Route, request: any, parameters: any) {
+        return Promise.resolve();
+    }
+
+    route(route: Route, parameters: any) {
         var storage = this.multer.diskStorage({
             destination: (req: any, file: any, cb: any) => {
                 var path = require('path');
@@ -16,10 +20,13 @@ class MultipartService implements Service {
                 cb(null, storagePath);
             },
             filename: (request: any, file: any, cb: any) => {
-                route.inform("readfile", request, file, request.singlefin.models).then(() => {
-                    //var result = request.singlefin.modelMap.getValue("result");
+                route.inform("readfile", request, request.singlefin.models).then(() => {
+                    var modelMap: ModelMap = request.singlefin.modelMap;
 
-                    cb(null, file.fieldname + '-' + Date.now() + ".jpg");
+                    var fileName = modelMap.getValue(parameters.file.name);
+                    var fileExtension = modelMap.getValue(parameters.file.extension);
+
+                    cb(null, fileName + "." + fileExtension);
                 });
             }
         });
@@ -28,14 +35,10 @@ class MultipartService implements Service {
 
         return upload.single(parameters.fieldname);
     }
-    
-    onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
-        return Promise.resolve();
-    }
 
-    onResponse(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
+    reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
         return new Promise((resolve, reject) => {
-            var file = request.file
+            var file = request.file;
 
             if (!file) {
                 return reject("uploadFileError")

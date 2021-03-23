@@ -1,3 +1,3 @@
 interface RouteEvent {
-    handle(domain: any, request: any, response: any, models: any): Promise<void>;
+    handle(domain: Domain, route: any, request: any, models: any): Promise<void>;
 }

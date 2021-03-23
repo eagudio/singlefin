@@ -2,16 +2,16 @@ class DataService implements Service {
     run(parameters: any): Promise<void> {
         return Promise.resolve();
     }
-    
-    onRoute(route: Route, parameters: any) {
-        return [];
-    }
-    
-    onRequest(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
+
+    call(route: Route, request: any, parameters: any) {
         return Promise.resolve();
     }
+    
+    route(route: Route, parameters: any) {
+        return [];
+    }
 
-    onResponse(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
+    reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
         var data = modelMap.getValue("data");
         
         response.send(data);

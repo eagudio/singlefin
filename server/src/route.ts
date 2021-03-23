@@ -28,11 +28,9 @@ class Route {
             this._method = "get";
         }
 
-        var middlewares = this._service.onRoute(this, this._config);
-
         this._domain.router[this._method](this._route, [(request: any, response: any, next: any) => {
             var models = this.initModels();
-            var modelMap: ModelMap = new ModelMap(models, this._config.models);
+            var modelMap: ModelMap = new ModelMap(models);
 
             request.singlefin = {
                 models: models,
@@ -40,80 +38,34 @@ class Route {
             };
 
             next();
-        }, middlewares, (request: any, response: any, next: any) => {
+        }, (request: any, response: any, next: any) => {
             var models = request.singlefin.models;
-            var modelMap: ModelMap = request.singlefin.modelMap;
 
-            this.onRequest(request, response, models, modelMap).then(() => {
+            this.inform("request", request, models).then(() => {
+                next();
+            }).catch((error: string) => {
+                next(error);
+            });
+        }, this._service.route(this, this._config), (request: any, response: any, next: any) => {
+            var models = request.singlefin.models;
+
+            this.inform("response", request, models).then(() => {
                 next();
             }).catch((error: string) => {
                 next(error);
             });
         }, (request: any, response: any, next: any) => {
-            var models = request.singlefin.models;
             var modelMap: ModelMap = request.singlefin.modelMap;
 
-            this.onResponse(request, response, models, modelMap).then(() => {
+            this._service.reply(request, response, modelMap, this._config).then(() => {
+                
             }).catch((error: string) => {
                 next(error);
             });
         }]);
     }
 
-    onRequest(request: any, response: any, models: any, modelMap: ModelMap) {
-        return new Promise<void>(async (resolve, reject) => {
-            var routeEvents: RouteEvent[] = this._events["request"];
-            
-            var hasError = false;
-
-            if(routeEvents) {
-                for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, request, response, models).catch((error: string) => {
-                        hasError = true;
-
-                        return reject(error);
-                    });
-                }
-            }
-
-            if(!hasError) {
-                this._service.onRequest(request, response, modelMap, this._config).then(() => {
-                    resolve(); 
-                }).catch((error: any) => {
-                    reject(error);
-                });
-            }
-        });
-    }
-
-    onResponse(request: any, response: any, models: any, modelMap: ModelMap) {
-        return new Promise<void>(async (resolve, reject) => {
-            var routeEvents: RouteEvent[] = this._events["response"];
-
-            var hasError = false;
-
-            if(routeEvents) {
-                for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, request, response, models).catch((error: string) => {
-                        hasError = true;
-
-                        return reject(error);
-                    });
-                }
-            }
-
-            if(!hasError) {
-                this._service.onResponse(request, response, modelMap, this._config).then(() => {
-                    resolve();
-                }).catch((error: any) => {
-                    reject(error);
-                });
-            }
-            
-        });
-    }
-
-    inform(event: string, request: any, response: any, models: any) {
+    inform(event: string, request: any, models: any) {
         return new Promise<void>(async (resolve, reject) => {
             var routeEvents: RouteEvent[] = this._events[event];
 
@@ -121,7 +73,7 @@ class Route {
 
             if(routeEvents) {
                 for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, request, response, models).catch((error: string) => {
+                    await routeEvents[i].handle(this._domain, this, request, models).catch((error: string) => {
                         hasError = true;
 
                         return reject(error);
@@ -178,6 +130,9 @@ class Route {
 
         if(eventType == "model") {
             return new ModelEvent(routeEvent[eventType]);
+        }
+        else if(eventType == "service") {
+            return new ServiceEvent(routeEvent[eventType]);
         }
 
         return new NullEvent(eventType);

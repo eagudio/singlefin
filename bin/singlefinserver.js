@@ -29,8 +29,7 @@ class Domain {
             }).then(() => {
                 this.initRoutes(this._schema.routes);
                 this._router.use((error, request, response, next) => {
-                    console.error(error);
-                    response.status(500).send(error);
+                    response.status(400).send(error);
                 });
                 server.use(this._path, this._router);
                 resolve();
@@ -45,6 +44,9 @@ class Domain {
     }
     get options() {
         return this._options;
+    }
+    get services() {
+        return this._services;
     }
     onInitialize() {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -151,81 +153,43 @@ class Route {
         if (!this._method) {
             this._method = "get";
         }
-        var middlewares = this._service.onRoute(this, this._config);
         this._domain.router[this._method](this._route, [(request, response, next) => {
                 var models = this.initModels();
-                var modelMap = new ModelMap(models, this._config.models);
+                var modelMap = new ModelMap(models);
                 request.singlefin = {
                     models: models,
                     modelMap: modelMap
                 };
                 next();
-            }, middlewares, (request, response, next) => {
+            }, (request, response, next) => {
                 var models = request.singlefin.models;
-                var modelMap = request.singlefin.modelMap;
-                this.onRequest(request, response, models, modelMap).then(() => {
+                this.inform("request", request, models).then(() => {
+                    next();
+                }).catch((error) => {
+                    next(error);
+                });
+            }, this._service.route(this, this._config), (request, response, next) => {
+                var models = request.singlefin.models;
+                this.inform("response", request, models).then(() => {
                     next();
                 }).catch((error) => {
                     next(error);
                 });
             }, (request, response, next) => {
-                var models = request.singlefin.models;
                 var modelMap = request.singlefin.modelMap;
-                this.onResponse(request, response, models, modelMap).then(() => {
+                this._service.reply(request, response, modelMap, this._config).then(() => {
                 }).catch((error) => {
                     next(error);
                 });
             }]);
     }
-    onRequest(request, response, models, modelMap) {
-        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            var routeEvents = this._events["request"];
-            var hasError = false;
-            if (routeEvents) {
-                for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
-                        hasError = true;
-                        return reject(error);
-                    });
-                }
-            }
-            if (!hasError) {
-                this._service.onRequest(request, response, modelMap, this._config).then(() => {
-                    resolve();
-                }).catch((error) => {
-                    reject(error);
-                });
-            }
-        }));
-    }
-    onResponse(request, response, models, modelMap) {
-        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            var routeEvents = this._events["response"];
-            var hasError = false;
-            if (routeEvents) {
-                for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
-                        hasError = true;
-                        return reject(error);
-                    });
-                }
-            }
-            if (!hasError) {
-                this._service.onResponse(request, response, modelMap, this._config).then(() => {
-                    resolve();
-                }).catch((error) => {
-                    reject(error);
-                });
-            }
-        }));
-    }
-    inform(event, request, response, models) {
+    inform(event, request, models) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             var routeEvents = this._events[event];
             var hasError = false;
             if (routeEvents) {
                 for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, request, response, models).catch((error) => {
+                    yield routeEvents[i].handle(this._domain, this, request, models).catch((error) => {
                         hasError = true;
                         return reject(error);
                     });
@@ -267,6 +231,9 @@ class Route {
         var eventType = Object.keys(routeEvent)[0];
         if (eventType == "model") {
             return new ModelEvent(routeEvent[eventType]);
+        }
+        else if (eventType == "service") {
+            return new ServiceEvent(routeEvent[eventType]);
         }
         return new NullEvent(eventType);
     }
@@ -815,32 +782,54 @@ class ModelEvent {
     constructor(event) {
         this._event = event;
     }
-    handle(domain, request, response, models) {
-        var instance = Runtime.getParentInstance(models, this._event);
-        var method = Runtime.getProperty(models, this._event);
-        return method.call(instance, domain, request, response, models);
+    handle(domain, route, request, models) {
+        return new Promise((resolve, reject) => {
+            var instance = Runtime.getParentInstance(models, this._event);
+            var method = Runtime.getProperty(models, this._event);
+            method.call(instance, domain, request, models).then(() => {
+                resolve();
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 }
 class NullEvent {
     constructor(eventType) {
         this._eventType = eventType;
     }
-    handle(domain, request, response, models) {
+    handle(domain, route, request, models) {
         console.error("event not recognized: " + this._eventType);
         return Promise.reject("event not recognized: " + this._eventType);
+    }
+}
+class ServiceEvent {
+    constructor(event) {
+        this._event = event;
+    }
+    handle(domain, route, request, models) {
+        return new Promise((resolve, reject) => {
+            var services = domain.services;
+            var service = services[this._event.service];
+            service.call(route, request, this._event).then(() => {
+                resolve();
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 }
 class DataService {
     run(parameters) {
         return Promise.resolve();
     }
-    onRoute(route, parameters) {
-        return [];
-    }
-    onRequest(request, response, modelMap, parameters) {
+    call(route, request, parameters) {
         return Promise.resolve();
     }
-    onResponse(request, response, modelMap, parameters) {
+    route(route, parameters) {
+        return [];
+    }
+    reply(request, response, modelMap, parameters) {
         var data = modelMap.getValue("data");
         response.send(data);
         return Promise.resolve();
@@ -850,13 +839,13 @@ class EmptyDataService {
     run(parameters) {
         return Promise.resolve();
     }
-    onRoute(route, parameters) {
-        return [];
-    }
-    onRequest(request, response, modelMap, parameters) {
+    call(route, request, parameters) {
         return Promise.resolve();
     }
-    onResponse(request, response, modelMap, parameters) {
+    route(route, parameters) {
+        return [];
+    }
+    reply(request, response, modelMap, parameters) {
         response.end();
         return Promise.resolve();
     }
@@ -865,40 +854,61 @@ class FileService {
     run(parameters) {
         return Promise.resolve();
     }
-    onRoute(route, parameters) {
-        return [];
-    }
-    onRequest(request, response, modelMap, parameters) {
+    call(route, request, parameters) {
         return Promise.resolve();
     }
-    onResponse(request, response, modelMap, parameters) {
+    route(route, parameters) {
+        return [];
+    }
+    reply(request, response, modelMap, parameters) {
         var path = require('path');
-        var fileName = modelMap.getValue("path");
+        var fileName = modelMap.getValue(parameters.path);
         var filePath = path.join(__dirname, "../../../", parameters.from, fileName);
         response.sendFile(filePath);
         return Promise.resolve();
     }
 }
 class ModelMap {
-    constructor(models, map) {
+    constructor(models) {
         this._models = models;
-        this._map = map;
     }
-    getValue(property) {
-        var valuePath = this._map[property];
-        if (!valuePath) {
-            throw new Error("an error occurred during get value from model map: property '" + property + "' does not exist");
-        }
+    getValue(valuePath) {
         return Runtime.getProperty(this._models, valuePath);
     }
-    setValue(property, value) {
-        var valuePath = this._map[property];
-        if (!valuePath) {
-            throw new Error("an error occurred during set value from model map: property '" + property + "' does not exist");
-        }
+    setValue(valuePath, value) {
         Runtime.setProperty(valuePath, this._models, value);
     }
 }
+/*class ModelMap {
+    private _models: any;
+    private _map: any;
+
+
+    constructor(models: any, map: any) {
+        this._models = models;
+        this._map = map;
+    }
+
+    getValue(property: string) {
+        var valuePath = this._map[property];
+
+        if(!valuePath) {
+            throw new Error("an error occurred during get value from model map: property '" + property + "' does not exist");
+        }
+
+        return Runtime.getProperty(this._models, valuePath);
+    }
+
+    setValue(property: string, value: any) {
+        var valuePath = this._map[property];
+
+        if(!valuePath) {
+            throw new Error("an error occurred during set value from model map: property '" + property + "' does not exist");
+        }
+
+        Runtime.setProperty(valuePath, this._models, value);
+    }
+}*/ 
 class MultipartService {
     constructor() {
         this.multer = require('multer');
@@ -906,7 +916,10 @@ class MultipartService {
     run(config) {
         return Promise.resolve();
     }
-    onRoute(route, parameters) {
+    call(route, request, parameters) {
+        return Promise.resolve();
+    }
+    route(route, parameters) {
         var storage = this.multer.diskStorage({
             destination: (req, file, cb) => {
                 var path = require('path');
@@ -914,19 +927,18 @@ class MultipartService {
                 cb(null, storagePath);
             },
             filename: (request, file, cb) => {
-                route.inform("readfile", request, file, request.singlefin.models).then(() => {
-                    //var result = request.singlefin.modelMap.getValue("result");
-                    cb(null, file.fieldname + '-' + Date.now() + ".jpg");
+                route.inform("readfile", request, request.singlefin.models).then(() => {
+                    var modelMap = request.singlefin.modelMap;
+                    var fileName = modelMap.getValue(parameters.file.name);
+                    var fileExtension = modelMap.getValue(parameters.file.extension);
+                    cb(null, fileName + "." + fileExtension);
                 });
             }
         });
         var upload = this.multer({ storage: storage });
         return upload.single(parameters.fieldname);
     }
-    onRequest(request, response, modelMap, parameters) {
-        return Promise.resolve();
-    }
-    onResponse(request, response, modelMap, parameters) {
+    reply(request, response, modelMap, parameters) {
         return new Promise((resolve, reject) => {
             var file = request.file;
             if (!file) {
