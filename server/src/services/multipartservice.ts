@@ -27,6 +27,8 @@ class MultipartService implements Service {
                     var fileExtension = modelMap.getValue(parameters.file.extension);
 
                     cb(null, fileName + "." + fileExtension);
+                }).catch((error: any) => {
+                    cb(error);
                 });
             }
         });

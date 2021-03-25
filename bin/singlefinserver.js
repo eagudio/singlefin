@@ -184,21 +184,32 @@ class Route {
             }]);
     }
     inform(event, request, models) {
-        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
             var routeEvents = this._events[event];
-            var hasError = false;
-            if (routeEvents) {
-                for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this._domain, this, request, models).catch((error) => {
-                        hasError = true;
-                        return reject(error);
-                    });
-                }
-            }
-            if (!hasError) {
+            this.performRouteEvents(0, routeEvents, request, models).then(() => {
                 resolve();
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+    performRouteEvents(index, routeEvents, request, models) {
+        return new Promise((resolve, reject) => {
+            if (!routeEvents) {
+                return resolve();
             }
-        }));
+            if (index >= routeEvents.length) {
+                return resolve();
+            }
+            routeEvents[index].handle(this._domain, this, request, models).then(() => {
+                index++;
+                return this.performRouteEvents(index, routeEvents, request, models);
+            }).then(() => {
+                return resolve();
+            }).catch((error) => {
+                return reject(error);
+            });
+        });
     }
     initModels() {
         var models = {};
@@ -932,6 +943,8 @@ class MultipartService {
                     var fileName = modelMap.getValue(parameters.file.name);
                     var fileExtension = modelMap.getValue(parameters.file.extension);
                     cb(null, fileName + "." + fileExtension);
+                }).catch((error) => {
+                    cb(error);
                 });
             }
         });

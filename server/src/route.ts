@@ -65,25 +65,37 @@ class Route {
         }]);
     }
 
-    inform(event: string, request: any, models: any) {
-        return new Promise<void>(async (resolve, reject) => {
+    inform(event: string, request: any, models: any) {        
+        return new Promise<void>((resolve, reject) => {
             var routeEvents: RouteEvent[] = this._events[event];
 
-            var hasError = false;
+            this.performRouteEvents(0, routeEvents, request, models).then(() => {
+                resolve();
+            }).catch((error: any) => {
+                reject(error);
+            });
+        });
+    }
 
-            if(routeEvents) {
-                for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this._domain, this, request, models).catch((error: string) => {
-                        hasError = true;
-
-                        return reject(error);
-                    });
-                }
+    performRouteEvents(index: number, routeEvents: RouteEvent[], request: any, models: any) {
+        return new Promise<void>((resolve, reject) => {
+            if(!routeEvents) {
+                return resolve();
             }
 
-            if(!hasError) {
-                resolve(); 
+            if(index >= routeEvents.length) {
+                return resolve();
             }
+      
+            routeEvents[index].handle(this._domain, this, request, models).then(() => {
+                index++;
+                
+                return this.performRouteEvents(index, routeEvents, request, models);
+            }).then(() => {
+                return resolve();
+            }).catch((error: any) => {
+                return reject(error);
+            });
         });
     }
 

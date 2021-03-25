@@ -2478,26 +2478,8 @@ var SinglefinModule;
                 var _data = event.data.data;
                 var inputElement = event.currentTarget;
                 if (inputElement.files && inputElement.files[0]) {
-                    /*var reader = new FileReader();
-                    
-                    reader.onload = ((e: any) => {
-                        var fileContent = e.target.result;
-
-                        Runtime.setProperty(_valuePath, _data, fileContent);
-
-                        if(!_model) {
-                            return;
-                        }
-        
-                        if(!_model.on) {
-                            return;
-                        }
-        
-                        _page.eventManager.handleEvent(_singlefin, _model, "on", _page, fileContent, event);
-                    });
-                    
-                    reader.readAsDataURL(inputElement.files[0]);*/
                     SinglefinModule.Runtime.setProperty(_valuePath, _data, inputElement.files[0]);
+                    console.log(inputElement.files[0]);
                     if (!_model) {
                         return;
                     }
