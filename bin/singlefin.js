@@ -2479,7 +2479,6 @@ var SinglefinModule;
                 var inputElement = event.currentTarget;
                 if (inputElement.files && inputElement.files[0]) {
                     SinglefinModule.Runtime.setProperty(_valuePath, _data, inputElement.files[0]);
-                    console.log(inputElement.files[0]);
                     if (!_model) {
                         return;
                     }
