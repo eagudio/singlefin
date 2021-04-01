@@ -1,14 +1,12 @@
-class DataService implements Service {
+/// <reference path="service.ts"/>
+
+class DataService extends Service {
     run(parameters: any): Promise<void> {
         return Promise.resolve();
     }
 
-    call(route: Route, request: any, parameters: any) {
+    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any) {
         return Promise.resolve();
-    }
-    
-    route(route: Route, parameters: any) {
-        return [];
     }
 
     reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {

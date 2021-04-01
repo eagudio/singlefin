@@ -12,11 +12,10 @@ class Domain {
     constructor(path, schema) {
         this._routes = [];
         this._services = {};
-        this._events = {};
         this._schema = schema;
         this._path = path;
         this._options = schema.options;
-        this.initEvents(this._schema.events);
+        this._routeActionsHandler = new RouteActionsHandler(this, this._schema.events);
     }
     create(server) {
         return new Promise((resolve, reject) => {
@@ -25,7 +24,13 @@ class Domain {
             this._router.use('/sf', express.static(__dirname));
             this.initStatic(this._schema.static);
             this.initServices(this._schema.services).then(() => {
-                return this.onInitialize();
+                var models = this.initModels();
+                var modelMap = new ModelMap(models);
+                return this._routeActionsHandler.inform("initialize", {
+                    singlefin: {
+                        modelMap: modelMap
+                    }
+                });
             }).then(() => {
                 this.initRoutes(this._schema.routes);
                 this._router.use((error, request, response, next) => {
@@ -47,20 +52,6 @@ class Domain {
     }
     get services() {
         return this._services;
-    }
-    onInitialize() {
-        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            var routeEvents = this._events["initialize"];
-            if (routeEvents) {
-                var models = this.initModels();
-                for (var i = 0; i < routeEvents.length; i++) {
-                    yield routeEvents[i].handle(this, null, null, models).catch((error) => {
-                        return reject(error);
-                    });
-                }
-            }
-            resolve();
-        }));
     }
     initStatic(staticSchema) {
         if (!staticSchema) {
@@ -91,13 +82,13 @@ class Domain {
     }
     initServices(servicesSchema) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            this._services["empty"] = new EmptyDataService();
-            this._services["data"] = new DataService();
-            this._services["file"] = new FileService();
-            this._services["multipart"] = new MultipartService();
+            this._services["empty"] = new EmptyDataService(this);
+            this._services["data"] = new DataService(this);
+            this._services["file"] = new FileService(this);
+            this._services["multipart"] = new MultipartService(this);
             for (var key in servicesSchema) {
                 var Service = servicesSchema[key].handler;
-                this._services[key] = new Service();
+                this._services[key] = new Service(this);
             }
             for (var key in this._services) {
                 yield this._services[key].run(servicesSchema[key]).then(() => {
@@ -109,26 +100,6 @@ class Domain {
             resolve();
         }));
     }
-    initEvents(eventsSchema) {
-        for (var key in eventsSchema) {
-            this._events[key] = [];
-            this._events[key] = this.makeRouteEvents(eventsSchema[key]);
-        }
-    }
-    makeRouteEvents(routeEvents) {
-        var events = [];
-        for (var i = 0; i < routeEvents.length; i++) {
-            events.push(this.makeRouteEvent(routeEvents[i]));
-        }
-        return events;
-    }
-    makeRouteEvent(routeEvent) {
-        var eventType = Object.keys(routeEvent)[0];
-        if (eventType == "model") {
-            return new ModelEvent(routeEvent[eventType]);
-        }
-        return new NullEvent(eventType);
-    }
     getRouterOptions() {
         if (this._schema && this._schema.router) {
             return this._schema.router;
@@ -138,16 +109,28 @@ class Domain {
 }
 class Route {
     constructor(domain, services, modelClasses, route, config) {
-        this._service = new EmptyDataService();
-        this._events = {};
         this._domain = domain;
         this._route = route;
         this._modelClasses = modelClasses;
         this._config = config;
         this._method = config.method;
+        this._service = new EmptyDataService(domain);
         this.makeService(services, config.service);
-        this.makeEvents(config.events);
+        this._routeActionsHandler = new RouteActionsHandler(domain, this._config.events);
+        this._currentRouteActionsHandler = this._routeActionsHandler;
         this.initRouting();
+    }
+    get domain() {
+        return this._domain;
+    }
+    get currentRouteActionsHandler() {
+        return this._currentRouteActionsHandler;
+    }
+    set currentRouteActionsHandler(currentRouteActionsHandler) {
+        this._currentRouteActionsHandler = currentRouteActionsHandler;
+    }
+    inform(event, request) {
+        return this._currentRouteActionsHandler.inform(event, request);
     }
     initRouting() {
         if (!this._method) {
@@ -157,20 +140,17 @@ class Route {
                 var models = this.initModels();
                 var modelMap = new ModelMap(models);
                 request.singlefin = {
-                    models: models,
                     modelMap: modelMap
                 };
                 next();
             }, (request, response, next) => {
-                var models = request.singlefin.models;
-                this.inform("request", request, models).then(() => {
+                this._routeActionsHandler.inform("request", request).then(() => {
                     next();
                 }).catch((error) => {
                     next(error);
                 });
             }, this._service.route(this, this._config), (request, response, next) => {
-                var models = request.singlefin.models;
-                this.inform("response", request, models).then(() => {
+                this._routeActionsHandler.inform("response", request).then(() => {
                     next();
                 }).catch((error) => {
                     next(error);
@@ -182,34 +162,6 @@ class Route {
                     next(error);
                 });
             }]);
-    }
-    inform(event, request, models) {
-        return new Promise((resolve, reject) => {
-            var routeEvents = this._events[event];
-            this.performRouteEvents(0, routeEvents, request, models).then(() => {
-                resolve();
-            }).catch((error) => {
-                reject(error);
-            });
-        });
-    }
-    performRouteEvents(index, routeEvents, request, models) {
-        return new Promise((resolve, reject) => {
-            if (!routeEvents) {
-                return resolve();
-            }
-            if (index >= routeEvents.length) {
-                return resolve();
-            }
-            routeEvents[index].handle(this._domain, this, request, models).then(() => {
-                index++;
-                return this.performRouteEvents(index, routeEvents, request, models);
-            }).then(() => {
-                return resolve();
-            }).catch((error) => {
-                return reject(error);
-            });
-        });
     }
     initModels() {
         var models = {};
@@ -224,29 +176,6 @@ class Route {
             return;
         }
         this._service = services[serviceName];
-    }
-    makeEvents(events) {
-        for (var key in events) {
-            this._events[key] = [];
-            this._events[key] = this.makeRouteEvents(events[key]);
-        }
-    }
-    makeRouteEvents(routeEvents) {
-        var events = [];
-        for (var i = 0; i < routeEvents.length; i++) {
-            events.push(this.makeRouteEvent(routeEvents[i]));
-        }
-        return events;
-    }
-    makeRouteEvent(routeEvent) {
-        var eventType = Object.keys(routeEvent)[0];
-        if (eventType == "model") {
-            return new ModelEvent(routeEvent[eventType]);
-        }
-        else if (eventType == "service") {
-            return new ServiceEvent(routeEvent[eventType]);
-        }
-        return new NullEvent(eventType);
     }
 }
 class RouteDataResponse {
@@ -789,15 +718,26 @@ class Singlefin {
     }
 }
 module.exports.singlefin = new Singlefin();
-class ModelEvent {
-    constructor(event) {
-        this._event = event;
+class RouteAction {
+    constructor(domain, parameters) {
+        this._parameters = parameters;
+        this._routeActionsHandler = new RouteActionsHandler(domain, parameters.events);
     }
-    handle(domain, route, request, models) {
+    get parameters() {
+        return this._parameters;
+    }
+    do(domain, request) {
+        return this.handle(domain, this._routeActionsHandler, request);
+    }
+}
+/// <reference path="routeaction.ts"/>
+class ModelAction extends RouteAction {
+    handle(domain, routeActionsHandler, request) {
         return new Promise((resolve, reject) => {
-            var instance = Runtime.getParentInstance(models, this._event);
-            var method = Runtime.getProperty(models, this._event);
-            method.call(instance, domain, request, models).then(() => {
+            var modelMap = request.singlefin.modelMap;
+            var instance = modelMap.getParentInstance(this.parameters);
+            var method = modelMap.getValue(this.parameters);
+            method.call(instance, domain, request).then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error);
@@ -805,24 +745,78 @@ class ModelEvent {
         });
     }
 }
-class NullEvent {
-    constructor(eventType) {
-        this._eventType = eventType;
-    }
-    handle(domain, route, request, models) {
-        console.error("event not recognized: " + this._eventType);
-        return Promise.reject("event not recognized: " + this._eventType);
+/// <reference path="routeaction.ts"/>
+class NullAction extends RouteAction {
+    handle(domain, routeActionsHandler, request) {
+        console.error("action not recognized: " + this.parameters);
+        return Promise.reject("action not recognized: " + this.parameters);
     }
 }
-class ServiceEvent {
-    constructor(event) {
-        this._event = event;
+class RouteActionsHandler {
+    constructor(domain, events) {
+        this._routeActions = {};
+        this._domain = domain;
+        this.makeActions(events);
     }
-    handle(domain, route, request, models) {
+    inform(event, request) {
+        return new Promise((resolve, reject) => {
+            var routeActions = this._routeActions[event];
+            this.performRouteActions(0, routeActions, request).then(() => {
+                resolve();
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+    performRouteActions(index, routeActions, request) {
+        return new Promise((resolve, reject) => {
+            if (!routeActions) {
+                return resolve();
+            }
+            if (index >= routeActions.length) {
+                return resolve();
+            }
+            routeActions[index].do(this._domain, request).then(() => {
+                index++;
+                return this.performRouteActions(index, routeActions, request);
+            }).then(() => {
+                return resolve();
+            }).catch((error) => {
+                return reject(error);
+            });
+        });
+    }
+    makeActions(events) {
+        for (var event in events) {
+            this._routeActions[event] = [];
+            this._routeActions[event] = this.makeRouteActions(events[event]);
+        }
+    }
+    makeRouteActions(routeActions) {
+        var actions = [];
+        for (var i = 0; i < routeActions.length; i++) {
+            actions.push(this.makeRouteAction(routeActions[i]));
+        }
+        return actions;
+    }
+    makeRouteAction(routeAction) {
+        var actionType = Object.keys(routeAction)[0];
+        if (actionType == "model") {
+            return new ModelAction(this._domain, routeAction[actionType]);
+        }
+        else if (actionType == "service") {
+            return new ServiceAction(this._domain, routeAction[actionType]);
+        }
+        return new NullAction(this._domain, actionType);
+    }
+}
+/// <reference path="routeaction.ts"/>
+class ServiceAction extends RouteAction {
+    handle(domain, routeActionsHandler, request) {
         return new Promise((resolve, reject) => {
             var services = domain.services;
-            var service = services[this._event.service];
-            service.call(route, request, this._event).then(() => {
+            var service = services[this.parameters.service];
+            service.call(routeActionsHandler, request.singlefin.modelMap, this.parameters, request).then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error);
@@ -830,15 +824,31 @@ class ServiceEvent {
         });
     }
 }
-class DataService {
+class Service {
+    constructor(domain) {
+        this._domain = domain;
+    }
+    get domain() {
+        return this._domain;
+    }
+    route(route, parameters) {
+        return (request, response, next) => {
+            this.call(route.currentRouteActionsHandler, request.singlefin.modelMap, parameters, request).then(() => {
+                next();
+            }).catch((error) => {
+                next(error);
+            });
+        };
+    }
+}
+module.exports.service = Service;
+/// <reference path="service.ts"/>
+class DataService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(route, request, parameters) {
+    call(routeActionsHandler, modelMap, parameters, request) {
         return Promise.resolve();
-    }
-    route(route, parameters) {
-        return [];
     }
     reply(request, response, modelMap, parameters) {
         var data = modelMap.getValue("data");
@@ -846,30 +856,26 @@ class DataService {
         return Promise.resolve();
     }
 }
-class EmptyDataService {
+/// <reference path="service.ts"/>
+class EmptyDataService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(route, request, parameters) {
+    call(routeActionsHandler, modelMap, parameters, request) {
         return Promise.resolve();
-    }
-    route(route, parameters) {
-        return [];
     }
     reply(request, response, modelMap, parameters) {
         response.end();
         return Promise.resolve();
     }
 }
-class FileService {
+/// <reference path="service.ts"/>
+class FileService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(route, request, parameters) {
+    call(routeActionsHandler, modelMap, parameters, request) {
         return Promise.resolve();
-    }
-    route(route, parameters) {
-        return [];
     }
     reply(request, response, modelMap, parameters) {
         var path = require('path');
@@ -882,6 +888,9 @@ class FileService {
 class ModelMap {
     constructor(models) {
         this._models = models;
+    }
+    getParentInstance(valuePath) {
+        return Runtime.getParentInstance(this._models, valuePath);
     }
     getValue(valuePath) {
         return Runtime.getProperty(this._models, valuePath);
@@ -920,14 +929,16 @@ class ModelMap {
         Runtime.setProperty(valuePath, this._models, value);
     }
 }*/ 
-class MultipartService {
+/// <reference path="service.ts"/>
+class MultipartService extends Service {
     constructor() {
+        super(...arguments);
         this.multer = require('multer');
     }
     run(config) {
         return Promise.resolve();
     }
-    call(route, request, parameters) {
+    call(routeActionsHandler, modelMap, parameters, request) {
         return Promise.resolve();
     }
     route(route, parameters) {
@@ -938,7 +949,7 @@ class MultipartService {
                 cb(null, storagePath);
             },
             filename: (request, file, cb) => {
-                route.inform("readfile", request, request.singlefin.models).then(() => {
+                route.inform("readfile", request).then(() => {
                     var modelMap = request.singlefin.modelMap;
                     var fileName = modelMap.getValue(parameters.file.name);
                     var fileExtension = modelMap.getValue(parameters.file.extension);

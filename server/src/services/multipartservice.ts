@@ -1,4 +1,6 @@
-class MultipartService implements Service {
+/// <reference path="service.ts"/>
+
+class MultipartService extends Service {
     private multer: any = require('multer');
 
 
@@ -6,7 +8,7 @@ class MultipartService implements Service {
         return Promise.resolve();
     }
 
-    call(route: Route, request: any, parameters: any) {
+    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any) {
         return Promise.resolve();
     }
 
@@ -20,7 +22,7 @@ class MultipartService implements Service {
                 cb(null, storagePath);
             },
             filename: (request: any, file: any, cb: any) => {
-                route.inform("readfile", request, request.singlefin.models).then(() => {
+                route.inform("readfile", request).then(() => {
                     var modelMap: ModelMap = request.singlefin.modelMap;
 
                     var fileName = modelMap.getValue(parameters.file.name);

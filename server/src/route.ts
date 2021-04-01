@@ -4,8 +4,9 @@ class Route {
     private _route: string;
     private _method: string;
     private _modelClasses: any;
-    private _service: Service = new EmptyDataService();
-    private _events: any = {};
+    private _service: Service;
+    private _routeActionsHandler: RouteActionsHandler;
+    private _currentRouteActionsHandler: RouteActionsHandler;
 
 
     constructor(domain: any, services: any, modelClasses: any, route: string, config: any) {
@@ -16,11 +17,31 @@ class Route {
         this._config = config;
 
         this._method = config.method;
+
+        this._service = new EmptyDataService(domain);
         
         this.makeService(services, config.service);
-        this.makeEvents(config.events);
+
+        this._routeActionsHandler = new RouteActionsHandler(domain, this._config.events);
+        this._currentRouteActionsHandler = this._routeActionsHandler;
 
         this.initRouting();
+    }
+
+    get domain() {
+        return this._domain;
+    }
+
+    get currentRouteActionsHandler() {
+        return this._currentRouteActionsHandler;
+    }
+
+    set currentRouteActionsHandler(currentRouteActionsHandler: RouteActionsHandler) {
+        this._currentRouteActionsHandler = currentRouteActionsHandler;
+    }
+    
+    inform(event: string, request: any): Promise<void> {
+        return this._currentRouteActionsHandler.inform(event, request);
     }
 
     initRouting() {
@@ -33,23 +54,18 @@ class Route {
             var modelMap: ModelMap = new ModelMap(models);
 
             request.singlefin = {
-                models: models,
                 modelMap: modelMap
             };
 
             next();
         }, (request: any, response: any, next: any) => {
-            var models = request.singlefin.models;
-
-            this.inform("request", request, models).then(() => {
+            this._routeActionsHandler.inform("request", request).then(() => {
                 next();
             }).catch((error: string) => {
                 next(error);
             });
         }, this._service.route(this, this._config), (request: any, response: any, next: any) => {
-            var models = request.singlefin.models;
-
-            this.inform("response", request, models).then(() => {
+            this._routeActionsHandler.inform("response", request).then(() => {
                 next();
             }).catch((error: string) => {
                 next(error);
@@ -63,40 +79,6 @@ class Route {
                 next(error);
             });
         }]);
-    }
-
-    inform(event: string, request: any, models: any) {        
-        return new Promise<void>((resolve, reject) => {
-            var routeEvents: RouteEvent[] = this._events[event];
-
-            this.performRouteEvents(0, routeEvents, request, models).then(() => {
-                resolve();
-            }).catch((error: any) => {
-                reject(error);
-            });
-        });
-    }
-
-    performRouteEvents(index: number, routeEvents: RouteEvent[], request: any, models: any) {
-        return new Promise<void>((resolve, reject) => {
-            if(!routeEvents) {
-                return resolve();
-            }
-
-            if(index >= routeEvents.length) {
-                return resolve();
-            }
-      
-            routeEvents[index].handle(this._domain, this, request, models).then(() => {
-                index++;
-                
-                return this.performRouteEvents(index, routeEvents, request, models);
-            }).then(() => {
-                return resolve();
-            }).catch((error: any) => {
-                return reject(error);
-            });
-        });
     }
 
     initModels() {
@@ -117,36 +99,5 @@ class Route {
         }
 
         this._service = services[serviceName];
-    }
-
-    makeEvents(events: any) {
-        for(var key in events) {
-            this._events[key] = [];
-
-            this._events[key] = this.makeRouteEvents(events[key]);
-        }
-    }
-
-    makeRouteEvents(routeEvents: any[]) {
-        var events = [];
-        
-        for(var i=0; i<routeEvents.length; i++) {
-            events.push(this.makeRouteEvent(routeEvents[i]));
-        }
-
-        return events;
-    }
-
-    makeRouteEvent(routeEvent: any) {
-        var eventType = Object.keys(routeEvent)[0];
-
-        if(eventType == "model") {
-            return new ModelEvent(routeEvent[eventType]);
-        }
-        else if(eventType == "service") {
-            return new ServiceEvent(routeEvent[eventType]);
-        }
-
-        return new NullEvent(eventType);
     }
 }

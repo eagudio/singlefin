@@ -6,7 +6,7 @@ class Domain {
     private _router: any;
     private _routes: any[] = [];
     private _services: any = {};
-    private _events: any = {};
+    private _routeActionsHandler: RouteActionsHandler;
 
     
     constructor(path: string, schema: any) {
@@ -16,7 +16,7 @@ class Domain {
 
         this._options = schema.options;
 
-        this.initEvents(this._schema.events);
+        this._routeActionsHandler = new RouteActionsHandler(this, this._schema.events);
     }
 
     create(server: any) {
@@ -30,7 +30,14 @@ class Domain {
             this.initStatic(this._schema.static);
     
             this.initServices(this._schema.services).then(() => {
-                return this.onInitialize();
+                var models = this.initModels();
+                var modelMap: ModelMap = new ModelMap(models);
+
+                return this._routeActionsHandler.inform("initialize", {
+                    singlefin: {
+                        modelMap: modelMap
+                    }
+                });
             }).then(() => {
                 this.initRoutes(this._schema.routes);
 
@@ -59,24 +66,6 @@ class Domain {
 
     get services() {
         return this._services;
-    }
-
-    onInitialize() {
-        return new Promise<void>(async (resolve, reject) => {
-            var routeEvents: RouteEvent[] = this._events["initialize"];
-
-            if(routeEvents) {
-                var models = this.initModels();
-
-                for(var i=0; i<routeEvents.length; i++) {
-                    await routeEvents[i].handle(this, null, null, models).catch((error: string) => {
-                        return reject(error);
-                    });
-                }
-            }
-        
-            resolve();
-        });
     }
 
     initStatic(staticSchema: any) {
@@ -118,15 +107,15 @@ class Domain {
 
     initServices(servicesSchema: any) {
         return new Promise<void>(async (resolve, reject) => {
-            this._services["empty"] = new EmptyDataService();
-            this._services["data"] = new DataService();
-            this._services["file"] = new FileService();
-            this._services["multipart"] = new MultipartService();
+            this._services["empty"] = new EmptyDataService(this);
+            this._services["data"] = new DataService(this);
+            this._services["file"] = new FileService(this);
+            this._services["multipart"] = new MultipartService(this);
 
             for(var key in servicesSchema) {
                 var Service = servicesSchema[key].handler;
 
-                this._services[key] = new Service();
+                this._services[key] = new Service(this);
             }
 
             for(var key in this._services) {
@@ -141,34 +130,6 @@ class Domain {
 
             resolve();
         });
-    }
-
-    initEvents(eventsSchema: any) {
-        for(var key in eventsSchema) {
-            this._events[key] = [];
-
-            this._events[key] = this.makeRouteEvents(eventsSchema[key]);
-        }
-    }
-
-    makeRouteEvents(routeEvents: any[]) {
-        var events = [];
-        
-        for(var i=0; i<routeEvents.length; i++) {
-            events.push(this.makeRouteEvent(routeEvents[i]));
-        }
-
-        return events;
-    }
-
-    makeRouteEvent(routeEvent: any) {
-        var eventType = Object.keys(routeEvent)[0];
-
-        if(eventType == "model") {
-            return new ModelEvent(routeEvent[eventType]);
-        }
-
-        return new NullEvent(eventType);
     }
 
     getRouterOptions() {

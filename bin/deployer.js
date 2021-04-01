@@ -105,6 +105,8 @@ var SinglefinDeployment;
                                 service.deploy(this, routeEvents[key].service, routesEventsSchema[key][i].service);
                             }
                         }
+                        routeEvents[key].service.events = routesEventsSchema[key][i].service.events;
+                        this.bundleServerRouteEvents(routeEvents[key].service.events, routesEventsSchema[key][i].service.events, servicesSchema);
                     }
                 }
             }

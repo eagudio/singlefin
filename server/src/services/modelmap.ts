@@ -6,6 +6,10 @@ class ModelMap {
         this._models = models;
     }
 
+    getParentInstance(valuePath: string) {
+        return Runtime.getParentInstance(this._models, valuePath);
+    }
+
     getValue(valuePath: string) {
         return Runtime.getProperty(this._models, valuePath);
     }
