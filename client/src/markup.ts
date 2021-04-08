@@ -52,14 +52,13 @@ module SinglefinModule {
                         var keyPath = ref.key.replace(".$", "[" + pageIndex + "]");
                         var key: any = Runtime.getProperty(models, keyPath);
 
-                        var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
-
                         if(map[key] !== undefined) {
                             this._text = this._text.replace(text, map[key]);
 
                             return true;
                         }
-                        else if(defaultValuePath){
+                        else if(ref.default){
+                            var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
                             var defaultValue: any = Runtime.getProperty(models, defaultValuePath);
 
                             this._text = this._text.replace(text, defaultValue);

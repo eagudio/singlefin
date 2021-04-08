@@ -12,8 +12,10 @@ module SinglefinModule {
 					var valuePath = delegate.page.models[key].ref
 
 					if(valuePath) {
-						valuePath = valuePath.replace(".$", "[" + page.index + "]");
-						valuePath = valuePath.trim();
+						if(typeof valuePath === "string") {
+							valuePath = valuePath.replace(".$", "[" + page.index + "]");
+							valuePath = valuePath.trim();
+						}
 					}
 
 					pageModels[key].ref = valuePath;

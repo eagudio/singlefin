@@ -481,12 +481,12 @@ var SinglefinModule;
                         var map = SinglefinModule.Runtime.getProperty(models, mapPath);
                         var keyPath = ref.key.replace(".$", "[" + pageIndex + "]");
                         var key = SinglefinModule.Runtime.getProperty(models, keyPath);
-                        var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
                         if (map[key] !== undefined) {
                             this._text = this._text.replace(text, map[key]);
                             return true;
                         }
-                        else if (defaultValuePath) {
+                        else if (ref.default) {
+                            var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
                             var defaultValue = SinglefinModule.Runtime.getProperty(models, defaultValuePath);
                             this._text = this._text.replace(text, defaultValue);
                             return true;
@@ -3031,8 +3031,10 @@ var SinglefinModule;
                     pageModels[key] = {};
                     var valuePath = delegate.page.models[key].ref;
                     if (valuePath) {
-                        valuePath = valuePath.replace(".$", "[" + page.index + "]");
-                        valuePath = valuePath.trim();
+                        if (typeof valuePath === "string") {
+                            valuePath = valuePath.replace(".$", "[" + page.index + "]");
+                            valuePath = valuePath.trim();
+                        }
                     }
                     pageModels[key].ref = valuePath;
                     pageModels[key].on = delegate.page.models[key].on;
