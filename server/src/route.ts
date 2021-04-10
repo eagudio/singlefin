@@ -50,8 +50,8 @@ class Route {
         }
 
         this._domain.router[this._method](this._route, [(request: any, response: any, next: any) => {
-            var models = this.initModels();
-            var modelMap: ModelMap = new ModelMap(models);
+            let models = this.initModels();
+            let modelMap: ModelMap = new ModelMap(models);
 
             request.singlefin = {
                 modelMap: modelMap
@@ -71,7 +71,7 @@ class Route {
                 next(error);
             });
         }, (request: any, response: any, next: any) => {
-            var modelMap: ModelMap = request.singlefin.modelMap;
+            let modelMap: ModelMap = request.singlefin.modelMap;
 
             this._service.reply(request, response, modelMap, this._config).then(() => {
                 
@@ -82,10 +82,10 @@ class Route {
     }
 
     initModels() {
-        var models: any = {};
+        let models: any = {};
 
-        for(var key in this._modelClasses) {
-            var Model = this._modelClasses[key];
+        for(let key in this._modelClasses) {
+            let Model = this._modelClasses[key];
 
             models[key] = new Model();
         }

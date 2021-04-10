@@ -10,7 +10,7 @@ class RouteActionsHandler {
 
     inform(event: string, request: any): Promise<void> {        
         return new Promise<void>((resolve, reject) => {
-            var routeActions: RouteAction[] = this._routeActions[event];
+            let routeActions: RouteAction[] = this._routeActions[event];
 
             this.performRouteActions(0, routeActions, request).then(() => {
                 resolve();
@@ -43,7 +43,7 @@ class RouteActionsHandler {
     }
 
     makeActions(events: any) {
-        for(var event in events) {
+        for(let event in events) {
             this._routeActions[event] = [];
 
             this._routeActions[event] = this.makeRouteActions(events[event]);
@@ -51,9 +51,9 @@ class RouteActionsHandler {
     }
 
     makeRouteActions(routeActions: any[]) {
-        var actions = [];
+        let actions = [];
         
-        for(var i=0; i<routeActions.length; i++) {
+        for(let i=0; i<routeActions.length; i++) {
             actions.push(this.makeRouteAction(routeActions[i]));
         }
 
@@ -61,7 +61,7 @@ class RouteActionsHandler {
     }
 
     makeRouteAction(routeAction: any) {
-        var actionType = Object.keys(routeAction)[0];
+        let actionType = Object.keys(routeAction)[0];
 
         if(actionType == "model") {
             return new ModelAction(this._domain, routeAction[actionType]);

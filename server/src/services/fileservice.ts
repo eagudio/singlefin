@@ -10,11 +10,11 @@ class FileService extends Service {
     }
 
     reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
-        var path = require('path');
+        let path = require('path');
 
-        var fileName = modelMap.getValue(parameters.path);
+        let fileName = modelMap.getValue(parameters.path);
 
-        var filePath = path.join(__dirname, "../../../", parameters.from, fileName);
+        let filePath = path.join(__dirname, "../../../", parameters.from, fileName);
         
         response.sendFile(filePath);
 

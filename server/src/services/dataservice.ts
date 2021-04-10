@@ -10,7 +10,7 @@ class DataService extends Service {
     }
 
     reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown> {
-        var data = modelMap.getValue("data");
+        let data = modelMap.getValue("data");
         
         response.send(data);
 

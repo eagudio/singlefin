@@ -4,9 +4,9 @@ class ServiceAction extends RouteAction {
 
     handle(domain: Domain, routeActionsHandler: RouteActionsHandler, request: any): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            var services = domain.services;
+            let services = domain.services;
 
-            var service: Service = services[this.parameters.service];
+            let service: Service = services[this.parameters.service];
     
             service.call(routeActionsHandler, request.singlefin.modelMap, this.parameters, request).then(() => {
                 resolve();

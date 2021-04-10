@@ -21,7 +21,7 @@ class Domain {
 
     create(server: any) {
         return new Promise<void>((resolve, reject) => {
-            var express = require('express');
+            let express = require('express');
 
             this._router = express.Router(this.getRouterOptions());
     
@@ -30,8 +30,8 @@ class Domain {
             this.initStatic(this._schema.static);
     
             this.initServices(this._schema.services).then(() => {
-                var models = this.initModels();
-                var modelMap: ModelMap = new ModelMap(models);
+                let models = this.initModels();
+                let modelMap: ModelMap = new ModelMap(models);
 
                 return this._routeActionsHandler.inform("initialize", {
                     singlefin: {
@@ -73,9 +73,9 @@ class Domain {
             return;
         }
 
-        for(var key in staticSchema) {
-            var express = require('express');
-            var path = require('path');
+        for(let key in staticSchema) {
+            let express = require('express');
+            let path = require('path');
 
             this._router.use(key, express.static(path.join(__dirname, "../../../", staticSchema[key])));
         }
@@ -86,18 +86,18 @@ class Domain {
             return;
         }
 
-        for(var key in routesSchema) {
-            var route = new Route(this, this._services, this._schema.models, key, routesSchema[key]);
+        for(let key in routesSchema) {
+            let route = new Route(this, this._services, this._schema.models, key, routesSchema[key]);
 
             this._routes.push(route);
         }
     }
 
     initModels() {
-        var models: any = {};
+        let models: any = {};
 
-        for(var key in this._schema.models) {
-            var Model = this._schema.models[key];
+        for(let key in this._schema.models) {
+            let Model = this._schema.models[key];
 
             models[key] = new Model();
         }
@@ -112,13 +112,13 @@ class Domain {
             this._services["file"] = new FileService(this);
             this._services["multipart"] = new MultipartService(this);
 
-            for(var key in servicesSchema) {
-                var Service = servicesSchema[key].handler;
+            for(let key in servicesSchema) {
+                let Service = servicesSchema[key].handler;
 
                 this._services[key] = new Service(this);
             }
 
-            for(var key in this._services) {
+            for(let key in this._services) {
                 await this._services[key].run(servicesSchema[key]).then(() => {
 
                 }).catch((error: any) =>  {

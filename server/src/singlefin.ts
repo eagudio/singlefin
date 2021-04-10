@@ -2,9 +2,9 @@
 class Singlefin {
     run(serverConfigPath: string, app?: any) {
         try {
-            var serverConfig = require(serverConfigPath);
+            let serverConfig = require(serverConfigPath);
         
-            var server = new Server(serverConfig, app);
+            let server = new Server(serverConfig, app);
     
             if(!app) {
                 server.startServer();
