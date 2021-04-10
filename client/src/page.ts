@@ -331,7 +331,7 @@ module SinglefinModule {
 			return new Promise((resolve, reject) => {
 				this.drawContainer(this, this.container, parameters, models).then((htmlContainerElement: any) => {
 					this.eventManager.handleEvent(this._singlefin, this.events, "refresh", this, parameters, models).then((viewParameters: any) => {
-						var previousPageHtmlElement = this.htmlElement;
+						let previousPageHtmlElement = this.htmlElement;
 
 						this.htmlElement = this.renderView(this, viewParameters, models);
 
@@ -418,13 +418,13 @@ module SinglefinModule {
 				return null;
 			}
 			
-			var pagePath = this.group[this.groupIndex];
+			let pagePath = this.group[this.groupIndex];
 
             return this._singlefin.pages[pagePath];
         }
 
 		nextStep(parameters: any, models: any) {
-			var currentPage = this.getCurrentGroupPage();
+			let currentPage = this.getCurrentGroupPage();
 			
 			this.groupIndex = this.groupIndex + 1;
 			
@@ -450,7 +450,7 @@ module SinglefinModule {
 		}
 
 		previousStep(parameters: any, models: any) {
-			var currentPage = this.getCurrentGroupPage();
+			let currentPage = this.getCurrentGroupPage();
 			
 			this.groupIndex = this.groupIndex - 1;
 			
@@ -490,7 +490,7 @@ module SinglefinModule {
 		}
 
 		openGroupPage(singlefin: Singlefin, pageName: string, parameters: any, models: any) {
-			var groupIndex = this.group.indexOf(pageName);
+			let groupIndex = this.group.indexOf(pageName);
 
 			if(groupIndex == -1) {
 				console.error("group page " + pageName + " not found");
@@ -504,7 +504,7 @@ module SinglefinModule {
 		}
 
 		setNextGroupStepEnabled(singlefin: Singlefin, enabled: boolean) {
-            var nextPage: Page = singlefin.pages[this.group[this.groupIndex]];
+            let nextPage: Page = singlefin.pages[this.group[this.groupIndex]];
 
 			if(!nextPage.parameters) {
 				nextPage.parameters = {};
@@ -514,7 +514,7 @@ module SinglefinModule {
         }
 
 		isNextGroupStepEnabled(singlefin: Singlefin) {
-			var nextPage: Page = singlefin.pages[this.group[this.groupIndex]];
+			let nextPage: Page = singlefin.pages[this.group[this.groupIndex]];
 
 			if(nextPage.parameters) {
 				return nextPage.parameters.nextEnabled;
@@ -524,7 +524,7 @@ module SinglefinModule {
 		}
 
 		setPreviousGroupStepEnabled(singlefin: Singlefin, enabled: boolean) {
-            var previousPage: Page = singlefin.pages[this.group[this.groupIndex]];
+            let previousPage: Page = singlefin.pages[this.group[this.groupIndex]];
 
 			if(!previousPage.parameters) {
 				previousPage.parameters = {};
@@ -534,7 +534,7 @@ module SinglefinModule {
 		}
 		
 		isPreviousGroupStepEnabled(singlefin: Singlefin) {
-			var previousPage: Page = singlefin.pages[this.group[this.groupIndex]];
+			let previousPage: Page = singlefin.pages[this.group[this.groupIndex]];
 
 			if(previousPage.parameters) {
 				return previousPage.parameters.previousEnabled;
@@ -544,7 +544,7 @@ module SinglefinModule {
 		}
         
 		drawBody(parameters: any, models: any) {
-			var body: Page = this._singlefin.getBody();
+			let body: Page = this._singlefin.getBody();
 			
 			if(body.htmlElement) {
 				return Promise.resolve(body.htmlElement);
@@ -557,7 +557,7 @@ module SinglefinModule {
 					body.appendStyles();
 					body.appendScripts();
 
-					var view = this.renderView(body, viewParameters, models);
+					let view = this.renderView(body, viewParameters, models);
 
 					body.htmlElement.append(view);
 
@@ -582,7 +582,7 @@ module SinglefinModule {
         }
         
 		drawContainer(page: any, containerName: string, parameters: any, models: any) {
-			var container: Page = this._singlefin.pages[containerName];
+			let container: Page = this._singlefin.pages[containerName];
 
 			if(!container) {
                 console.error("container page '" + containerName + "' not found");
@@ -633,7 +633,7 @@ module SinglefinModule {
 					return resolve(this._singlefin.getBody().htmlElement);
 				}
 				
-				var parentPage: Page = this._singlefin.pages[pageName];
+				let parentPage: Page = this._singlefin.pages[pageName];
 	
 				if(!parentPage) {
                     console.error("page not found");
@@ -671,9 +671,9 @@ module SinglefinModule {
 					return resolve();
 				}
 				
-				for(var i=0; i<children.length; i++) {
-					var childPageName = children[i];
-                    var childPage: Page = this._singlefin.pages[childPageName];
+				for(let i=0; i<children.length; i++) {
+					let childPageName = children[i];
+                    let childPage: Page = this._singlefin.pages[childPageName];
 
 					if(childPage.action == "group") {
 						if(parent.groupIndex != i) {
@@ -740,7 +740,7 @@ module SinglefinModule {
         
 		unwindItems(parent: Page, pageName: string, page: Page, parameters: any, controllerParameters: any, models: any) {
 			return new Promise<void>(async (resolve, reject) => {
-				var unwind = parameters;
+				let unwind = parameters;
 
 				if(page.unwind && page.unwind.list) {
 					unwind = Runtime.getProperty(this._singlefin.models, page.unwind.list);
@@ -754,8 +754,8 @@ module SinglefinModule {
 
 				//TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
 
-				for(var i=0; i<unwind.length; i++) {
-					var surrogate: Page = this._singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
+				for(let i=0; i<unwind.length; i++) {
+					let surrogate: Page = this._singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
 					
 					surrogate.index = i;
 
@@ -788,22 +788,22 @@ module SinglefinModule {
 				if(page.unwind && page.unwind.list) {
 					ProxyHandlerMap.registerPage(page.path);
 
-					var valuePath = page.unwind.list;
+					let valuePath = page.unwind.list;
 
-					var valuePath = valuePath.replace(".$", "[" + page.index + "]");
+					valuePath = valuePath.replace(".$", "[" + page.index + "]");
 
-					var elementBinding: ElementBinding = new ListBinding(page.htmlElement, "unwind", null, this._singlefin, page, page.unwind);
+					let elementBinding: ElementBinding = new ListBinding(page.htmlElement, "unwind", null, this._singlefin, page, page.unwind);
 
 					elementBinding.watch(this._singlefin, page, null, valuePath, this._singlefin.models, parameters);
 
-					var proxyPath = Runtime.getParentPath(valuePath);
-					var object = Runtime.getParentInstance(this._singlefin.models, valuePath);
-					var property = Runtime.getPropertyName(valuePath);
+					let proxyPath = Runtime.getParentPath(valuePath);
+					let object = Runtime.getParentInstance(this._singlefin.models, valuePath);
+					let property = Runtime.getPropertyName(valuePath);
 
-					var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
+					let proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
 					ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
 
-					var value: any = Runtime.getProperty(this._singlefin.models, valuePath);
+					let value: any = Runtime.getProperty(this._singlefin.models, valuePath);
 					
 					Runtime.setProperty(proxyPath, this._singlefin.models, proxyHandler.proxy);
 
@@ -820,9 +820,9 @@ module SinglefinModule {
 				//return $();
 			}
 
-			var group: any = null;
+			let group: any = null;
 
-			var currentGroupPage = page.getCurrentGroupPage();
+			let currentGroupPage = page.getCurrentGroupPage();
 
 			if(currentGroupPage) {
 				group = {
@@ -831,18 +831,18 @@ module SinglefinModule {
 				};
 			}
 			
-			var html: string = this.resolveMarkup(page.view, {
+			let html: string = this.resolveMarkup(page.view, {
 				data: data,
 				parameters: page.parameters,
 				models: this._singlefin.models,
 				group: group
 			});
 
-			var markup = new Markup(html);
+			let markup = new Markup(html);
 
 			html = markup.resolve(this._singlefin.models, models, this.models, this.index);
 
-			var htmlElement = $(html);
+			let htmlElement = $(html);
 
 			return htmlElement;
 		}
@@ -857,9 +857,9 @@ module SinglefinModule {
 					return resolve(parameters);
 				}
 
-				var result = parameters;
+				let result = parameters;
                 
-				for(var i=0; i<page.controllers.length; i++) {
+				for(let i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].next) {
 						await page.controllers[i].next(this._singlefin, page, result).then(async (_result: any) => {
 							result = _result;
@@ -884,9 +884,9 @@ module SinglefinModule {
 					return resolve(parameters);
 				}
 
-				var result = parameters;
+				let result = parameters;
                 
-				for(var i=0; i<page.controllers.length; i++) {
+				for(let i=0; i<page.controllers.length; i++) {
 					if(page.controllers[i].previous) {
 						await page.controllers[i].previous(this._singlefin, page, result).then(async (_result: any) => {
 							result = _result;
@@ -906,21 +906,21 @@ module SinglefinModule {
 
 		resolveMarkup(markup: string, context: any): string {
             try {
-				var markupRegex = /<%(.[\s\S]*?)%>/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
+				let markupRegex = /<%(.[\s\S]*?)%>/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
 				
-				var str = markup;
+				let str = markup;
 
-				var match = markupRegex.exec(str);
+				let match = markupRegex.exec(str);
 				
 				while(match) {
-					var result: any = null;
+					let result: any = null;
                 
-					var code = `(() => {
-						var data = context.data;
-						var parameters = context.parameters;
-						var models = context.models;
-						var model = context.model;
-						var group = context.group;
+					let code = `(() => {
+						let data = context.data;
+						let parameters = context.parameters;
+						let models = context.models;
+						let model = context.model;
+						let group = context.group;
 						
 						result = ` + match[1] + `;
 					})()`;
@@ -943,19 +943,19 @@ module SinglefinModule {
 		}
         
 		addHtmlElement(container: any, page: Page) {
-			var element = container;
-			var elements = $();
+			let element = container;
+			let elements = $();
 
 			if(!element) {
-				var containerPage: Page = this._singlefin.pages[page.container];
+				let containerPage: Page = this._singlefin.pages[page.container];
 				
-				var parentPage: Page = this._singlefin.pages[containerPage.container];
+				let parentPage: Page = this._singlefin.pages[containerPage.container];
 
 				element = parentPage.htmlElement;
 			}
 
 			if(page.hidden) {
-				var hidden: boolean = Runtime.getProperty(this._singlefin.models, page.hidden);
+				let hidden: boolean = Runtime.getProperty(this._singlefin.models, page.hidden);
 
 				if(hidden == true) {
 					return;
@@ -963,7 +963,7 @@ module SinglefinModule {
 			}
 
 			if(page.showed) {
-				var showed: boolean = Runtime.getProperty(this._singlefin.models, page.showed);
+				let showed: boolean = Runtime.getProperty(this._singlefin.models, page.showed);
 
 				if(showed == false) {
 					return;
@@ -973,21 +973,21 @@ module SinglefinModule {
 			page.appendStyles();
 			page.appendScripts();
 			
-			var pageName = page.name.split('#')[0];
-			var pageTag = element.find("page[" + pageName +"]");
+			let pageName = page.name.split('#')[0];
+			let pageTag = element.find("page[" + pageName +"]");
 
-			var containerPagesAttribute = element.find("[pages]");
+			let containerPagesAttribute = element.find("[pages]");
 
 			containerPagesAttribute.each((i: number, item: any) => {
-				var pageAttributeValues = $(item).attr("pages");
-				var pages = pageAttributeValues.split(',');
+				let pageAttributeValues: any = $(item).attr("pages");
+				let pages = pageAttributeValues.split(',');
 
 				if(pages.indexOf(pageName) >= 0) {
 					element = elements.add($(item));
 				}
 			});
 
-			var containerPageAttribute = element.find(`[page="` + pageName + `"]`);
+			let containerPageAttribute = element.find(`[page="` + pageName + `"]`);
 
 			if(containerPageAttribute.length > 0) {
 				element = elements.add(containerPageAttribute);
@@ -1006,7 +1006,7 @@ module SinglefinModule {
 			if(page.action == "replace") {
 				element.html(page.htmlElement);
 
-				var containerPage: Page = this._singlefin.pages[page.container];
+				let containerPage: Page = this._singlefin.pages[page.container];
 
 				containerPage.appendStyles();
 				containerPage.appendScripts();
@@ -1020,22 +1020,22 @@ module SinglefinModule {
 			else if(page.action == "group") {
 				element.html(page.htmlElement);
 
-				var containerPage: Page = this._singlefin.pages[page.container];
+				let containerPage: Page = this._singlefin.pages[page.container];
 
 				containerPage.appendStyles();
 				containerPage.appendScripts();
 			}
 
-			var toHide = element.find(`[singlefin-status="hide"]`);
+			let toHide = element.find(`[singlefin-status="hide"]`);
 
 			if(toHide.length > 0) {
 				toHide.replaceWith("<!--" + toHide.html() +  "-->");
 			}
 
-			var toShow = element.find(`[singlefin-status="show"]`);
+			let toShow = element.find(`[singlefin-status="show"]`);
 
 			if(toShow.length > 0) {
-				var html = toShow.html().substring(4, toShow.html().length-3);
+				let html = toShow.html().substring(4, toShow.html().length-3);
 
 				toShow.attr("singlefin-status", false);
 
@@ -1056,7 +1056,7 @@ module SinglefinModule {
 				return;
 			}
 			
-			for(var i=0; i<this._styles.length; i++) {
+			for(let i=0; i<this._styles.length; i++) {
 				this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
 			}
 		}
@@ -1066,8 +1066,8 @@ module SinglefinModule {
 				return;
 			}
 			
-			for(var i=0; i<this._scripts.length; i++) {
-				var script = document.createElement("script");
+			for(let i=0; i<this._scripts.length; i++) {
+				let script = document.createElement("script");
 				script.type = "text/javascript";
 				script.text = this._scripts[i];
 				this.htmlElement.append(script);
@@ -1134,10 +1134,10 @@ module SinglefinModule {
 					return resolve();
 				}
 				
-				for(var i=0; i<children.length; i++) {
-					var childName = children[i];
+				for(let i=0; i<children.length; i++) {
+					let childName = children[i];
 
-					var page = this._singlefin.pages[childName];
+					let page = this._singlefin.pages[childName];
 
 					if(!page) {
 						console.error("close children error: page '" + childName + "' not found");

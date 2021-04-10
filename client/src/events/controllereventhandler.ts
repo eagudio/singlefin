@@ -4,14 +4,14 @@ module SinglefinModule {
     export class ControllerEventHandler extends EventHandler {
         handle(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any): Promise<void> {
 			return new Promise(async (resolve, reject) => {
-				var result = parameters;
+				let result = parameters;
 	
-				for(var i=0; i<page.controllers.length; i++) {
-					var controller = page.controllers[i];
-					var controllerMethod = controller[delegate.controller];
+				for(let i=0; i<page.controllers.length; i++) {
+					let controller = page.controllers[i];
+					let controllerMethod = controller[delegate.controller];
 	
 					if(controllerMethod) {
-						var promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
+						let promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
 
 						if(promise) {
 							await promise.then((_result: any) => {

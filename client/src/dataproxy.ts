@@ -45,10 +45,10 @@ module SinglefinModule {
                 set: (target: any, key: any, value: any) => {
                     target[key] = value;
 
-                    for(var dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
-                        var dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
+                    for(let dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
+                        let dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
 
-                        for(var i=0; i<dataProxyHandlers.length; i++) {
+                        for(let i=0; i<dataProxyHandlers.length; i++) {
                             dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
                         }
                     }

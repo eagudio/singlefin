@@ -1,5 +1,3 @@
-declare var $: any;
-
 module SinglefinModule {
     export class ConfigLoader {
 		private _bodyName: string = "";
@@ -7,10 +5,10 @@ module SinglefinModule {
 
 
         load(config: any, singlefin: Singlefin) {
-			var modules = config.modules;
-			var models = config.models;
-			var proxies = config.proxies;
-			var pages = config.pages;
+			let modules = config.modules;
+			let models = config.models;
+			let proxies = config.proxies;
+			let pages = config.pages;
 			
 			if(!pages) {
 				throw "pages cannot be null or undefined";
@@ -18,7 +16,7 @@ module SinglefinModule {
 
 			this._bodyName = Object.keys(pages)[0];
 
-			var module = this.getModule(this._bodyName);
+			let module = this.getModule(this._bodyName);
 				
 			module.modules = {};
 
@@ -27,13 +25,13 @@ module SinglefinModule {
 			Singlefin.modules = module.modules;
 
 			if(models) {
-				var module = this.getModule(this._bodyName);
+				let module = this.getModule(this._bodyName);
 				module.models = {};
 
-				for (var modelKey in models) {
+				for (let modelKey in models) {
 					module.models[modelKey] = {};
 
-					var path = "['" + this._bodyName + "'].models['" + modelKey + "']";
+					let path = "['" + this._bodyName + "'].models['" + modelKey + "']";
 
 					module.models[modelKey] = this.unbundleJavascriptObject(path, "object", models[modelKey]);
 				}
@@ -42,14 +40,14 @@ module SinglefinModule {
 			}
 
 			if(proxies) {
-				var module = this.getModule(this._bodyName);
+				let module = this.getModule(this._bodyName);
 				module.proxies = [];
 
-				for(var i=0; i<proxies.length; i++) {
-					var proxy: any = {};
+				for(let i=0; i<proxies.length; i++) {
+					let proxy: any = {};
 					proxy.events = proxies[i].events;
 
-					var path = "['" + this._bodyName + "'].proxies[" + i + "].proxy";
+					let path = "['" + this._bodyName + "'].proxies[" + i + "].proxy";
 
 					proxy.proxy = this.unbundleJavascriptObject(path, "object", proxies[i].proxy);
 
@@ -61,7 +59,7 @@ module SinglefinModule {
 
 			singlefin.addBody(this._bodyName);
 
-			var body = pages[this._bodyName];
+			let body = pages[this._bodyName];
 
 			if(body.view) {
 				singlefin.getBody().htmlElement = null;
@@ -69,7 +67,7 @@ module SinglefinModule {
 
 			singlefin.getBody().view = this.unbundleView(body.view);
 
-			var module = this.getModule(this._bodyName);
+			module = this.getModule(this._bodyName);
 			module.controllers = [];
 			module.controllers = this.unbundleJavascriptObjects("['" + this._bodyName + "'].controllers", "array", body.controllers);
 			singlefin.getBody().controllers = module.controllers;
@@ -93,7 +91,7 @@ module SinglefinModule {
 				return;
 			}
 
-			for (var key in modulesConfig) {
+			for (let key in modulesConfig) {
 				if(!path) {
 					path = key;
 				}
@@ -107,7 +105,7 @@ module SinglefinModule {
                     this.processModules(modules[key], modulesConfig[key], path);
                 }
                 else {
-					var classPath = "['" + this._bodyName + "'].modules." + path;
+					let classPath = "['" + this._bodyName + "'].modules." + path;
 
 					modules[key] = this.unbundleJavascriptClass(classPath, "object", modulesConfig[key]);
 				}
@@ -127,13 +125,13 @@ module SinglefinModule {
 				return;
 			}
 
-			for(var i=0; i<pages.length; i++) {
-				var pageName = Object.keys(pages[i])[0];
-				var page = pages[i][pageName];
+			for(let i=0; i<pages.length; i++) {
+				let pageName = Object.keys(pages[i])[0];
+				let page = pages[i][pageName];
 				page.isWidget = isWidget;
 				page.appRootPath = appRootPath;
 
-				var pagePath = containerName + "/" + pageName;
+				let pagePath = containerName + "/" + pageName;
 
 				if(page.widget) {
 					page.isWidget = true;
@@ -152,14 +150,14 @@ module SinglefinModule {
 					page.appRootPath = pagePath;
 				}
 
-				var replaceChildren = this.processChildrenPage(pagePath, page.replace);
-				var appendChildren = this.processChildrenPage(pagePath, page.append);
-				var commitChildren = this.processChildrenPage(pagePath, page.commit);
-				var groupChildren = this.processChildrenPage(pagePath, page.group);
+				let replaceChildren = this.processChildrenPage(pagePath, page.replace);
+				let appendChildren = this.processChildrenPage(pagePath, page.append);
+				let commitChildren = this.processChildrenPage(pagePath, page.commit);
+				let groupChildren = this.processChildrenPage(pagePath, page.group);
 
 				page.view = this.unbundleView(page.view);
 
-				var module = this.getModule(pagePath);
+				let module = this.getModule(pagePath);
 				module.controllers = this.unbundleJavascriptObjects("['" + pagePath + "'].controllers", "array", page.controllers);
 				page.controllers = module.controllers;
 
@@ -178,16 +176,16 @@ module SinglefinModule {
         }
         
 		processChildrenPage(parentPagePath: string, childrenPage: any[]) {
-			var children: any[] = [];
+			let children: any[] = [];
 			
 			if(!childrenPage) {
 				return children;
 			}
 
-			for(var i=0; i<childrenPage.length; i++) {
-				var childPageName = Object.keys(childrenPage[i])[0];
+			for(let i=0; i<childrenPage.length; i++) {
+				let childPageName = Object.keys(childrenPage[i])[0];
 				
-				var childPagePath = parentPagePath + "/" + childPageName;
+				let childPagePath = parentPagePath + "/" + childPageName;
 
 				children.push(childPagePath);
 			}
@@ -208,9 +206,9 @@ module SinglefinModule {
 				return;
 			}
 
-			var files: any[] = [];
+			let files: any[] = [];
 			
-			for(var i=0; i<_files.length; i++) {
+			for(let i=0; i<_files.length; i++) {
 				files.push(this.decodeBase64(_files[i]));
 			};
 
@@ -218,7 +216,7 @@ module SinglefinModule {
 		}
 
 		unbundleJson(json: string): string {
-			var jsonString = this.decodeBase64(json);
+			let jsonString = this.decodeBase64(json);
 
 			return JSON.parse(jsonString);
 		}
@@ -228,10 +226,10 @@ module SinglefinModule {
 				return;
 			}
 
-			var objects: any[] = [];
+			let objects: any[] = [];
 			
-			for(var i=0; i<_objects.length; i++) {
-				var object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
+			for(let i=0; i<_objects.length; i++) {
+				let object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
 
 				if(object) {
 					objects.push(object);
@@ -242,7 +240,7 @@ module SinglefinModule {
 		}
 
 		unbundleJavascriptClass(path: string, moduleType: string, javascriptClass: string): any {
-			var code = this.decodeBase64(javascriptClass);
+			let code = this.decodeBase64(javascriptClass);
 
 			if(moduleType == "array") {
 				this._modulesCode += `Singlefin.moduleMap` + path + `.push(` + code + `)\n`;
@@ -255,7 +253,7 @@ module SinglefinModule {
 		}
 
 		unbundleJavascriptObject(path: string, moduleType: string, javascriptObject: string): any {
-			var code = this.decodeBase64(javascriptObject);
+			let code = this.decodeBase64(javascriptObject);
 
 			if(moduleType == "array") {
 				this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
@@ -281,7 +279,7 @@ module SinglefinModule {
 
 		loadModules() {
 			return new Promise<void>((resolve, reject) => {
-				var script = document.createElement("script");
+				let script = document.createElement("script");
 				script.type = "text/javascript";
 
 				this._modulesCode += `\nSinglefin.loadModuleCallbacks["` + this._bodyName + `"]();`;

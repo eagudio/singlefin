@@ -10,8 +10,8 @@ module SinglefinModule {
                 return;
             }
 
-            var checked = element.is(":checked");
-            var value = element.val();
+            let checked = element.is(":checked");
+            let value = element.val();
 
             if(checked) {
                 Runtime.setProperty(key, data, value);
@@ -21,10 +21,10 @@ module SinglefinModule {
                 data: data,
                 key: key
             }, (event: any) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
 
                 Runtime.setProperty(_key, _data, value);
             });
@@ -39,7 +39,7 @@ module SinglefinModule {
                 return;
             }
 
-            var checked = element.is(":checked");
+            let checked = element.is(":checked");
 
             Runtime.setProperty(key, data, checked);
 
@@ -47,10 +47,10 @@ module SinglefinModule {
                 data: data,
                 key: key
             }, (event: any) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var checked = inputElement.is(":checked");
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let checked = inputElement.is(":checked");
             
                 Runtime.setProperty(_key, _data, checked);
             });

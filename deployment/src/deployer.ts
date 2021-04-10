@@ -12,7 +12,7 @@ export module SinglefinDeployment {
         make(schemasPath: string) {
             console.log("build bundles...");
 
-            var schema = require(schemasPath);
+            let schema = require(schemasPath);
 
             this.bundleModules(schema.modules);
 
@@ -27,12 +27,12 @@ export module SinglefinDeployment {
                 return;
             }
 
-            for(var key in modulesSchema) {
+            for(let key in modulesSchema) {
                 if(typeof modulesSchema[key] != "string") {
                     this.bundleModules(modulesSchema[key]);
                 }
                 else {
-                    var moduleBundle = this.bundleFile(modulesSchema[key]);
+                    let moduleBundle = this.bundleFile(modulesSchema[key]);
 
                     modulesSchema[key] = moduleBundle;
                 }
@@ -44,8 +44,8 @@ export module SinglefinDeployment {
                 return;
             }
 
-            for(var key in domainsSchema) {
-                var domain = {};
+            for(let key in domainsSchema) {
+                let domain = {};
 
                 this.bundleServerDomain(domain, domainsSchema[key]);
 
@@ -75,7 +75,7 @@ export module SinglefinDeployment {
                 return;
             }
 
-            for(var key in modelsSchema) {
+            for(let key in modelsSchema) {
                 models[key] = modelsSchema[key];
 
                 this.addServerInstance(modelsSchema[key]);
@@ -87,7 +87,7 @@ export module SinglefinDeployment {
                 return;
             }
 
-            for(var key in servicesSchema) {
+            for(let key in servicesSchema) {
                 services[key] = servicesSchema[key];
 
                 this.addServerInstance(servicesSchema[key].handler);
@@ -99,15 +99,15 @@ export module SinglefinDeployment {
                 return;
             }
 
-            for(var key in routesSchema) {
+            for(let key in routesSchema) {
                 routes[key] = routesSchema[key];
 
                 if(routesSchema[key].service) {
                     if(servicesSchema[routesSchema[key].service]) {
                         if(servicesSchema[routesSchema[key].service].deployer) {
-                            var Deployer = require(servicesSchema[routesSchema[key].service].deployer);
+                            let Deployer = require(servicesSchema[routesSchema[key].service].deployer);
                         
-                            var service = new Deployer();
+                            let service = new Deployer();
         
                             service.deploy(this, routes[key], routesSchema[key]);
                         }
@@ -121,19 +121,19 @@ export module SinglefinDeployment {
         }
 
         bundleServerRouteEvents(routeEvents: any, routesEventsSchema: any, servicesSchema: any) {
-            for(var key in routesEventsSchema) {
+            for(let key in routesEventsSchema) {
                 routeEvents[key] = routesEventsSchema[key];
 
-                for(var i=0; i<routesEventsSchema[key].length; i++) {
+                for(let i=0; i<routesEventsSchema[key].length; i++) {
                     if(routesEventsSchema[key][i].service) {
                         routeEvents[key].service = routesEventsSchema[key][i].service;
 
                         if(servicesSchema[routesEventsSchema[key][i].service.service]) {
                             
                             if(servicesSchema[routesEventsSchema[key][i].service.service].deployer) {
-                                var Deployer = require(servicesSchema[routesEventsSchema[key][i].service.service].deployer);
+                                let Deployer = require(servicesSchema[routesEventsSchema[key][i].service.service].deployer);
                             
-                                var service = new Deployer();
+                                let service = new Deployer();
             
                                 service.deploy(this, routeEvents[key].service, routesEventsSchema[key][i].service);
                             }
@@ -152,8 +152,8 @@ export module SinglefinDeployment {
         }
 
         bundleApps(appsSchema: any, modules: any) {
-            for(var key in appsSchema) {
-                var app: any = {};
+            for(let key in appsSchema) {
+                let app: any = {};
 
                 app.modules = modules;
 
@@ -182,11 +182,11 @@ export module SinglefinDeployment {
                 return;
             }
 
-			for (var languageKey in resources) {
+			for (let languageKey in resources) {
                 bundle.resources[languageKey] = {};
 
-				for (var resourceKey in resources[languageKey]) {
-                    var fileBundle = this.bundleFile(resources[languageKey][resourceKey]);
+				for (let resourceKey in resources[languageKey]) {
+                    let fileBundle = this.bundleFile(resources[languageKey][resourceKey]);
 
                     bundle.resources[languageKey][resourceKey] = fileBundle;
 				}
@@ -200,10 +200,10 @@ export module SinglefinDeployment {
                 return;
             }
 
-			for (var model in models) {
+			for (let model in models) {
                 bundle.models[model] = {};
 
-                var fileBundle = this.bundleFile(models[model]);
+                let fileBundle = this.bundleFile(models[model]);
 
                 bundle.models[model] = fileBundle;
 			}
@@ -216,11 +216,11 @@ export module SinglefinDeployment {
                 return;
             }
 
-			for(var i=0; i<proxies.length; i++) {
-                var proxy: any = {};
+			for(let i=0; i<proxies.length; i++) {
+                let proxy: any = {};
                 proxy.events = proxies[i].events;
 
-                var fileBundle = this.bundleFile(proxies[i].proxy);
+                let fileBundle = this.bundleFile(proxies[i].proxy);
 
                 proxy.proxy = fileBundle;
 
@@ -235,10 +235,10 @@ export module SinglefinDeployment {
                 return;
             }
 
-			for (var widget in widgets) {
+			for (let widget in widgets) {
                 bundle.widgets[widget] = {};
 
-                var pageBundle = this.bundlePage(widgets[widget]);
+                let pageBundle = this.bundlePage(widgets[widget]);
 
                 bundle.widgets[widget] = pageBundle;
 			}
@@ -251,17 +251,17 @@ export module SinglefinDeployment {
                 return;
             }
 
-			for (var page in pages) {
+			for (let page in pages) {
                 bundle.pages[page] = {};
 
-                var pageBundle = this.bundlePage(pages[page]);
+                let pageBundle = this.bundlePage(pages[page]);
 
                 bundle.pages[page] = pageBundle;
 			}
         }
 
         bundlePage(_page: any) {
-            var page: any = {};
+            let page: any = {};
 
             page.events = _page.events;
             page.parameters = _page.parameters;
@@ -310,10 +310,10 @@ export module SinglefinDeployment {
         }
 
         bundleControllers(_controllers: string[]): string[] {
-            var controllers: string[] = [];
+            let controllers: string[] = [];
 
-            for(var i=0; i<_controllers.length; i++) {
-                var controller = this.bundleFile(_controllers[i]);
+            for(let i=0; i<_controllers.length; i++) {
+                let controller = this.bundleFile(_controllers[i]);
                 
                 controllers.push(controller);
             }
@@ -322,10 +322,10 @@ export module SinglefinDeployment {
         }
 
         bundleStyles(_styles: string[]): string[] {
-            var styles: string[] = [];
+            let styles: string[] = [];
 
-            for(var i=0; i<_styles.length; i++) {
-                var style = this.bundleFile(_styles[i]);
+            for(let i=0; i<_styles.length; i++) {
+                let style = this.bundleFile(_styles[i]);
                 
                 styles.push(style);
             }
@@ -334,10 +334,10 @@ export module SinglefinDeployment {
         }
 
         bundleScripts(_scripts: string[]): string[] {
-            var scripts: string[] = [];
+            let scripts: string[] = [];
 
-            for(var i=0; i<_scripts.length; i++) {
-                var script = this.bundleFile(_scripts[i]);
+            for(let i=0; i<_scripts.length; i++) {
+                let script = this.bundleFile(_scripts[i]);
                 
                 scripts.push(script);
             }
@@ -346,15 +346,15 @@ export module SinglefinDeployment {
         }
 
         bundlePageMethod(_method: any[]): any[] {
-            var method: any[] = [];
+            let method: any[] = [];
 
-            for(var i=0; i<_method.length; i++) {
-                var pages = _method[i];
+            for(let i=0; i<_method.length; i++) {
+                let pages = _method[i];
 
-                for(var _page in pages) {
-                    var bundlePage = this.bundlePage(pages[_page]);
+                for(let _page in pages) {
+                    let bundlePage = this.bundlePage(pages[_page]);
 
-                    var page: any = {};
+                    let page: any = {};
                     
                     page[_page] = bundlePage;
 
@@ -366,15 +366,15 @@ export module SinglefinDeployment {
         }
 
         bundleFile(filePath: string): string {
-            var fileContent: string = this.readFile(filePath);
+            let fileContent: string = this.readFile(filePath);
             
-            var base64FileContent: string = this.encodeBase64(fileContent);
+            let base64FileContent: string = this.encodeBase64(fileContent);
 
             return base64FileContent;
         }
 
         bundleServiceRequest(request: any) {
-            var service = request["service"];
+            let service = request["service"];
 
             if(!service) {
                 return request;        
@@ -402,15 +402,15 @@ export module SinglefinDeployment {
         }
 
         saveServerBundle(filePath: string, bundle: any) {
-            var bundleContent = JSON.stringify(bundle);
+            let bundleContent = JSON.stringify(bundle);
 
-            for(var key in this._serverInstanceMap) {
-                var regex = new RegExp('"' + key + '"', "g");
+            for(let key in this._serverInstanceMap) {
+                let regex = new RegExp('"' + key + '"', "g");
 
                 bundleContent = bundleContent.replace(regex, this._serverInstanceMap[key]);
             }
 
-            var script = `
+            let script = `
                 class SinglefinServerBundle{
                     getBundle() {
                         return ` + bundleContent + `;
@@ -423,17 +423,17 @@ export module SinglefinDeployment {
         }
 
         saveBundle(appName: string, filePath: string, bundle: any) {
-            var bundleContent = JSON.stringify(bundle);
+            let bundleContent = JSON.stringify(bundle);
 
-            var script = `var homepage=document.currentScript.getAttribute('homepage');var singlefin_` + appName + ` = new Singlefin(` + bundleContent + `,homepage);`;
+            let script = `let homepage=document.currentScript.getAttribute('homepage');let singlefin_` + appName + ` = new Singlefin(` + bundleContent + `,homepage);`;
 
             fs.writeFileSync(filePath, script);
         }
         
         resolvePath(path: string) {
-            var pathRegExp = new RegExp("@([a-z0-9_-]+)");
+            let pathRegExp = new RegExp("@([a-z0-9_-]+)");
             
-            var pathMarkup = pathRegExp.exec(path);
+            let pathMarkup = pathRegExp.exec(path);
     
             return pathMarkup;
         }

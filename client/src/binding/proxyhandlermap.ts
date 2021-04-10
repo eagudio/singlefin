@@ -10,8 +10,8 @@ module SinglefinModule {
                     ProxyHandlerMap._bindMaps[proxyPath] = {};
                 }
 
-                var handler = new ProxyHandler(proxyPath, ProxyHandlerMap._bindMaps[proxyPath]);
-                var proxy = new Proxy(object, handler);
+                let handler = new ProxyHandler(proxyPath, ProxyHandlerMap._bindMaps[proxyPath]);
+                let proxy = new Proxy(object, handler);
 
                 ProxyHandlerMap._map[proxyPath] = {};
                 ProxyHandlerMap._map[proxyPath].proxy = proxy;
@@ -22,7 +22,7 @@ module SinglefinModule {
         }
 
         static deleteProxyStartWith(proxyPath: string) {
-            for(var key in ProxyHandlerMap._map) {
+            for(let key in ProxyHandlerMap._map) {
                 if(key.startsWith(proxyPath)) {
                     ProxyHandlerMap._map[key] = null;
                 }

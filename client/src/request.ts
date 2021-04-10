@@ -15,7 +15,7 @@ module SinglefinModule {
         
         call(singlefin: Singlefin, page: Page, models: any, parameters: any, pageModels: any) {
             return new Promise<void>((resolve: any, reject: any) => {
-                var jsonData: any = {};
+                let jsonData: any = {};
 
                 if(!this._models.data) {
                     jsonData = parameters;
@@ -39,10 +39,10 @@ module SinglefinModule {
         ajaxRequest(singlefin: Singlefin, page: Page, models: any, parameters: any, pageModels: any, data: any) {
             return new Promise<void>((resolve: any, reject: any) => {
                 try {
-                    var requestData: any = null;
-                    var contentType: any = "application/json";
-                    var processData;
-                    var cache;
+                    let requestData: any = null;
+                    let contentType: any = "application/json";
+                    let processData;
+                    let cache;
 
                     if(this._config.type == "formdata") {
                         requestData = new FormData();
@@ -50,7 +50,7 @@ module SinglefinModule {
                         processData = false;
                         cache = false;
 
-                        for(var key in data) {
+                        for(let key in data) {
                             requestData.append(key, data[key]);
                         }
                     }
@@ -109,8 +109,8 @@ module SinglefinModule {
                     return resolve(data);
                 }
 
-                for(var i=0; i<singlefin.proxies.length; i++) {
-                    var rejected: boolean = false;
+                for(let i=0; i<singlefin.proxies.length; i++) {
+                    let rejected: boolean = false;
 
                     await singlefin.proxies[i].proxy.request(page.app, page, singlefin.models, data).then(async (event: string) => {
                         await page.eventManager.handleEvent(singlefin, singlefin.proxies[i].events, event, page, data, null).then(() => {
@@ -143,8 +143,8 @@ module SinglefinModule {
                     return resolve(data);
                 }
 
-                for(var i=0; i<singlefin.proxies.length; i++) {
-                    var rejected: boolean = false;
+                for(let i=0; i<singlefin.proxies.length; i++) {
+                    let rejected: boolean = false;
 
                     await singlefin.proxies[i].proxy.response(page.app, page, singlefin.models, data).then(async (event: string) => {
                         await page.eventManager.handleEvent(singlefin, singlefin.proxies[i].events, event, page, data, null).then(() => {

@@ -24,10 +24,10 @@ module SinglefinModule {
                 return true;
             }
             
-            for(var pagePath in this._bindMaps[key]) {
-                var elementBindings = this._bindMaps[key][pagePath].binding[this._proxyPath][key];
+            for(let pagePath in this._bindMaps[key]) {
+                let elementBindings = this._bindMaps[key][pagePath].binding[this._proxyPath][key];
 
-                for(var i=0; i<elementBindings.length; i++) {
+                for(let i=0; i<elementBindings.length; i++) {
                     elementBindings[i].update(value);
                 }
             }

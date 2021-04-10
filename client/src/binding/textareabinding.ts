@@ -12,14 +12,14 @@ module SinglefinModule {
                 valuePath: valuePath,
                 model: model
             }, (event: any) => {
-                var _singlefin = event.data.singlefin;
-                var _page: Page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
+                let _singlefin = event.data.singlefin;
+                let _page: Page = event.data.page;
+                let _valuePath = event.data.valuePath;
+                let _model = event.data.model;
+                let _data = event.data.data;
 
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
             
                 Runtime.setProperty(_valuePath, _data, value);
                 

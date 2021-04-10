@@ -10,8 +10,8 @@ module SinglefinModule {
                 return;
             }
 
-            var checked = element.is(":checked");
-            var value = element.val();
+            let checked = element.is(":checked");
+            let value = element.val();
 
             if(checked) {
                 Runtime.setProperty(key, data, value);
@@ -21,10 +21,10 @@ module SinglefinModule {
                 data: data,
                 key: key
             }, (event: any) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
 
                 Runtime.setProperty(_key, _data, value);
             });
@@ -39,21 +39,21 @@ module SinglefinModule {
                 return;
             }
 
-            var checked = element.is(":checked");
+            let checked = element.is(":checked");
 
             Runtime.setProperty(key, data, checked);
 
             element.on("click", {
                 data: data
             }, (event: any) => {
-                var _data = event.data.data;
-                var name = element.attr("name");
-                var radios = container.find('input[type="radio"][name ="' + name + '"]');
+                let _data = event.data.data;
+                let name = element.attr("name");
+                let radios = container.find('input[type="radio"][name ="' + name + '"]');
     
-                for(var i=0; i < radios.length; i++) {
-                    var radioElement = $(radios[i]);
-                    var _checked = radioElement.is(":checked");
-                    var isAttributeValue = radioElement.attr("is");
+                for(let i=0; i < radios.length; i++) {
+                    let radioElement = $(radios[i]);
+                    let _checked = radioElement.is(":checked");
+                    let isAttributeValue = radioElement.attr("is");
                     
                     if(isAttributeValue) {
                         Runtime.setProperty(isAttributeValue, _data, _checked);

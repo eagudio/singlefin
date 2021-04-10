@@ -15,23 +15,23 @@ module SinglefinModule {
 				return;
             }
 
-            var pageModels = page.models;
+            let pageModels = page.models;
             
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
 					if(attribute.specified) {
 						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model")) {
-                            var elementAttributeName = null;
+                            let elementAttributeName = null;
 
                             if(attribute.name.startsWith("model-")) {
-                                var onAttribute = attribute.name.split("model-");
+                                let onAttribute = attribute.name.split("model-");
                                 elementAttributeName = onAttribute[1];
                             }
                             
-                            var originalValuePath = attribute.value;
-                            var valuePath = originalValuePath;
-                            var model = null;
-                            var modelProperty = null;
+                            let originalValuePath = attribute.value;
+                            let valuePath = originalValuePath;
+                            let model = null;
+                            let modelProperty = null;
 
                             if(pageModels) {
                                 if(pageModels[originalValuePath]) {
@@ -52,18 +52,18 @@ module SinglefinModule {
                             if(valuePath) {
                                 valuePath = valuePath.replace(".$", "[" + page.index + "]");
 
-                                var elementBinding: ElementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
+                                let elementBinding: ElementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
                 
                                 elementBinding.watch(singlefin, page, model, valuePath, singlefin.models, pageData);
 
-                                var proxyPath = Runtime.getParentPath(valuePath);
-                                var object = Runtime.getParentInstance(singlefin.models, valuePath);
-                                var property = Runtime.getPropertyName(valuePath);
+                                let proxyPath = Runtime.getParentPath(valuePath);
+                                let object = Runtime.getParentInstance(singlefin.models, valuePath);
+                                let property = Runtime.getPropertyName(valuePath);
 
-                                var proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
+                                let proxyHandler = ProxyHandlerMap.newProxy(proxyPath, object);
                                 ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
                                 
-                                var value: any = Runtime.getProperty(singlefin.models, valuePath);
+                                let value: any = Runtime.getProperty(singlefin.models, valuePath);
 
                                 Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
                                 
@@ -74,7 +74,7 @@ module SinglefinModule {
                 });
             });
 
-            var children = element.children();
+            let children = element.children();
 
 			children.each((i: number, item: any) => {
 				this.bindPageElements(singlefin, page, $(item), models, pageData);
@@ -129,7 +129,7 @@ module SinglefinModule {
 				return;
             }
 
-            var dataProxy: DataProxy = singlefin.modelProxy;
+            let dataProxy: DataProxy = singlefin.modelProxy;
             
             if(!dataProxy) {
 				return;
@@ -146,22 +146,22 @@ module SinglefinModule {
         in(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
             this.bindElements(singlefin, page, element, dataProxy, pageData, models);
 
-            var children = element.find("[model-value]");
+            let children = element.find("[model-value]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
                 this.bindElements(singlefin, page, child, dataProxy, pageData, models);
             }
         }
 
         bindElements(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
-            var modelKey = element.attr("model-value");
-            var key = modelKey;
-            var pageModels = page.models;
-            var model = null;
+            let modelKey = element.attr("model-value");
+            let key = modelKey;
+            let pageModels = page.models;
+            let model = null;
 
-            var hasModelValueEvent = element.attr("has-model-value-event");
+            let hasModelValueEvent = element.attr("has-model-value-event");
 
             if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
                 return;
@@ -192,7 +192,7 @@ module SinglefinModule {
         }
 
         is(element: any, dataProxy: DataProxy) {
-            var key = element.attr("is");
+            let key = element.attr("is");
 
             this.elementBinding.is(element, element, dataProxy.proxy, key);
             this.inputBinding.is(element, element, dataProxy.proxy, key);
@@ -201,12 +201,12 @@ module SinglefinModule {
             this.radioBinding.is(element, element, dataProxy.proxy, key);
             this.selectBinding.is(element, element, dataProxy.proxy, key);
             
-            var children = element.find("[is]");
+            let children = element.find("[is]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
-                var key = child.attr("is");
+                let key = child.attr("is");
 
                 this.elementBinding.is(element, child, dataProxy.proxy, key);
                 this.inputBinding.is(element, child, dataProxy.proxy, key);
@@ -218,16 +218,16 @@ module SinglefinModule {
         }
 
         outClass(page: Page, element: any, dataProxy: DataProxy) {
-            var key = element.attr("model-class");
+            let key = element.attr("model-class");
             
             this.elementBinding.outClass(this._dataProxyHandlers, page, element, element, dataProxy, key);
             
-            var children = element.find("[model-class]");
+            let children = element.find("[model-class]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
-                var key = child.attr("model-class");
+                let key = child.attr("model-class");
 
                 this.elementBinding.outClass(this._dataProxyHandlers, page, element, child, dataProxy, key);
             }
@@ -238,16 +238,16 @@ module SinglefinModule {
 				return;
             }
 
-            var pageModels = page.models;
+            let pageModels = page.models;
             
             element.each((i: number, item: any) => {
 				$.each(item.attributes, (i: number, attribute: any) => {
 					if(attribute.specified) {
 						if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
-                            var onAttribute = attribute.name.split("model-");
-                            var elementAttributeName = onAttribute[1];
-                            var originalValue = attribute.value;
-                            var value = originalValue;
+                            let onAttribute = attribute.name.split("model-");
+                            let elementAttributeName = onAttribute[1];
+                            let originalValue = attribute.value;
+                            let value = originalValue;
 
                             if(pageModels) {
                                 if(pageModels[originalValue]) {
@@ -270,7 +270,7 @@ module SinglefinModule {
                 });
             });
 
-            var children = element.children();
+            let children = element.children();
 
 			children.each((i: number, item: any) => {
 				this.outAttribute(page, $(item), dataProxy, models);

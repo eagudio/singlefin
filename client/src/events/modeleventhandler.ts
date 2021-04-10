@@ -5,10 +5,10 @@ module SinglefinModule {
         handle(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any): Promise<void> {
 			return new Promise<void>((resolve, reject) => {
 				if(pageModels) {
-					var modelMethodName = Runtime.getPropertyName(delegate.model);
+					let modelMethodName = Runtime.getPropertyName(delegate.model);
 	
 					if(pageModels[modelMethodName]) {
-						var pageModelMethodName = pageModels[modelMethodName].ref;
+						let pageModelMethodName = pageModels[modelMethodName].ref;
 						
 						if(!pageModelMethodName) {
 							this.eventManager.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
@@ -18,8 +18,8 @@ module SinglefinModule {
 							});
 						}
 						else {
-							var model = Runtime.getParentInstance(singlefin.models, pageModelMethodName);
-							var modelMethod = Runtime.getProperty(singlefin.models, pageModelMethodName);
+							let model = Runtime.getParentInstance(singlefin.models, pageModelMethodName);
+							let modelMethod = Runtime.getProperty(singlefin.models, pageModelMethodName);
 	
 							modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
 								if(!pageModels[modelMethodName].on) {
@@ -38,8 +38,8 @@ module SinglefinModule {
 					}
 				}
 	
-				var model = Runtime.getParentInstance(singlefin.models, delegate.model);
-				var modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
+				let model = Runtime.getParentInstance(singlefin.models, delegate.model);
+				let modelMethod = Runtime.getProperty(singlefin.models, delegate.model);
 
 				modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
 					page.eventManager.handleEvent(singlefin, delegate, "resolved", page, parameters, null).then(() => {

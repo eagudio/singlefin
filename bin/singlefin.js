@@ -58,8 +58,8 @@ var SinglefinModule;
             if (!key) {
                 return;
             }
-            var checked = element.is(":checked");
-            var value = element.val();
+            let checked = element.is(":checked");
+            let value = element.val();
             if (checked) {
                 SinglefinModule.Runtime.setProperty(key, data, value);
             }
@@ -67,10 +67,10 @@ var SinglefinModule;
                 data: data,
                 key: key
             }, (event) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
                 SinglefinModule.Runtime.setProperty(_key, _data, value);
             });
         }
@@ -81,16 +81,16 @@ var SinglefinModule;
             if (!key) {
                 return;
             }
-            var checked = element.is(":checked");
+            let checked = element.is(":checked");
             SinglefinModule.Runtime.setProperty(key, data, checked);
             element.on("click", {
                 data: data,
                 key: key
             }, (event) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var checked = inputElement.is(":checked");
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let checked = inputElement.is(":checked");
                 SinglefinModule.Runtime.setProperty(_key, _data, checked);
             });
         }
@@ -105,47 +105,47 @@ var SinglefinModule;
             this._modulesCode = "";
         }
         load(config, singlefin) {
-            var modules = config.modules;
-            var models = config.models;
-            var proxies = config.proxies;
-            var pages = config.pages;
+            let modules = config.modules;
+            let models = config.models;
+            let proxies = config.proxies;
+            let pages = config.pages;
             if (!pages) {
                 throw "pages cannot be null or undefined";
             }
             this._bodyName = Object.keys(pages)[0];
-            var module = this.getModule(this._bodyName);
+            let module = this.getModule(this._bodyName);
             module.modules = {};
             this.processModules(module.modules, config.modules, null);
             SinglefinModule.Singlefin.modules = module.modules;
             if (models) {
-                var module = this.getModule(this._bodyName);
+                let module = this.getModule(this._bodyName);
                 module.models = {};
-                for (var modelKey in models) {
+                for (let modelKey in models) {
                     module.models[modelKey] = {};
-                    var path = "['" + this._bodyName + "'].models['" + modelKey + "']";
+                    let path = "['" + this._bodyName + "'].models['" + modelKey + "']";
                     module.models[modelKey] = this.unbundleJavascriptObject(path, "object", models[modelKey]);
                 }
                 singlefin.models = module.models;
             }
             if (proxies) {
-                var module = this.getModule(this._bodyName);
+                let module = this.getModule(this._bodyName);
                 module.proxies = [];
-                for (var i = 0; i < proxies.length; i++) {
-                    var proxy = {};
+                for (let i = 0; i < proxies.length; i++) {
+                    let proxy = {};
                     proxy.events = proxies[i].events;
-                    var path = "['" + this._bodyName + "'].proxies[" + i + "].proxy";
+                    let path = "['" + this._bodyName + "'].proxies[" + i + "].proxy";
                     proxy.proxy = this.unbundleJavascriptObject(path, "object", proxies[i].proxy);
                     module.proxies.push(proxy);
                 }
                 singlefin.proxies = module.proxies;
             }
             singlefin.addBody(this._bodyName);
-            var body = pages[this._bodyName];
+            let body = pages[this._bodyName];
             if (body.view) {
                 singlefin.getBody().htmlElement = null;
             }
             singlefin.getBody().view = this.unbundleView(body.view);
-            var module = this.getModule(this._bodyName);
+            module = this.getModule(this._bodyName);
             module.controllers = [];
             module.controllers = this.unbundleJavascriptObjects("['" + this._bodyName + "'].controllers", "array", body.controllers);
             singlefin.getBody().controllers = module.controllers;
@@ -163,7 +163,7 @@ var SinglefinModule;
             if (!modulesConfig) {
                 return;
             }
-            for (var key in modulesConfig) {
+            for (let key in modulesConfig) {
                 if (!path) {
                     path = key;
                 }
@@ -175,7 +175,7 @@ var SinglefinModule;
                     this.processModules(modules[key], modulesConfig[key], path);
                 }
                 else {
-                    var classPath = "['" + this._bodyName + "'].modules." + path;
+                    let classPath = "['" + this._bodyName + "'].modules." + path;
                     modules[key] = this.unbundleJavascriptClass(classPath, "object", modulesConfig[key]);
                 }
             }
@@ -190,12 +190,12 @@ var SinglefinModule;
             if (pages == null) {
                 return;
             }
-            for (var i = 0; i < pages.length; i++) {
-                var pageName = Object.keys(pages[i])[0];
-                var page = pages[i][pageName];
+            for (let i = 0; i < pages.length; i++) {
+                let pageName = Object.keys(pages[i])[0];
+                let page = pages[i][pageName];
                 page.isWidget = isWidget;
                 page.appRootPath = appRootPath;
-                var pagePath = containerName + "/" + pageName;
+                let pagePath = containerName + "/" + pageName;
                 if (page.widget) {
                     page.isWidget = true;
                     page.view = widgets[page.widget].view;
@@ -212,12 +212,12 @@ var SinglefinModule;
                     page.models = widgets[page.widget].models;
                     page.appRootPath = pagePath;
                 }
-                var replaceChildren = this.processChildrenPage(pagePath, page.replace);
-                var appendChildren = this.processChildrenPage(pagePath, page.append);
-                var commitChildren = this.processChildrenPage(pagePath, page.commit);
-                var groupChildren = this.processChildrenPage(pagePath, page.group);
+                let replaceChildren = this.processChildrenPage(pagePath, page.replace);
+                let appendChildren = this.processChildrenPage(pagePath, page.append);
+                let commitChildren = this.processChildrenPage(pagePath, page.commit);
+                let groupChildren = this.processChildrenPage(pagePath, page.group);
                 page.view = this.unbundleView(page.view);
-                var module = this.getModule(pagePath);
+                let module = this.getModule(pagePath);
                 module.controllers = this.unbundleJavascriptObjects("['" + pagePath + "'].controllers", "array", page.controllers);
                 page.controllers = module.controllers;
                 page.styles = this.unbundleFiles(page.styles);
@@ -232,13 +232,13 @@ var SinglefinModule;
             }
         }
         processChildrenPage(parentPagePath, childrenPage) {
-            var children = [];
+            let children = [];
             if (!childrenPage) {
                 return children;
             }
-            for (var i = 0; i < childrenPage.length; i++) {
-                var childPageName = Object.keys(childrenPage[i])[0];
-                var childPagePath = parentPagePath + "/" + childPageName;
+            for (let i = 0; i < childrenPage.length; i++) {
+                let childPageName = Object.keys(childrenPage[i])[0];
+                let childPagePath = parentPagePath + "/" + childPageName;
                 children.push(childPagePath);
             }
             return children;
@@ -253,24 +253,24 @@ var SinglefinModule;
             if (!_files) {
                 return;
             }
-            var files = [];
-            for (var i = 0; i < _files.length; i++) {
+            let files = [];
+            for (let i = 0; i < _files.length; i++) {
                 files.push(this.decodeBase64(_files[i]));
             }
             ;
             return files;
         }
         unbundleJson(json) {
-            var jsonString = this.decodeBase64(json);
+            let jsonString = this.decodeBase64(json);
             return JSON.parse(jsonString);
         }
         unbundleJavascriptObjects(path, moduleType, _objects) {
             if (!_objects) {
                 return;
             }
-            var objects = [];
-            for (var i = 0; i < _objects.length; i++) {
-                var object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
+            let objects = [];
+            for (let i = 0; i < _objects.length; i++) {
+                let object = this.unbundleJavascriptObject(path, moduleType, _objects[i]);
                 if (object) {
                     objects.push(object);
                 }
@@ -279,7 +279,7 @@ var SinglefinModule;
             return objects;
         }
         unbundleJavascriptClass(path, moduleType, javascriptClass) {
-            var code = this.decodeBase64(javascriptClass);
+            let code = this.decodeBase64(javascriptClass);
             if (moduleType == "array") {
                 this._modulesCode += `Singlefin.moduleMap` + path + `.push(` + code + `)\n`;
             }
@@ -289,7 +289,7 @@ var SinglefinModule;
             return null;
         }
         unbundleJavascriptObject(path, moduleType, javascriptObject) {
-            var code = this.decodeBase64(javascriptObject);
+            let code = this.decodeBase64(javascriptObject);
             if (moduleType == "array") {
                 this._modulesCode += `Singlefin.moduleMap` + path + `.push(new ` + code + `())\n`;
             }
@@ -309,7 +309,7 @@ var SinglefinModule;
         }
         loadModules() {
             return new Promise((resolve, reject) => {
-                var script = document.createElement("script");
+                let script = document.createElement("script");
                 script.type = "text/javascript";
                 this._modulesCode += `\nSinglefin.loadModuleCallbacks["` + this._bodyName + `"]();`;
                 script.text = this._modulesCode;
@@ -361,10 +361,10 @@ var SinglefinModule;
                     set: (target: any, key: any, value: any) => {
                         target[key] = value;
     
-                        for(var dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
-                            var dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
+                        for(let dataProxyHandlerKey in DataProxy._dataProxyHandlers) {
+                            let dataProxyHandlers: DataProxyHandler[] = DataProxy._dataProxyHandlers[dataProxyHandlerKey];
     
-                            for(var i=0; i<dataProxyHandlers.length; i++) {
+                            for(let i=0; i<dataProxyHandlers.length; i++) {
                                 dataProxyHandlers[i].handler(dataProxyHandlers[i].parameters);
                             }
                         }
@@ -398,67 +398,20 @@ var SinglefinModule;
 })(SinglefinModule || (SinglefinModule = {}));
 var SinglefinModule;
 (function (SinglefinModule) {
-    class Loader {
-        load(paths, pathsMap) {
-            return new Promise((resolve, reject) => {
-                var normalizedPaths = this.normalizePaths(paths, pathsMap);
-                require(normalizedPaths, function () {
-                    resolve();
-                }, function (error) {
-                    console.error("load module error: " + error);
-                    reject("load module error: " + error);
-                });
-            });
-        }
-        getInstance(path, pathsMap) {
-            var normalizedPath = this.normalizePath(path, pathsMap);
-            return require(normalizedPath);
-        }
-        normalizePath(path, pathsMap) {
-            if (!pathsMap) {
-                return path;
-            }
-            var pathMarkup = this.resolvePath(path);
-            if (pathMarkup) {
-                var itemPath = pathsMap[pathMarkup[1]];
-                return path.replace(pathMarkup[0], itemPath);
-            }
-            return path;
-        }
-        normalizePaths(paths, pathsMap) {
-            var normalizedPaths = [];
-            if (!pathsMap) {
-                return paths;
-            }
-            for (var i = 0; i < paths.length; i++) {
-                normalizedPaths.push(this.normalizePath(paths[i], pathsMap));
-            }
-            return normalizedPaths;
-        }
-        resolvePath(path) {
-            var pathRegExp = new RegExp("@([a-z0-9_-]+)");
-            var pathMarkup = pathRegExp.exec(path);
-            return pathMarkup;
-        }
-    }
-    SinglefinModule.Loader = Loader;
-})(SinglefinModule || (SinglefinModule = {}));
-var SinglefinModule;
-(function (SinglefinModule) {
     class Markup {
         constructor(text) {
             this._text = text;
         }
         resolve(models, refModels, pageModels, pageIndex) {
             try {
-                var markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
-                var match = markupRegex.exec(this._text);
+                let markupRegex = /{{(.[\s\S]*?)}}/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
+                let match = markupRegex.exec(this._text);
                 while (match) {
-                    var isRefModelsResolved = this.resolveModelsReference(match[0], refModels, match[1], models, pageIndex);
-                    var isPageModelsResolved = this.resolveModelsReference(match[0], pageModels, match[1], models, pageIndex);
+                    let isRefModelsResolved = this.resolveModelsReference(match[0], refModels, match[1], models, pageIndex);
+                    let isPageModelsResolved = this.resolveModelsReference(match[0], pageModels, match[1], models, pageIndex);
                     if (!isRefModelsResolved && !isPageModelsResolved) {
-                        var valuePath = match[1].replace(".$", "[" + pageIndex + "]");
-                        var value = SinglefinModule.Runtime.getProperty(models, valuePath);
+                        let valuePath = match[1].replace(".$", "[" + pageIndex + "]");
+                        let value = SinglefinModule.Runtime.getProperty(models, valuePath);
                         this._text = this._text.replace(match[0], value);
                     }
                     match = markupRegex.exec(this._text);
@@ -471,30 +424,30 @@ var SinglefinModule;
             }
         }
         resolveModelsReference(text, refModels, modelPath, models, pageIndex) {
-            var valuePath = modelPath.replace(".$", "[" + pageIndex + "]");
+            let valuePath = modelPath.replace(".$", "[" + pageIndex + "]");
             valuePath = valuePath.trim();
             if (refModels) {
                 if (refModels[valuePath]) {
-                    var ref = refModels[valuePath].ref;
+                    let ref = refModels[valuePath].ref;
                     if (typeof ref !== "string") {
-                        var mapPath = ref.map.replace(".$", "[" + pageIndex + "]");
-                        var map = SinglefinModule.Runtime.getProperty(models, mapPath);
-                        var keyPath = ref.key.replace(".$", "[" + pageIndex + "]");
-                        var key = SinglefinModule.Runtime.getProperty(models, keyPath);
+                        let mapPath = ref.map.replace(".$", "[" + pageIndex + "]");
+                        let map = SinglefinModule.Runtime.getProperty(models, mapPath);
+                        let keyPath = ref.key.replace(".$", "[" + pageIndex + "]");
+                        let key = SinglefinModule.Runtime.getProperty(models, keyPath);
                         if (map[key] !== undefined) {
                             this._text = this._text.replace(text, map[key]);
                             return true;
                         }
                         else if (ref.default) {
-                            var defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
-                            var defaultValue = SinglefinModule.Runtime.getProperty(models, defaultValuePath);
+                            let defaultValuePath = ref.default.replace(".$", "[" + pageIndex + "]");
+                            let defaultValue = SinglefinModule.Runtime.getProperty(models, defaultValuePath);
                             this._text = this._text.replace(text, defaultValue);
                             return true;
                         }
                     }
                     else {
                         valuePath = ref.replace(".$", "[" + pageIndex + "]");
-                        var value = SinglefinModule.Runtime.getProperty(models, valuePath);
+                        let value = SinglefinModule.Runtime.getProperty(models, valuePath);
                         this._text = this._text.replace(text, value);
                     }
                 }
@@ -748,7 +701,7 @@ var SinglefinModule;
             return new Promise((resolve, reject) => {
                 this.drawContainer(this, this.container, parameters, models).then((htmlContainerElement) => {
                     this.eventManager.handleEvent(this._singlefin, this.events, "refresh", this, parameters, models).then((viewParameters) => {
-                        var previousPageHtmlElement = this.htmlElement;
+                        let previousPageHtmlElement = this.htmlElement;
                         this.htmlElement = this.renderView(this, viewParameters, models);
                         this.eventManager.addEventsHandlers(this._singlefin, this.app, this, this.htmlElement, viewParameters, models);
                         this.bind(this.htmlElement, viewParameters, models);
@@ -819,11 +772,11 @@ var SinglefinModule;
             if (!this.group) {
                 return null;
             }
-            var pagePath = this.group[this.groupIndex];
+            let pagePath = this.group[this.groupIndex];
             return this._singlefin.pages[pagePath];
         }
         nextStep(parameters, models) {
-            var currentPage = this.getCurrentGroupPage();
+            let currentPage = this.getCurrentGroupPage();
             this.groupIndex = this.groupIndex + 1;
             if (this.groupIndex >= this.group.length) {
                 this.groupIndex = this.group.length - 1;
@@ -843,7 +796,7 @@ var SinglefinModule;
             });
         }
         previousStep(parameters, models) {
-            var currentPage = this.getCurrentGroupPage();
+            let currentPage = this.getCurrentGroupPage();
             this.groupIndex = this.groupIndex - 1;
             if (this.groupIndex < 0) {
                 this.groupIndex = 0;
@@ -873,7 +826,7 @@ var SinglefinModule;
             return this.redraw(parameters, models);
         }
         openGroupPage(singlefin, pageName, parameters, models) {
-            var groupIndex = this.group.indexOf(pageName);
+            let groupIndex = this.group.indexOf(pageName);
             if (groupIndex == -1) {
                 console.error("group page " + pageName + " not found");
                 Promise.reject("group page " + pageName + " not found");
@@ -882,35 +835,35 @@ var SinglefinModule;
             return this.redraw(parameters, models);
         }
         setNextGroupStepEnabled(singlefin, enabled) {
-            var nextPage = singlefin.pages[this.group[this.groupIndex]];
+            let nextPage = singlefin.pages[this.group[this.groupIndex]];
             if (!nextPage.parameters) {
                 nextPage.parameters = {};
             }
             nextPage.parameters.nextEnabled = enabled;
         }
         isNextGroupStepEnabled(singlefin) {
-            var nextPage = singlefin.pages[this.group[this.groupIndex]];
+            let nextPage = singlefin.pages[this.group[this.groupIndex]];
             if (nextPage.parameters) {
                 return nextPage.parameters.nextEnabled;
             }
             return true;
         }
         setPreviousGroupStepEnabled(singlefin, enabled) {
-            var previousPage = singlefin.pages[this.group[this.groupIndex]];
+            let previousPage = singlefin.pages[this.group[this.groupIndex]];
             if (!previousPage.parameters) {
                 previousPage.parameters = {};
             }
             previousPage.parameters.previousEnabled = enabled;
         }
         isPreviousGroupStepEnabled(singlefin) {
-            var previousPage = singlefin.pages[this.group[this.groupIndex]];
+            let previousPage = singlefin.pages[this.group[this.groupIndex]];
             if (previousPage.parameters) {
                 return previousPage.parameters.previousEnabled;
             }
             return true;
         }
         drawBody(parameters, models) {
-            var body = this._singlefin.getBody();
+            let body = this._singlefin.getBody();
             if (body.htmlElement) {
                 return Promise.resolve(body.htmlElement);
             }
@@ -919,7 +872,7 @@ var SinglefinModule;
                     body.htmlElement = $("#" + body.name);
                     body.appendStyles();
                     body.appendScripts();
-                    var view = this.renderView(body, viewParameters, models);
+                    let view = this.renderView(body, viewParameters, models);
                     body.htmlElement.append(view);
                     this.eventManager.handleEvent(this._singlefin, body.events, "show", body, viewParameters, models).then(() => {
                         resolve(body.htmlElement);
@@ -939,7 +892,7 @@ var SinglefinModule;
             });
         }
         drawContainer(page, containerName, parameters, models) {
-            var container = this._singlefin.pages[containerName];
+            let container = this._singlefin.pages[containerName];
             if (!container) {
                 console.error("container page '" + containerName + "' not found");
                 return Promise.reject("container page '" + containerName + "' not found");
@@ -979,7 +932,7 @@ var SinglefinModule;
                 if (pageName == this._singlefin.body) {
                     return resolve(this._singlefin.getBody().htmlElement);
                 }
-                var parentPage = this._singlefin.pages[pageName];
+                let parentPage = this._singlefin.pages[pageName];
                 if (!parentPage) {
                     console.error("page not found");
                     return reject("page not found");
@@ -1008,9 +961,9 @@ var SinglefinModule;
                 if (!children) {
                     return resolve();
                 }
-                for (var i = 0; i < children.length; i++) {
-                    var childPageName = children[i];
-                    var childPage = this._singlefin.pages[childPageName];
+                for (let i = 0; i < children.length; i++) {
+                    let childPageName = children[i];
+                    let childPage = this._singlefin.pages[childPageName];
                     if (childPage.action == "group") {
                         if (parent.groupIndex != i) {
                             continue;
@@ -1063,7 +1016,7 @@ var SinglefinModule;
         }
         unwindItems(parent, pageName, page, parameters, controllerParameters, models) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var unwind = parameters;
+                let unwind = parameters;
                 if (page.unwind && page.unwind.list) {
                     unwind = SinglefinModule.Runtime.getProperty(this._singlefin.models, page.unwind.list);
                 }
@@ -1072,8 +1025,8 @@ var SinglefinModule;
                     return reject("unwind error page '" + pageName + "': list must to be an array");
                 }
                 //TODO: rimuovere i surrogati per liberare memoria e gli eventi!?
-                for (var i = 0; i < unwind.length; i++) {
-                    var surrogate = this._singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
+                for (let i = 0; i < unwind.length; i++) {
+                    let surrogate = this._singlefin.addSurrogate(page.name + "#" + i, pageName + "/" + page.name + "#" + i, page.container, page);
                     surrogate.index = i;
                     yield this.eventManager.handleEvent(this._singlefin, surrogate.events, "unwind", surrogate, unwind[i], models).then((viewParameters) => __awaiter(this, void 0, void 0, function* () {
                         surrogate.htmlElement = surrogate.renderView(surrogate, viewParameters, models);
@@ -1097,16 +1050,16 @@ var SinglefinModule;
                 }
                 if (page.unwind && page.unwind.list) {
                     SinglefinModule.ProxyHandlerMap.registerPage(page.path);
-                    var valuePath = page.unwind.list;
-                    var valuePath = valuePath.replace(".$", "[" + page.index + "]");
-                    var elementBinding = new SinglefinModule.ListBinding(page.htmlElement, "unwind", null, this._singlefin, page, page.unwind);
+                    let valuePath = page.unwind.list;
+                    valuePath = valuePath.replace(".$", "[" + page.index + "]");
+                    let elementBinding = new SinglefinModule.ListBinding(page.htmlElement, "unwind", null, this._singlefin, page, page.unwind);
                     elementBinding.watch(this._singlefin, page, null, valuePath, this._singlefin.models, parameters);
-                    var proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
-                    var object = SinglefinModule.Runtime.getParentInstance(this._singlefin.models, valuePath);
-                    var property = SinglefinModule.Runtime.getPropertyName(valuePath);
-                    var proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
+                    let proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
+                    let object = SinglefinModule.Runtime.getParentInstance(this._singlefin.models, valuePath);
+                    let property = SinglefinModule.Runtime.getPropertyName(valuePath);
+                    let proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
                     SinglefinModule.ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
-                    var value = SinglefinModule.Runtime.getProperty(this._singlefin.models, valuePath);
+                    let value = SinglefinModule.Runtime.getProperty(this._singlefin.models, valuePath);
                     SinglefinModule.Runtime.setProperty(proxyPath, this._singlefin.models, proxyHandler.proxy);
                     elementBinding.init(value);
                 }
@@ -1118,23 +1071,23 @@ var SinglefinModule;
                 return null;
                 //return $();
             }
-            var group = null;
-            var currentGroupPage = page.getCurrentGroupPage();
+            let group = null;
+            let currentGroupPage = page.getCurrentGroupPage();
             if (currentGroupPage) {
                 group = {
                     page: currentGroupPage.name,
                     index: page.groupIndex
                 };
             }
-            var html = this.resolveMarkup(page.view, {
+            let html = this.resolveMarkup(page.view, {
                 data: data,
                 parameters: page.parameters,
                 models: this._singlefin.models,
                 group: group
             });
-            var markup = new SinglefinModule.Markup(html);
+            let markup = new SinglefinModule.Markup(html);
             html = markup.resolve(this._singlefin.models, models, this.models, this.index);
-            var htmlElement = $(html);
+            let htmlElement = $(html);
             return htmlElement;
         }
         bind(htmlElement, data, models) {
@@ -1145,8 +1098,8 @@ var SinglefinModule;
                 if (!page.controllers) {
                     return resolve(parameters);
                 }
-                var result = parameters;
-                for (var i = 0; i < page.controllers.length; i++) {
+                let result = parameters;
+                for (let i = 0; i < page.controllers.length; i++) {
                     if (page.controllers[i].next) {
                         yield page.controllers[i].next(this._singlefin, page, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
                             result = _result;
@@ -1166,8 +1119,8 @@ var SinglefinModule;
                 if (!page.controllers) {
                     return resolve(parameters);
                 }
-                var result = parameters;
-                for (var i = 0; i < page.controllers.length; i++) {
+                let result = parameters;
+                for (let i = 0; i < page.controllers.length; i++) {
                     if (page.controllers[i].previous) {
                         yield page.controllers[i].previous(this._singlefin, page, result).then((_result) => __awaiter(this, void 0, void 0, function* () {
                             result = _result;
@@ -1184,17 +1137,17 @@ var SinglefinModule;
         }
         resolveMarkup(markup, context) {
             try {
-                var markupRegex = /<%(.[\s\S]*?)%>/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
-                var str = markup;
-                var match = markupRegex.exec(str);
+                let markupRegex = /<%(.[\s\S]*?)%>/m; //TODO: il tag singleline (s) è supportato soltanto in ES2018; da modificare se si vogliono gestire le interruzioni linea \n
+                let str = markup;
+                let match = markupRegex.exec(str);
                 while (match) {
-                    var result = null;
-                    var code = `(() => {
-						var data = context.data;
-						var parameters = context.parameters;
-						var models = context.models;
-						var model = context.model;
-						var group = context.group;
+                    let result = null;
+                    let code = `(() => {
+						let data = context.data;
+						let parameters = context.parameters;
+						let models = context.models;
+						let model = context.model;
+						let group = context.group;
 						
 						result = ` + match[1] + `;
 					})()`;
@@ -1211,38 +1164,38 @@ var SinglefinModule;
             }
         }
         addHtmlElement(container, page) {
-            var element = container;
-            var elements = $();
+            let element = container;
+            let elements = $();
             if (!element) {
-                var containerPage = this._singlefin.pages[page.container];
-                var parentPage = this._singlefin.pages[containerPage.container];
+                let containerPage = this._singlefin.pages[page.container];
+                let parentPage = this._singlefin.pages[containerPage.container];
                 element = parentPage.htmlElement;
             }
             if (page.hidden) {
-                var hidden = SinglefinModule.Runtime.getProperty(this._singlefin.models, page.hidden);
+                let hidden = SinglefinModule.Runtime.getProperty(this._singlefin.models, page.hidden);
                 if (hidden == true) {
                     return;
                 }
             }
             if (page.showed) {
-                var showed = SinglefinModule.Runtime.getProperty(this._singlefin.models, page.showed);
+                let showed = SinglefinModule.Runtime.getProperty(this._singlefin.models, page.showed);
                 if (showed == false) {
                     return;
                 }
             }
             page.appendStyles();
             page.appendScripts();
-            var pageName = page.name.split('#')[0];
-            var pageTag = element.find("page[" + pageName + "]");
-            var containerPagesAttribute = element.find("[pages]");
+            let pageName = page.name.split('#')[0];
+            let pageTag = element.find("page[" + pageName + "]");
+            let containerPagesAttribute = element.find("[pages]");
             containerPagesAttribute.each((i, item) => {
-                var pageAttributeValues = $(item).attr("pages");
-                var pages = pageAttributeValues.split(',');
+                let pageAttributeValues = $(item).attr("pages");
+                let pages = pageAttributeValues.split(',');
                 if (pages.indexOf(pageName) >= 0) {
                     element = elements.add($(item));
                 }
             });
-            var containerPageAttribute = element.find(`[page="` + pageName + `"]`);
+            let containerPageAttribute = element.find(`[page="` + pageName + `"]`);
             if (containerPageAttribute.length > 0) {
                 element = elements.add(containerPageAttribute);
             }
@@ -1255,7 +1208,7 @@ var SinglefinModule;
             }
             if (page.action == "replace") {
                 element.html(page.htmlElement);
-                var containerPage = this._singlefin.pages[page.container];
+                let containerPage = this._singlefin.pages[page.container];
                 containerPage.appendStyles();
                 containerPage.appendScripts();
             }
@@ -1267,17 +1220,17 @@ var SinglefinModule;
             }
             else if (page.action == "group") {
                 element.html(page.htmlElement);
-                var containerPage = this._singlefin.pages[page.container];
+                let containerPage = this._singlefin.pages[page.container];
                 containerPage.appendStyles();
                 containerPage.appendScripts();
             }
-            var toHide = element.find(`[singlefin-status="hide"]`);
+            let toHide = element.find(`[singlefin-status="hide"]`);
             if (toHide.length > 0) {
                 toHide.replaceWith("<!--" + toHide.html() + "-->");
             }
-            var toShow = element.find(`[singlefin-status="show"]`);
+            let toShow = element.find(`[singlefin-status="show"]`);
             if (toShow.length > 0) {
-                var html = toShow.html().substring(4, toShow.html().length - 3);
+                let html = toShow.html().substring(4, toShow.html().length - 3);
                 toShow.attr("singlefin-status", false);
                 toShow.replaceWith(html);
             }
@@ -1292,7 +1245,7 @@ var SinglefinModule;
             if (!this._styles) {
                 return;
             }
-            for (var i = 0; i < this._styles.length; i++) {
+            for (let i = 0; i < this._styles.length; i++) {
                 this.htmlElement.append(`<style type='text/css'>` + this._styles[i] + `</style>`);
             }
         }
@@ -1300,8 +1253,8 @@ var SinglefinModule;
             if (!this._scripts) {
                 return;
             }
-            for (var i = 0; i < this._scripts.length; i++) {
-                var script = document.createElement("script");
+            for (let i = 0; i < this._scripts.length; i++) {
+                let script = document.createElement("script");
                 script.type = "text/javascript";
                 script.text = this._scripts[i];
                 this.htmlElement.append(script);
@@ -1360,9 +1313,9 @@ var SinglefinModule;
                 if (!children) {
                     return resolve();
                 }
-                for (var i = 0; i < children.length; i++) {
-                    var childName = children[i];
-                    var page = this._singlefin.pages[childName];
+                for (let i = 0; i < children.length; i++) {
+                    let childName = children[i];
+                    let page = this._singlefin.pages[childName];
                     if (!page) {
                         console.error("close children error: page '" + childName + "' not found");
                         return resolve();
@@ -1388,8 +1341,8 @@ var SinglefinModule;
             if (!key) {
                 return;
             }
-            var checked = element.is(":checked");
-            var value = element.val();
+            let checked = element.is(":checked");
+            let value = element.val();
             if (checked) {
                 SinglefinModule.Runtime.setProperty(key, data, value);
             }
@@ -1397,10 +1350,10 @@ var SinglefinModule;
                 data: data,
                 key: key
             }, (event) => {
-                var _data = event.data.data;
-                var _key = event.data.key;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _data = event.data.data;
+                let _key = event.data.key;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
                 SinglefinModule.Runtime.setProperty(_key, _data, value);
             });
         }
@@ -1411,18 +1364,18 @@ var SinglefinModule;
             if (!key) {
                 return;
             }
-            var checked = element.is(":checked");
+            let checked = element.is(":checked");
             SinglefinModule.Runtime.setProperty(key, data, checked);
             element.on("click", {
                 data: data
             }, (event) => {
-                var _data = event.data.data;
-                var name = element.attr("name");
-                var radios = container.find('input[type="radio"][name ="' + name + '"]');
-                for (var i = 0; i < radios.length; i++) {
-                    var radioElement = $(radios[i]);
-                    var _checked = radioElement.is(":checked");
-                    var isAttributeValue = radioElement.attr("is");
+                let _data = event.data.data;
+                let name = element.attr("name");
+                let radios = container.find('input[type="radio"][name ="' + name + '"]');
+                for (let i = 0; i < radios.length; i++) {
+                    let radioElement = $(radios[i]);
+                    let _checked = radioElement.is(":checked");
+                    let isAttributeValue = radioElement.attr("is");
                     if (isAttributeValue) {
                         SinglefinModule.Runtime.setProperty(isAttributeValue, _data, _checked);
                     }
@@ -1443,7 +1396,7 @@ var SinglefinModule;
         }
         call(singlefin, page, models, parameters, pageModels) {
             return new Promise((resolve, reject) => {
-                var jsonData = {};
+                let jsonData = {};
                 if (!this._models.data) {
                     jsonData = parameters;
                 }
@@ -1464,16 +1417,16 @@ var SinglefinModule;
         ajaxRequest(singlefin, page, models, parameters, pageModels, data) {
             return new Promise((resolve, reject) => {
                 try {
-                    var requestData = null;
-                    var contentType = "application/json";
-                    var processData;
-                    var cache;
+                    let requestData = null;
+                    let contentType = "application/json";
+                    let processData;
+                    let cache;
                     if (this._config.type == "formdata") {
                         requestData = new FormData();
                         contentType = false;
                         processData = false;
                         cache = false;
-                        for (var key in data) {
+                        for (let key in data) {
                             requestData.append(key, data[key]);
                         }
                     }
@@ -1527,8 +1480,8 @@ var SinglefinModule;
                 if (singlefin.proxies.length == 0) {
                     return resolve(data);
                 }
-                for (var i = 0; i < singlefin.proxies.length; i++) {
-                    var rejected = false;
+                for (let i = 0; i < singlefin.proxies.length; i++) {
+                    let rejected = false;
                     yield singlefin.proxies[i].proxy.request(page.app, page, singlefin.models, data).then((event) => __awaiter(this, void 0, void 0, function* () {
                         yield page.eventManager.handleEvent(singlefin, singlefin.proxies[i].events, event, page, data, null).then(() => {
                         }).catch((ex) => {
@@ -1553,8 +1506,8 @@ var SinglefinModule;
                 if (singlefin.proxies.length == 0) {
                     return resolve(data);
                 }
-                for (var i = 0; i < singlefin.proxies.length; i++) {
-                    var rejected = false;
+                for (let i = 0; i < singlefin.proxies.length; i++) {
+                    let rejected = false;
                     yield singlefin.proxies[i].proxy.response(page.app, page, singlefin.models, data).then((event) => __awaiter(this, void 0, void 0, function* () {
                         yield page.eventManager.handleEvent(singlefin, singlefin.proxies[i].events, event, page, data, null).then(() => {
                         }).catch((ex) => {
@@ -1581,22 +1534,22 @@ var SinglefinModule;
 (function (SinglefinModule) {
     class Runtime {
         static getParentInstance(data, exp) {
-            var vars = exp.split(/[.\[\]]/);
-            var _data = data;
+            let vars = exp.split(/[.\[\]]/);
+            let _data = data;
             vars = vars.filter((value) => {
                 return value != "";
             });
             if (vars.length == 1) {
                 return _data[vars[0]];
             }
-            for (var i = 0; i < vars.length - 1; i++) {
+            for (let i = 0; i < vars.length - 1; i++) {
                 _data = _data[vars[i]];
             }
             return _data;
         }
         /*static setInstance(exp: string, data: any, instance: any) {
-            var vars = exp.split(".");
-            var _data = data;
+            let vars = exp.split(".");
+            let _data = data;
 
             if(vars.length == 1) {
                 this.setItem(vars[0], data, instance);
@@ -1605,7 +1558,7 @@ var SinglefinModule;
             }
 
             if(vars.length > 1) {
-                for(var i=0; i<vars.length-2; i++) {
+                for(let i=0; i<vars.length-2; i++) {
                     //_data = this.getItem(_data, vars[i]);
                     _data = _data[vars[i]];
                 }
@@ -1616,31 +1569,31 @@ var SinglefinModule;
             }
         }*/
         static getProperty(data, exp) {
-            var vars = exp.split(".");
-            var value = data;
-            for (var i = 0; i < vars.length; i++) {
+            let vars = exp.split(".");
+            let value = data;
+            for (let i = 0; i < vars.length; i++) {
                 value = this.getItem(value, vars[i]);
             }
             return value;
         }
         static setProperty(exp, data, value) {
-            var vars = exp.split(".");
-            var _data = data;
-            for (var i = 0; i < vars.length - 1; i++) {
+            let vars = exp.split(".");
+            let _data = data;
+            for (let i = 0; i < vars.length - 1; i++) {
                 _data = this.getItem(_data, vars[i]);
             }
             this.setItem(vars[vars.length - 1], _data, value);
         }
         static getParentPath(exp) {
-            var vars = exp.split(/[.\[]/);
-            var _path = "";
-            var count = 0;
+            let vars = exp.split(/[.\[]/);
+            let _path = "";
+            let count = 0;
             if (vars.length == 1) {
                 return vars[0];
             }
             vars.map((value) => {
-                var newValue = value;
-                var isArrayItem = false;
+                let newValue = value;
+                let isArrayItem = false;
                 if (value.charAt(value.length - 1) === "]") {
                     newValue = "[" + value;
                     isArrayItem = true;
@@ -1659,44 +1612,44 @@ var SinglefinModule;
             return _path;
         }
         /*static hasPropertyName(data: any, exp: string) {
-            var vars = exp.split(".");
-            var _data = data;
+            let vars = exp.split(".");
+            let _data = data;
 
-            for(var i=0; i<vars.length-1; i++) {
+            for(let i=0; i<vars.length-1; i++) {
                 _data = _data[vars[i]];
             }
 
             return _data[vars[vars.length-1]] != undefined;
         }*/
         static getPropertyName(exp) {
-            var vars = exp.split(".");
+            let vars = exp.split(".");
             return this.getItemName(vars[vars.length - 1]);
         }
         static getItemName(exp) {
-            var res = exp.split("[");
+            let res = exp.split("[");
             if (res.length === 1) {
                 return res[0];
             }
-            var index = res[1].substring(0, res[1].length - 1);
+            let index = res[1].substring(0, res[1].length - 1);
             return index;
         }
         static getItem(data, exp) {
-            var res = exp.split("[");
+            let res = exp.split("[");
             if (res.length === 1) {
                 return data[res[0]];
             }
-            var array = res[0];
-            var index = res[1].substring(0, res[1].length - 1);
+            let array = res[0];
+            let index = res[1].substring(0, res[1].length - 1);
             return data[array][index];
         }
         static setItem(exp, data, instance) {
-            var res = exp.split("[");
+            let res = exp.split("[");
             if (res.length === 1) {
                 data[res[0]] = instance;
                 return;
             }
-            var array = res[0];
-            var index = res[1].substring(0, res[1].length - 1);
+            let array = res[0];
+            let index = res[1].substring(0, res[1].length - 1);
             data[array][index] = instance;
         }
     }
@@ -1763,10 +1716,10 @@ var SinglefinModule;
             }
             init(config, homepage) {
                 try {
-                    var params = this.getUrlParams(window.location.href);
-                    var configLoader = new SinglefinModule.ConfigLoader();
+                    let params = this.getUrlParams(window.location.href);
+                    let configLoader = new SinglefinModule.ConfigLoader();
                     configLoader.load(config, this).then(() => {
-                        var _homepage = config.homepage;
+                        let _homepage = config.homepage;
                         if (homepage) {
                             _homepage = homepage;
                         }
@@ -1787,11 +1740,11 @@ var SinglefinModule;
             }
             open(pageName, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during open page '" + pageName + "': page not found");
                         return resolve();
@@ -1806,11 +1759,11 @@ var SinglefinModule;
             }
             refresh(pageName, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during refresh page '" + pageName + "': page not found");
                         return resolve();
@@ -1825,11 +1778,11 @@ var SinglefinModule;
             }
             nextGroupStep(pageName, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during next step of page '" + pageName + "': page not found");
                         return resolve();
@@ -1844,11 +1797,11 @@ var SinglefinModule;
             }
             previousGroupStep(pageName, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during previous step of page '" + pageName + "': page not found");
                         return resolve();
@@ -1863,11 +1816,11 @@ var SinglefinModule;
             }
             openGroupPageByIndex(pageName, index, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during open group page by index '" + pageName + "': page not found");
                         return resolve();
@@ -1882,16 +1835,16 @@ var SinglefinModule;
             }
             openGroupPage(pageName, pageTarget, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
+                    let _pageName = this._body + "/" + pageName;
                     if (_pageName == this.body) {
                         return resolve(this._pages[_pageName]);
                     }
-                    var page = this.pages[_pageName];
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occurred during open group page '" + pageName + "': page not found");
                         return resolve();
                     }
-                    var target = this.body + "/" + page.path + "/" + pageTarget;
+                    let target = this.body + "/" + page.path + "/" + pageTarget;
                     page.openGroupPage(this, target, parameters, models).then(() => {
                         resolve();
                     }, (error) => {
@@ -1901,75 +1854,75 @@ var SinglefinModule;
                 });
             }
             resetGroupPage(pageName) {
-                var _pageName = this._body + "/" + pageName;
+                let _pageName = this._body + "/" + pageName;
                 if (_pageName == this.body) {
                     return;
                 }
-                var page = this.pages[_pageName];
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during reset group page '" + pageName + "': page not found");
                 }
                 page.groupIndex = 0;
             }
             getGroupCount(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during get group count of page '" + pageName + "': page not found");
                 }
                 return page.group.length;
             }
             getGroupIndex(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during get group index of page '" + pageName + "': page not found");
                 }
                 return page.groupIndex;
             }
             isFirstGroupStep(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during check first group step of page '" + pageName + "': page not found");
                 }
                 return page.groupIndex == 0;
             }
             isLastGroupStep(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during check last group step of page '" + pageName + "': page not found");
                 }
                 return page.groupIndex == page.group.length - 1;
             }
             setNextGroupStepEnabled(pageName, enabled) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during set next group step enabled of page '" + pageName + "': page not found");
                 }
                 page.setNextGroupStepEnabled(this, enabled);
             }
             isNextGroupStepEnabled(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during check next group step enabled of page '" + pageName + "': page not found");
                 }
                 return page.isNextGroupStepEnabled(this);
             }
             setPreviousGroupStepEnabled(pageName, enabled) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during set previous group step enabled of page '" + pageName + "': page not found");
                 }
                 page.setPreviousGroupStepEnabled(this, enabled);
             }
             isPreviousGroupStepEnabled(pageName) {
-                var _pageName = this._body + "/" + pageName;
-                var page = this.pages[_pageName];
+                let _pageName = this._body + "/" + pageName;
+                let page = this.pages[_pageName];
                 if (!page) {
                     console.error("an error occurred during check previous group step enabled of page '" + pageName + "': page not found");
                 }
@@ -1977,8 +1930,8 @@ var SinglefinModule;
             }
             close(pageName, parameters, models) {
                 return new Promise((resolve) => {
-                    var _pageName = this._body + "/" + pageName;
-                    var page = this.pages[_pageName];
+                    let _pageName = this._body + "/" + pageName;
+                    let page = this.pages[_pageName];
                     if (!page) {
                         console.error("an error occured during close page: page '" + pageName + "' not found");
                         return resolve();
@@ -1992,13 +1945,13 @@ var SinglefinModule;
                 });
             }
             trigger(event, data) {
-                var paths = [];
+                let paths = [];
                 if (this._handlers[event]) {
                     paths = this._handlers[event];
                 }
-                for (var h = 0; h < paths.length; h++) {
-                    var handlerPage = this.pages[paths[h]];
-                    var eventObject = {
+                for (let h = 0; h < paths.length; h++) {
+                    let handlerPage = this.pages[paths[h]];
+                    let eventObject = {
                         browser: {
                             event: "event",
                             handler: event,
@@ -2013,12 +1966,12 @@ var SinglefinModule;
                 }
             }
             static getURLPath() {
-                var path = window.location.href;
-                var paths = path.split("/");
+                let path = window.location.href;
+                let paths = path.split("/");
                 if (paths.length > 2) {
-                    var basePath = "/";
-                    for (var i = 3; i < paths.length; i++) {
-                        var qualifyPaths = paths[i].split("?");
+                    let basePath = "/";
+                    for (let i = 3; i < paths.length; i++) {
+                        let qualifyPaths = paths[i].split("?");
                         basePath += qualifyPaths[0];
                     }
                     return basePath;
@@ -2026,21 +1979,21 @@ var SinglefinModule;
                 return "/";
             }
             addBody(name) {
-                var app = new SinglefinModule.App(this);
+                let app = new SinglefinModule.App(this);
                 this._body = name;
                 this._home = name;
-                var body = new SinglefinModule.Page(this, app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
+                let body = new SinglefinModule.Page(this, app, name, null, null, "", this._body, "", null, [], [], [], [], [], "", [], null, false, [], [], null);
                 this._pages[this._body] = body;
             }
             addPage(pageName, hidden, showed, action, pagePath, container, view, controllers, replace, append, commit, group, unwind, events, parameters, isWidget, styles, scripts, models, appRootPath) {
-                var bodyRegexp = new RegExp("^(" + this.body + "/)");
-                var pathContainer = container.replace(bodyRegexp, "");
-                var app = new SinglefinModule.App(this);
+                let bodyRegexp = new RegExp("^(" + this.body + "/)");
+                let pathContainer = container.replace(bodyRegexp, "");
+                let app = new SinglefinModule.App(this);
                 if (isWidget) {
-                    var rootPath = appRootPath.replace(bodyRegexp, "");
+                    let rootPath = appRootPath.replace(bodyRegexp, "");
                     app.rootPath = rootPath + "/";
                 }
-                var relativePath = pathContainer + "/" + pageName;
+                let relativePath = pathContainer + "/" + pageName;
                 if (pathContainer == this.body) {
                     relativePath = pageName;
                 }
@@ -2048,43 +2001,43 @@ var SinglefinModule;
                 return this._pages[pagePath];
             }
             addSurrogate(name, path, containerPath, page) {
-                var replaceChildren = this.createSurrogates(path, page.replace);
-                var appendChildren = this.createSurrogates(path, page.append);
-                var commitChildren = this.createSurrogates(path, page.commit);
-                var groupChildren = this.createSurrogates(path, page.group);
-                var bodyRegexp = new RegExp("^(" + this.body + "/)");
-                var relativePath = path.replace(bodyRegexp, "");
+                let replaceChildren = this.createSurrogates(path, page.replace);
+                let appendChildren = this.createSurrogates(path, page.append);
+                let commitChildren = this.createSurrogates(path, page.commit);
+                let groupChildren = this.createSurrogates(path, page.group);
+                let bodyRegexp = new RegExp("^(" + this.body + "/)");
+                let relativePath = path.replace(bodyRegexp, "");
                 this._pages[path] = new SinglefinModule.Page(this, page.app, name, page.hidden, page.showed, page.action, containerPath, relativePath, page.view, page.controllers, replaceChildren, appendChildren, commitChildren, groupChildren, page.unwind, page.events, page.parameters, page.isWidget, page.styles, page.scripts, page.models);
                 return this._pages[path];
             }
             createSurrogates(path, pagesPath) {
-                var surrogates = [];
-                for (var i = 0; i < pagesPath.length; i++) {
-                    var page = this.pages[pagesPath[i]];
-                    var pagePath = path + "/" + page.name;
+                let surrogates = [];
+                for (let i = 0; i < pagesPath.length; i++) {
+                    let page = this.pages[pagesPath[i]];
+                    let pagePath = path + "/" + page.name;
                     surrogates.push(pagePath);
                     this.addSurrogate(page.name, pagePath, path, page);
                 }
                 return surrogates;
             }
             getUrlParams(url) {
-                var queryString = url.split("?");
-                var query = "";
+                let queryString = url.split("?");
+                let query = "";
                 if (queryString.length < 2) {
                     return null;
                 }
                 query = queryString[1];
-                var vars = query.split("&");
-                var queryObject = {};
-                for (var i = 0; i < vars.length; i++) {
-                    var pair = vars[i].split("=");
-                    var key = decodeURIComponent(pair[0]);
-                    var value = decodeURIComponent(pair[1]);
+                let vars = query.split("&");
+                let queryObject = {};
+                for (let i = 0; i < vars.length; i++) {
+                    let pair = vars[i].split("=");
+                    let key = decodeURIComponent(pair[0]);
+                    let value = decodeURIComponent(pair[1]);
                     if (typeof queryObject[key] === "undefined") {
                         queryObject[key] = decodeURIComponent(value);
                     }
                     else if (typeof queryObject[key] === "string") {
-                        var arr = [queryObject[key], decodeURIComponent(value)];
+                        let arr = [queryObject[key], decodeURIComponent(value)];
                         queryObject[key] = arr;
                     }
                     else {
@@ -2116,20 +2069,20 @@ var SinglefinModule;
             if (!element) {
                 return;
             }
-            var pageModels = page.models;
+            let pageModels = page.models;
             element.each((i, item) => {
                 $.each(item.attributes, (i, attribute) => {
                     if (attribute.specified) {
                         if (!attribute.name.startsWith("model-class") && attribute.name.startsWith("model")) {
-                            var elementAttributeName = null;
+                            let elementAttributeName = null;
                             if (attribute.name.startsWith("model-")) {
-                                var onAttribute = attribute.name.split("model-");
+                                let onAttribute = attribute.name.split("model-");
                                 elementAttributeName = onAttribute[1];
                             }
-                            var originalValuePath = attribute.value;
-                            var valuePath = originalValuePath;
-                            var model = null;
-                            var modelProperty = null;
+                            let originalValuePath = attribute.value;
+                            let valuePath = originalValuePath;
+                            let model = null;
+                            let modelProperty = null;
                             if (pageModels) {
                                 if (pageModels[originalValuePath]) {
                                     valuePath = pageModels[originalValuePath].ref;
@@ -2146,14 +2099,14 @@ var SinglefinModule;
                             }
                             if (valuePath) {
                                 valuePath = valuePath.replace(".$", "[" + page.index + "]");
-                                var elementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
+                                let elementBinding = this.makeBinding($(item), elementAttributeName, modelProperty);
                                 elementBinding.watch(singlefin, page, model, valuePath, singlefin.models, pageData);
-                                var proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
-                                var object = SinglefinModule.Runtime.getParentInstance(singlefin.models, valuePath);
-                                var property = SinglefinModule.Runtime.getPropertyName(valuePath);
-                                var proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
+                                let proxyPath = SinglefinModule.Runtime.getParentPath(valuePath);
+                                let object = SinglefinModule.Runtime.getParentInstance(singlefin.models, valuePath);
+                                let property = SinglefinModule.Runtime.getPropertyName(valuePath);
+                                let proxyHandler = SinglefinModule.ProxyHandlerMap.newProxy(proxyPath, object);
                                 SinglefinModule.ProxyHandlerMap.addElementBinding(page.path, proxyPath, property, elementBinding);
-                                var value = SinglefinModule.Runtime.getProperty(singlefin.models, valuePath);
+                                let value = SinglefinModule.Runtime.getProperty(singlefin.models, valuePath);
                                 SinglefinModule.Runtime.setProperty(proxyPath, singlefin.models, proxyHandler.proxy);
                                 elementBinding.init(value);
                             }
@@ -2161,7 +2114,7 @@ var SinglefinModule;
                     }
                 });
             });
-            var children = element.children();
+            let children = element.children();
             children.each((i, item) => {
                 this.bindPageElements(singlefin, page, $(item), models, pageData);
             });
@@ -2209,7 +2162,7 @@ var SinglefinModule;
                 return;
             }
 
-            var dataProxy: DataProxy = singlefin.modelProxy;
+            let dataProxy: DataProxy = singlefin.modelProxy;
             
             if(!dataProxy) {
                 return;
@@ -2226,22 +2179,22 @@ var SinglefinModule;
         in(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
             this.bindElements(singlefin, page, element, dataProxy, pageData, models);
 
-            var children = element.find("[model-value]");
+            let children = element.find("[model-value]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
                 this.bindElements(singlefin, page, child, dataProxy, pageData, models);
             }
         }
 
         bindElements(singlefin: Singlefin, page: Page, element: any, dataProxy: DataProxy, pageData: any, models: any) {
-            var modelKey = element.attr("model-value");
-            var key = modelKey;
-            var pageModels = page.models;
-            var model = null;
+            let modelKey = element.attr("model-value");
+            let key = modelKey;
+            let pageModels = page.models;
+            let model = null;
 
-            var hasModelValueEvent = element.attr("has-model-value-event");
+            let hasModelValueEvent = element.attr("has-model-value-event");
 
             if(typeof hasModelValueEvent !== typeof undefined && hasModelValueEvent !== false) {
                 return;
@@ -2272,7 +2225,7 @@ var SinglefinModule;
         }
 
         is(element: any, dataProxy: DataProxy) {
-            var key = element.attr("is");
+            let key = element.attr("is");
 
             this.elementBinding.is(element, element, dataProxy.proxy, key);
             this.inputBinding.is(element, element, dataProxy.proxy, key);
@@ -2281,12 +2234,12 @@ var SinglefinModule;
             this.radioBinding.is(element, element, dataProxy.proxy, key);
             this.selectBinding.is(element, element, dataProxy.proxy, key);
             
-            var children = element.find("[is]");
+            let children = element.find("[is]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
-                var key = child.attr("is");
+                let key = child.attr("is");
 
                 this.elementBinding.is(element, child, dataProxy.proxy, key);
                 this.inputBinding.is(element, child, dataProxy.proxy, key);
@@ -2298,16 +2251,16 @@ var SinglefinModule;
         }
 
         outClass(page: Page, element: any, dataProxy: DataProxy) {
-            var key = element.attr("model-class");
+            let key = element.attr("model-class");
             
             this.elementBinding.outClass(this._dataProxyHandlers, page, element, element, dataProxy, key);
             
-            var children = element.find("[model-class]");
+            let children = element.find("[model-class]");
 
-            for(var i=0; i<children.length; i++) {
-                var child = $(children[i]);
+            for(let i=0; i<children.length; i++) {
+                let child = $(children[i]);
 
-                var key = child.attr("model-class");
+                let key = child.attr("model-class");
 
                 this.elementBinding.outClass(this._dataProxyHandlers, page, element, child, dataProxy, key);
             }
@@ -2318,16 +2271,16 @@ var SinglefinModule;
                 return;
             }
 
-            var pageModels = page.models;
+            let pageModels = page.models;
             
             element.each((i: number, item: any) => {
                 $.each(item.attributes, (i: number, attribute: any) => {
                     if(attribute.specified) {
                         if(!attribute.name.startsWith("model-class") && attribute.name.startsWith("model-")) {
-                            var onAttribute = attribute.name.split("model-");
-                            var elementAttributeName = onAttribute[1];
-                            var originalValue = attribute.value;
-                            var value = originalValue;
+                            let onAttribute = attribute.name.split("model-");
+                            let elementAttributeName = onAttribute[1];
+                            let originalValue = attribute.value;
+                            let value = originalValue;
 
                             if(pageModels) {
                                 if(pageModels[originalValue]) {
@@ -2350,7 +2303,7 @@ var SinglefinModule;
                 });
             });
 
-            var children = element.children();
+            let children = element.children();
 
             children.each((i: number, item: any) => {
                 this.outAttribute(page, $(item), dataProxy, models);
@@ -2381,7 +2334,7 @@ var SinglefinModule;
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
         update(value) {
-            var _value = value;
+            let _value = value;
             if (this._property) {
                 _value = SinglefinModule.Runtime.getProperty(value, this._property);
             }
@@ -2430,13 +2383,13 @@ var SinglefinModule;
                 valuePath: valuePath,
                 model: model
             }, (event) => {
-                var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _singlefin = event.data.singlefin;
+                let _page = event.data.page;
+                let _valuePath = event.data.valuePath;
+                let _model = event.data.model;
+                let _data = event.data.data;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
                 SinglefinModule.Runtime.setProperty(_valuePath, _data, value);
                 if (!_model) {
                     return;
@@ -2471,12 +2424,12 @@ var SinglefinModule;
                 valuePath: valuePath,
                 model: model
             }, (event) => {
-                var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var inputElement = event.currentTarget;
+                let _singlefin = event.data.singlefin;
+                let _page = event.data.page;
+                let _valuePath = event.data.valuePath;
+                let _model = event.data.model;
+                let _data = event.data.data;
+                let inputElement = event.currentTarget;
                 if (inputElement.files && inputElement.files[0]) {
                     SinglefinModule.Runtime.setProperty(_valuePath, _data, inputElement.files[0]);
                     if (!_model) {
@@ -2543,9 +2496,9 @@ var SinglefinModule;
             if (this._disabled) {
                 return true;
             }
-            for (var pagePath in this._bindMaps[key]) {
-                var elementBindings = this._bindMaps[key][pagePath].binding[this._proxyPath][key];
-                for (var i = 0; i < elementBindings.length; i++) {
+            for (let pagePath in this._bindMaps[key]) {
+                let elementBindings = this._bindMaps[key][pagePath].binding[this._proxyPath][key];
+                for (let i = 0; i < elementBindings.length; i++) {
                     elementBindings[i].update(value);
                 }
             }
@@ -2563,8 +2516,8 @@ var SinglefinModule;
                     if (!ProxyHandlerMap._bindMaps[proxyPath]) {
                         ProxyHandlerMap._bindMaps[proxyPath] = {};
                     }
-                    var handler = new SinglefinModule.ProxyHandler(proxyPath, ProxyHandlerMap._bindMaps[proxyPath]);
-                    var proxy = new Proxy(object, handler);
+                    let handler = new SinglefinModule.ProxyHandler(proxyPath, ProxyHandlerMap._bindMaps[proxyPath]);
+                    let proxy = new Proxy(object, handler);
                     ProxyHandlerMap._map[proxyPath] = {};
                     ProxyHandlerMap._map[proxyPath].proxy = proxy;
                     ProxyHandlerMap._map[proxyPath].handler = handler;
@@ -2572,7 +2525,7 @@ var SinglefinModule;
                 return ProxyHandlerMap._map[proxyPath];
             }
             static deleteProxyStartWith(proxyPath) {
-                for (var key in ProxyHandlerMap._map) {
+                for (let key in ProxyHandlerMap._map) {
                     if (key.startsWith(proxyPath)) {
                         ProxyHandlerMap._map[key] = null;
                     }
@@ -2630,13 +2583,13 @@ var SinglefinModule;
                 valuePath: valuePath,
                 model: model
             }, (event) => {
-                var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _singlefin = event.data.singlefin;
+                let _page = event.data.page;
+                let _valuePath = event.data.valuePath;
+                let _model = event.data.model;
+                let _data = event.data.data;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
                 if (value === "null") {
                     value = null;
                 }
@@ -2654,7 +2607,7 @@ var SinglefinModule;
                 data: data,
                 valuePath: valuePath
             }, (event) => {
-                var value = SinglefinModule.Runtime.getProperty(event.data.data, event.data.valuePath);
+                let value = SinglefinModule.Runtime.getProperty(event.data.data, event.data.valuePath);
                 event.data.elementBinding.update(value);
             });
         }
@@ -2704,13 +2657,13 @@ var SinglefinModule;
                 valuePath: valuePath,
                 model: model
             }, (event) => {
-                var _singlefin = event.data.singlefin;
-                var _page = event.data.page;
-                var _valuePath = event.data.valuePath;
-                var _model = event.data.model;
-                var _data = event.data.data;
-                var inputElement = $(event.currentTarget);
-                var value = inputElement.val();
+                let _singlefin = event.data.singlefin;
+                let _page = event.data.page;
+                let _valuePath = event.data.valuePath;
+                let _model = event.data.model;
+                let _data = event.data.data;
+                let inputElement = $(event.currentTarget);
+                let value = inputElement.val();
                 SinglefinModule.Runtime.setProperty(_valuePath, _data, value);
                 if (!_model) {
                     return;
@@ -2760,12 +2713,12 @@ var SinglefinModule;
     class ControllerEventHandler extends SinglefinModule.EventHandler {
         handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var result = parameters;
-                for (var i = 0; i < page.controllers.length; i++) {
-                    var controller = page.controllers[i];
-                    var controllerMethod = controller[delegate.controller];
+                let result = parameters;
+                for (let i = 0; i < page.controllers.length; i++) {
+                    let controller = page.controllers[i];
+                    let controllerMethod = controller[delegate.controller];
                     if (controllerMethod) {
-                        var promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
+                        let promise = controllerMethod.call(controller, page.app, page, singlefin.models, parameters, event);
                         if (promise) {
                             yield promise.then((_result) => {
                                 result = _result;
@@ -2818,15 +2771,15 @@ var SinglefinModule;
                 $.each(item.attributes, (i, attribute) => {
                     if (attribute.specified) {
                         if (attribute.name.startsWith("on-")) {
-                            var onAttribute = attribute.name.split("on-");
-                            var event = onAttribute[1];
-                            var handlerList = [];
+                            let onAttribute = attribute.name.split("on-");
+                            let event = onAttribute[1];
+                            let handlerList = [];
                             if (attribute.value) {
                                 handlerList = attribute.value.split(",");
                             }
-                            for (var n = 0; n < handlerList.length; n++) {
-                                var handler = handlerList[n];
-                                var paths = [];
+                            for (let n = 0; n < handlerList.length; n++) {
+                                let handler = handlerList[n];
+                                let paths = [];
                                 if (singlefin.handlers[handler]) {
                                     paths = singlefin.handlers[handler];
                                 }
@@ -2835,10 +2788,10 @@ var SinglefinModule;
                         }
                         if (attribute.name == "href") {
                             if (attribute.value.startsWith("page#")) {
-                                var href = attribute.value;
-                                var markup = href.split("#");
+                                let href = attribute.value;
+                                let markup = href.split("#");
                                 if (markup.length > 0) {
-                                    var path = markup[1];
+                                    let path = markup[1];
                                     element.on("click", (event) => {
                                         event.preventDefault();
                                         singlefin.open(path);
@@ -2850,7 +2803,7 @@ var SinglefinModule;
                     }
                 });
             });
-            var children = element.children();
+            let children = element.children();
             children.each((i, item) => {
                 this.addEventsHandlers(singlefin, app, page, $(item), parameters, pageModels);
             });
@@ -2859,7 +2812,7 @@ var SinglefinModule;
             if (!page.events) {
                 return;
             }
-            var events = page.events[event];
+            let events = page.events[event];
             if (!events) {
                 return;
             }
@@ -2871,22 +2824,22 @@ var SinglefinModule;
                 data: parameters,
                 pageModels: pageModels
             }, (event) => {
-                var eventData = event.data;
-                var _page = eventData.page;
+                let eventData = event.data;
+                let _page = eventData.page;
                 _page.eventManager.handleEvent(singlefin, eventData.page.events, eventData.event, eventData.page, eventData.data, eventData.pageModels, event);
             });
         }
         handleEvent(singlefin, events, event, page, parameters, pageModels, eventObject) {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                var result = parameters;
+                let result = parameters;
                 if (!events) {
                     return resolve(result);
                 }
-                var eventsList = events[event];
+                let eventsList = events[event];
                 if (!eventsList) {
                     return resolve(result);
                 }
-                for (var i = 0; i < eventsList.length; i++) {
+                for (let i = 0; i < eventsList.length; i++) {
                     yield this.handleAction(singlefin, eventsList[i], page, parameters, result, pageModels, eventObject).then((_result) => {
                         result = _result;
                     }).catch((ex) => {
@@ -2898,7 +2851,7 @@ var SinglefinModule;
         }
         handleAction(singlefin, actions, page, parameters, result, pageModels, eventObject) {
             return new Promise((resolve, reject) => {
-                var eventHandler = this.makeEventHandler(actions);
+                let eventHandler = this.makeEventHandler(actions);
                 eventHandler.handle(singlefin, actions, page, parameters, pageModels, eventObject).then((_result) => __awaiter(this, void 0, void 0, function* () {
                     resolve(_result);
                 })).catch((ex) => {
@@ -2962,9 +2915,9 @@ var SinglefinModule;
         handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
                 if (pageModels) {
-                    var modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
+                    let modelMethodName = SinglefinModule.Runtime.getPropertyName(delegate.model);
                     if (pageModels[modelMethodName]) {
-                        var pageModelMethodName = pageModels[modelMethodName].ref;
+                        let pageModelMethodName = pageModels[modelMethodName].ref;
                         if (!pageModelMethodName) {
                             this.eventManager.handleEvent(singlefin, pageModels[modelMethodName], "on", page, parameters, pageModels).then(() => {
                                 return resolve();
@@ -2973,8 +2926,8 @@ var SinglefinModule;
                             });
                         }
                         else {
-                            var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, pageModelMethodName);
-                            var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, pageModelMethodName);
+                            let model = SinglefinModule.Runtime.getParentInstance(singlefin.models, pageModelMethodName);
+                            let modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, pageModelMethodName);
                             modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
                                 if (!pageModels[modelMethodName].on) {
                                     return resolve();
@@ -2990,8 +2943,8 @@ var SinglefinModule;
                         }
                     }
                 }
-                var model = SinglefinModule.Runtime.getParentInstance(singlefin.models, delegate.model);
-                var modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
+                let model = SinglefinModule.Runtime.getParentInstance(singlefin.models, delegate.model);
+                let modelMethod = SinglefinModule.Runtime.getProperty(singlefin.models, delegate.model);
                 modelMethod.call(model, page.app, page, singlefin.models, parameters, event).then(() => {
                     page.eventManager.handleEvent(singlefin, delegate, "resolved", page, parameters, null).then(() => {
                         return resolve();
@@ -3026,10 +2979,10 @@ var SinglefinModule;
     class PageEventHandler extends SinglefinModule.EventHandler {
         handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
-                var pageModels = {};
-                for (var key in delegate.page.models) {
+                let pageModels = {};
+                for (let key in delegate.page.models) {
                     pageModels[key] = {};
-                    var valuePath = delegate.page.models[key].ref;
+                    let valuePath = delegate.page.models[key].ref;
                     if (valuePath) {
                         if (typeof valuePath === "string") {
                             valuePath = valuePath.replace(".$", "[" + page.index + "]");
@@ -3068,7 +3021,7 @@ var SinglefinModule;
     class RequestEventHandler extends SinglefinModule.EventHandler {
         handle(singlefin, delegate, page, parameters, pageModels, event) {
             return new Promise((resolve, reject) => {
-                var request = new SinglefinModule.Request(delegate.request);
+                let request = new SinglefinModule.Request(delegate.request);
                 request.call(singlefin, page, singlefin.models, parameters, pageModels).then(() => {
                     resolve();
                 }).catch((ex) => {

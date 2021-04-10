@@ -4,12 +4,12 @@ module SinglefinModule {
     export class PageEventHandler extends EventHandler {
         handle(singlefin: Singlefin, delegate: any, page: Page, parameters: any, pageModels: any, event?: any): Promise<void> {
 			return new Promise<void>((resolve, reject) => {
-				var pageModels: any = {};
+				let pageModels: any = {};
 
-				for(var key in delegate.page.models) {
+				for(let key in delegate.page.models) {
 					pageModels[key] = {};
 
-					var valuePath = delegate.page.models[key].ref
+					let valuePath = delegate.page.models[key].ref
 
 					if(valuePath) {
 						if(typeof valuePath === "string") {

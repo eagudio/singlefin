@@ -30,7 +30,7 @@ module SinglefinModule {
         }
 
         update(value: any) {
-            var _value = value;
+            let _value = value;
 
             if(this._property) {
                 _value = Runtime.getProperty(value, this._property);
@@ -49,15 +49,15 @@ module SinglefinModule {
                 return;
             }
             
-            var dataProxyHandler: DataProxyHandler = new DataProxyHandler({
+            let dataProxyHandler: DataProxyHandler = new DataProxyHandler({
                 element: element,
                 exp: exp,
                 dataProxy: dataProxy
             }, (parameters: any) => {
                 try {
-                    var classes: any = Runtime.getProperty(parameters.dataProxy.data, exp);
+                    let classes: any = Runtime.getProperty(parameters.dataProxy.data, exp);
 
-                    for(var key in classes) {
+                    for(let key in classes) {
                         if(classes[key] == true) {
                             parameters.element.addClass(key);
                         }
