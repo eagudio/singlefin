@@ -8,7 +8,7 @@ class MultipartService extends Service {
         return Promise.resolve();
     }
 
-    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any) {
+    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any, response: any) {
         return Promise.resolve();
     }
 
@@ -22,7 +22,7 @@ class MultipartService extends Service {
                 cb(null, storagePath);
             },
             filename: (request: any, file: any, cb: any) => {
-                route.inform("readfile", request).then(() => {
+                route.inform("readfile", request, file).then(() => {
                     let modelMap: ModelMap = request.singlefin.modelMap;
 
                     let fileName = modelMap.getValue(parameters.file.name);

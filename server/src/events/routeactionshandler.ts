@@ -8,11 +8,11 @@ class RouteActionsHandler {
         this.makeActions(events);
     }
 
-    inform(event: string, request: any): Promise<void> {        
+    inform(event: string, request: any, reponse: any): Promise<void> {        
         return new Promise<void>((resolve, reject) => {
             let routeActions: RouteAction[] = this._routeActions[event];
 
-            this.performRouteActions(0, routeActions, request).then(() => {
+            this.performRouteActions(0, routeActions, request, reponse).then(() => {
                 resolve();
             }).catch((error: any) => {
                 reject(error);
@@ -20,7 +20,7 @@ class RouteActionsHandler {
         });
     }
 
-    performRouteActions(index: number, routeActions: RouteAction[], request: any) {
+    performRouteActions(index: number, routeActions: RouteAction[], request: any, reponse: any) {
         return new Promise<void>((resolve, reject) => {
             if(!routeActions) {
                 return resolve();
@@ -30,10 +30,10 @@ class RouteActionsHandler {
                 return resolve();
             }
       
-            routeActions[index].do(this._domain, request).then(() => {
+            routeActions[index].do(this._domain, request, reponse).then(() => {
                 index++;
                 
-                return this.performRouteActions(index, routeActions, request);
+                return this.performRouteActions(index, routeActions, request, reponse);
             }).then(() => {
                 return resolve();
             }).catch((error: any) => {

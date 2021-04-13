@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import Runtime from '../../core/src/runtime';
+import Runtime from '../../client/src/runtime';
 
 describe('Runtime', () => {
     it('get parent instance with one item', () => {

@@ -13,9 +13,9 @@ abstract class RouteAction {
         return this._parameters;
     }
 
-    do(domain: Domain, request: any) {
-        return this.handle(domain, this._routeActionsHandler, request);
+    do(domain: Domain, request: any, response: any) {
+        return this.handle(domain, this._routeActionsHandler, request, response);
     }
 
-    abstract handle(domain: Domain, routeActionsHandler: RouteActionsHandler, request: any): Promise<void>;
+    abstract handle(domain: Domain, routeActionsHandler: RouteActionsHandler, request: any, response: any): Promise<void>;
 }

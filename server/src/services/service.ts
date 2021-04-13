@@ -3,7 +3,7 @@ abstract class Service {
     
     
     abstract run(parameters: any): Promise<void>;
-    abstract call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any): Promise<unknown>;
+    abstract call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any, response: any): Promise<unknown>;
     abstract reply(request: any, response: any, modelMap: ModelMap, parameters: any): Promise<unknown>;
 
     constructor(domain: any) {
@@ -16,7 +16,7 @@ abstract class Service {
 
     route(route: Route, parameters: any): any {
         return (request: any, response: any, next: any) => {
-            this.call(route.currentRouteActionsHandler, request.singlefin.modelMap, parameters, request).then(() => {
+            this.call(route.currentRouteActionsHandler, request.singlefin.modelMap, parameters, request, response).then(() => {
                 next();
             }).catch((error) => {
                 next(error);

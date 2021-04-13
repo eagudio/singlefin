@@ -30,7 +30,7 @@ class Domain {
                     singlefin: {
                         modelMap: modelMap
                     }
-                });
+                }, null);
             }).then(() => {
                 this.initRoutes(this._schema.routes);
                 this._router.use((error, request, response, next) => {
@@ -129,8 +129,8 @@ class Route {
     set currentRouteActionsHandler(currentRouteActionsHandler) {
         this._currentRouteActionsHandler = currentRouteActionsHandler;
     }
-    inform(event, request) {
-        return this._currentRouteActionsHandler.inform(event, request);
+    inform(event, request, response) {
+        return this._currentRouteActionsHandler.inform(event, request, response);
     }
     initRouting() {
         if (!this._method) {
@@ -144,13 +144,13 @@ class Route {
                 };
                 next();
             }, (request, response, next) => {
-                this._routeActionsHandler.inform("request", request).then(() => {
+                this._routeActionsHandler.inform("request", request, response).then(() => {
                     next();
                 }).catch((error) => {
                     next(error);
                 });
             }, this._service.route(this, this._config), (request, response, next) => {
-                this._routeActionsHandler.inform("response", request).then(() => {
+                this._routeActionsHandler.inform("response", request, response).then(() => {
                     next();
                 }).catch((error) => {
                     next(error);
@@ -365,18 +365,18 @@ class RouteAction {
     get parameters() {
         return this._parameters;
     }
-    do(domain, request) {
-        return this.handle(domain, this._routeActionsHandler, request);
+    do(domain, request, response) {
+        return this.handle(domain, this._routeActionsHandler, request, response);
     }
 }
 /// <reference path="routeaction.ts"/>
 class ModelAction extends RouteAction {
-    handle(domain, routeActionsHandler, request) {
+    handle(domain, routeActionsHandler, request, response) {
         return new Promise((resolve, reject) => {
             let modelMap = request.singlefin.modelMap;
             let instance = modelMap.getParentInstance(this.parameters);
             let method = modelMap.getValue(this.parameters);
-            method.call(instance, domain, request).then(() => {
+            method.call(instance, domain, request, response).then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error);
@@ -386,7 +386,7 @@ class ModelAction extends RouteAction {
 }
 /// <reference path="routeaction.ts"/>
 class NullAction extends RouteAction {
-    handle(domain, routeActionsHandler, request) {
+    handle(domain, routeActionsHandler, request, response) {
         console.error("action not recognized: " + this.parameters);
         return Promise.reject("action not recognized: " + this.parameters);
     }
@@ -397,17 +397,17 @@ class RouteActionsHandler {
         this._domain = domain;
         this.makeActions(events);
     }
-    inform(event, request) {
+    inform(event, request, reponse) {
         return new Promise((resolve, reject) => {
             let routeActions = this._routeActions[event];
-            this.performRouteActions(0, routeActions, request).then(() => {
+            this.performRouteActions(0, routeActions, request, reponse).then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error);
             });
         });
     }
-    performRouteActions(index, routeActions, request) {
+    performRouteActions(index, routeActions, request, reponse) {
         return new Promise((resolve, reject) => {
             if (!routeActions) {
                 return resolve();
@@ -415,9 +415,9 @@ class RouteActionsHandler {
             if (index >= routeActions.length) {
                 return resolve();
             }
-            routeActions[index].do(this._domain, request).then(() => {
+            routeActions[index].do(this._domain, request, reponse).then(() => {
                 index++;
-                return this.performRouteActions(index, routeActions, request);
+                return this.performRouteActions(index, routeActions, request, reponse);
             }).then(() => {
                 return resolve();
             }).catch((error) => {
@@ -451,11 +451,11 @@ class RouteActionsHandler {
 }
 /// <reference path="routeaction.ts"/>
 class ServiceAction extends RouteAction {
-    handle(domain, routeActionsHandler, request) {
+    handle(domain, routeActionsHandler, request, response) {
         return new Promise((resolve, reject) => {
             let services = domain.services;
             let service = services[this.parameters.service];
-            service.call(routeActionsHandler, request.singlefin.modelMap, this.parameters, request).then(() => {
+            service.call(routeActionsHandler, request.singlefin.modelMap, this.parameters, request, response).then(() => {
                 resolve();
             }).catch((error) => {
                 reject(error);
@@ -472,7 +472,7 @@ class Service {
     }
     route(route, parameters) {
         return (request, response, next) => {
-            this.call(route.currentRouteActionsHandler, request.singlefin.modelMap, parameters, request).then(() => {
+            this.call(route.currentRouteActionsHandler, request.singlefin.modelMap, parameters, request, response).then(() => {
                 next();
             }).catch((error) => {
                 next(error);
@@ -486,7 +486,7 @@ class DataService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(routeActionsHandler, modelMap, parameters, request) {
+    call(routeActionsHandler, modelMap, parameters, request, response) {
         return Promise.resolve();
     }
     reply(request, response, modelMap, parameters) {
@@ -500,7 +500,7 @@ class EmptyDataService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(routeActionsHandler, modelMap, parameters, request) {
+    call(routeActionsHandler, modelMap, parameters, request, response) {
         return Promise.resolve();
     }
     reply(request, response, modelMap, parameters) {
@@ -513,7 +513,7 @@ class FileService extends Service {
     run(parameters) {
         return Promise.resolve();
     }
-    call(routeActionsHandler, modelMap, parameters, request) {
+    call(routeActionsHandler, modelMap, parameters, request, response) {
         return Promise.resolve();
     }
     reply(request, response, modelMap, parameters) {
@@ -547,7 +547,7 @@ class MultipartService extends Service {
     run(config) {
         return Promise.resolve();
     }
-    call(routeActionsHandler, modelMap, parameters, request) {
+    call(routeActionsHandler, modelMap, parameters, request, response) {
         return Promise.resolve();
     }
     route(route, parameters) {
@@ -558,7 +558,7 @@ class MultipartService extends Service {
                 cb(null, storagePath);
             },
             filename: (request, file, cb) => {
-                route.inform("readfile", request).then(() => {
+                route.inform("readfile", request, file).then(() => {
                     let modelMap = request.singlefin.modelMap;
                     let fileName = modelMap.getValue(parameters.file.name);
                     let fileExtension = modelMap.getValue(parameters.file.extension);

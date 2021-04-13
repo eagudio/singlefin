@@ -40,8 +40,8 @@ class Route {
         this._currentRouteActionsHandler = currentRouteActionsHandler;
     }
     
-    inform(event: string, request: any): Promise<void> {
-        return this._currentRouteActionsHandler.inform(event, request);
+    inform(event: string, request: any, response: any): Promise<void> {
+        return this._currentRouteActionsHandler.inform(event, request, response);
     }
 
     initRouting() {
@@ -59,13 +59,13 @@ class Route {
 
             next();
         }, (request: any, response: any, next: any) => {
-            this._routeActionsHandler.inform("request", request).then(() => {
+            this._routeActionsHandler.inform("request", request, response).then(() => {
                 next();
             }).catch((error: string) => {
                 next(error);
             });
         }, this._service.route(this, this._config), (request: any, response: any, next: any) => {
-            this._routeActionsHandler.inform("response", request).then(() => {
+            this._routeActionsHandler.inform("response", request, response).then(() => {
                 next();
             }).catch((error: string) => {
                 next(error);

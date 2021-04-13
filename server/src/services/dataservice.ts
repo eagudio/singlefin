@@ -5,7 +5,7 @@ class DataService extends Service {
         return Promise.resolve();
     }
 
-    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any) {
+    call(routeActionsHandler: RouteActionsHandler, modelMap: ModelMap, parameters: any, request: any, response: any) {
         return Promise.resolve();
     }
 

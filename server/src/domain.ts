@@ -37,7 +37,7 @@ class Domain {
                     singlefin: {
                         modelMap: modelMap
                     }
-                });
+                }, null);
             }).then(() => {
                 this.initRoutes(this._schema.routes);
 
