@@ -9,14 +9,7 @@ module SinglefinModule {
         }
 
         update(value: any) {
-            if(!value) {
-                this.htmlElement.attr("singlefin-status", "hide");
-            }
-            else {
-                if(this.htmlElement.attr("singlefin-status") == "hide") {
-                    this.htmlElement.attr("singlefin-status", "show");
-                }
-            }
+            this.htmlElement.attr("hidden", !value);
         }
     }
 }

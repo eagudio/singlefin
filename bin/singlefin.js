@@ -1226,11 +1226,11 @@ var SinglefinModule;
             }
             let toHide = element.find(`[singlefin-status="hide"]`);
             if (toHide.length > 0) {
-                toHide.replaceWith("<!--" + toHide.html() + "-->");
+                toHide.replaceWith("<!--" + toHide.prop('outerHTML') + "-->");
             }
             let toShow = element.find(`[singlefin-status="show"]`);
             if (toShow.length > 0) {
-                let html = toShow.html().substring(4, toShow.html().length - 3);
+                let html = toShow.prop('outerHTML').substring(4, toShow.prop('outerHTML').length - 3);
                 toShow.attr("singlefin-status", false);
                 toShow.replaceWith(html);
             }
@@ -2357,14 +2357,7 @@ var SinglefinModule;
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
         update(value) {
-            if (!value) {
-                if (this.htmlElement.attr("singlefin-status") == "hide") {
-                    this.htmlElement.attr("singlefin-status", "show");
-                }
-            }
-            else {
-                this.htmlElement.attr("singlefin-status", "hide");
-            }
+            this.htmlElement.attr("hidden", value);
         }
     }
     SinglefinModule.HideBinding = HideBinding;
@@ -2631,14 +2624,7 @@ var SinglefinModule;
         watch(singlefin, page, model, valuePath, data, pageData) {
         }
         update(value) {
-            if (!value) {
-                this.htmlElement.attr("singlefin-status", "hide");
-            }
-            else {
-                if (this.htmlElement.attr("singlefin-status") == "hide") {
-                    this.htmlElement.attr("singlefin-status", "show");
-                }
-            }
+            this.htmlElement.attr("hidden", !value);
         }
     }
     SinglefinModule.ShowBinding = ShowBinding;

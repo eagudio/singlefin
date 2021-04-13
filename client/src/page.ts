@@ -1029,13 +1029,13 @@ module SinglefinModule {
 			let toHide = element.find(`[singlefin-status="hide"]`);
 
 			if(toHide.length > 0) {
-				toHide.replaceWith("<!--" + toHide.html() +  "-->");
+				toHide.replaceWith("<!--" + toHide.prop('outerHTML') +  "-->");
 			}
 
 			let toShow = element.find(`[singlefin-status="show"]`);
 
 			if(toShow.length > 0) {
-				let html = toShow.html().substring(4, toShow.html().length-3);
+				let html = toShow.prop('outerHTML').substring(4, toShow.prop('outerHTML').length-3);
 
 				toShow.attr("singlefin-status", false);
 
